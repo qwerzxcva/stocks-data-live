@@ -1,10 +1,12 @@
 # 每日收盘后完整统计 (交易日 15:30 CST = 7:30 UTC)
-# 私有仓免费额度内 (每工作日 ~2 分钟)
+# 私有仓免费额度内 (~2 分钟/次, 22 天 ≈ 44 分钟/月)
 name: daily-close
 on:
   schedule:
-    - cron: '30 7 * * 1-5'   # 15:30 CST
-  workflow_dispatch:
+    - cron: '30 7 * * 1-5'  # 工作日 15:30 CST
+  workflow_dispatch: {}
+  pull_request:
+    branches: [main]
 permissions:
   contents: write
 jobs:

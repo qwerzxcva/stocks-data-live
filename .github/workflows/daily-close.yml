@@ -3,7 +3,7 @@
 name: daily-close
 on:
   schedule:
-    - cron: '30 7 * * 1-5'  # 工作日 15:30 CST
+    - cron: '30 7 * * 1-5'
   workflow_dispatch: {}
   pull_request:
     branches: [main]

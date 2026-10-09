@@ -1,12 +1,9 @@
 # 每日收盘后完整统计 (交易日 15:30 CST = 7:30 UTC)
-# 私有仓免费额度内 (~2 分钟/次, 22 天 ≈ 44 分钟/月)
 name: daily-close
 on:
   schedule:
     - cron: '30 7 * * 1-5'
-  workflow_dispatch:
-  pull_request:
-    branches: [main]
+  workflow_dispatch: {}
 permissions:
   contents: write
 jobs:
@@ -14,14 +11,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with: { token: ${{ secrets.GITHUB_TOKEN }} }
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/checkout@v4
         with:
           repository: qwerzxcva/stocks-tools
           path: tools-repo
           token: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/setup-python@v5
-        with: { python-version: '3.x' }
+        with:
+          python-version: '3.x'
       - name: Daily close analysis
         env:
           STOCKS_ROOT: ${{ github.workspace }}/tools-repo
@@ -29,7 +28,6 @@ jobs:
           STOCKS_ANA: ${{ github.workspace }}
         run: |
           python3 tools-repo/tools/refresh_pool.py
-          python3 tools-repo/tools/analyze_today.py
           python3 tools-repo/tools/monitor.py
       - name: Commit & push
         run: |

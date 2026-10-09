@@ -3,9 +3,10 @@
 name: auto-intraday
 on:
   schedule:
-    # UTC = CST - 8h: 9:30 CST = 1:30 UTC → 每隔30分钟, 工作日 1-7 UTC (覆盖 9:30-15:00 CST)
-    - cron: '0,30 1-7 * * 1-5'
-  workflow_dispatch:  # 支持手动触发
+    # 60min 间隔 (CST 9:30-15:00 = UTC 1:30-7:00, 工作日)
+    # 免费额度友好: ~528 min/月 (vs 30min 间隔 ~1056 min)
+    - cron: '0 1,2,3,4,5,6,7 * * 1-5'
+  workflow_dispatch: {}  # 支持手动触发
 
 # 给 GITHUB_TOKEN 写入权限 (推送到私有仓)
 permissions:

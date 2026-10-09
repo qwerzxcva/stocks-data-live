@@ -1,0 +1,55 @@
+# 盘中数据自动采集 (每30分钟, 交易时段 9:30-15:00 CST)
+# 私有仓免费额度 2000 分钟/月; 每轮 ~1 分钟, 48 轮/天 × 22 天 ≈ 1056 分钟/月 ✅
+name: auto-intraday
+on:
+  schedule:
+    # UTC = CST - 8h: 9:30 CST = 1:30 UTC → 每隔30分钟, 工作日 1-7 UTC (覆盖 9:30-15:00 CST)
+    - cron: '0,30 1-7 * * 1-5'
+  workflow_dispatch:  # 支持手动触发
+
+# 给 GITHUB_TOKEN 写入权限 (推送到私有仓)
+permissions:
+  contents: write
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout live data repo
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Checkout tools repo
+        uses: actions/checkout@v4
+        with:
+          repository: qwerzxcva/stocks-tools
+          path: tools-repo
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Run refresh + monitor
+        env:
+          STOCKS_ROOT: ${{ github.workspace }}/tools-repo
+          STOCKS_LIVE: ${{ github.workspace }}/data
+          STOCKS_ANA: ${{ github.workspace }}
+        run: |
+          python3 tools-repo/tools/refresh_pool.py
+          python3 tools-repo/tools/monitor.py
+      - name: Commit & push
+        run: |
+          git config user.name "stocks-bot"
+          git config user.email "41888888888+stocks-bot@users.noreply.github.com"
+          git add -A
+          ts=$(TZ=Asia/Shanghai date '+%Y%m%d_%H%M')
+          git diff --quiet HEAD && echo "no changes" || {
+            git commit -m "auto-intraday $ts snapshot" && \
+            git -c http.version=HTTP/1.1 push origin main
+          }
+      - name: Summary
+        run: |
+          echo "## Auto-Collect Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- Time: $(TZ=Asia/Shanghai date '+%Y-%m-%d %H:%M CST')" >> $GITHUB_STEP_SUMMARY
+          echo "- Files changed: $(git diff --stat HEAD | tail -1)" >> $GITHUB_STEP_SUMMARY
+          ls -la data/mon/ 2>/dev/null | tail -3 >> $GITHUB_STEP_SUMMARY || true

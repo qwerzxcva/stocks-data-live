@@ -1,6 +1,6 @@
 {
   "date": "2026-10-12",
-  "ts": "0751",
+  "ts": "1132",
   "market_phase": "decline",
   "rounds": 5,
   "candidates": 0,
@@ -11,14 +11,17 @@
   "watch": [],
   "avoid": [],
   "summary": {
-    "hotspot_themes": [],
-    "top_sectors": [
-      "医疗服务",
-      "半导体",
-      "电力",
-      "计算机设备",
-      "IT服务Ⅱ"
+    "hotspot_themes": [
+      "人工智能",
+      "低空经济",
+      "军工",
+      "财政政策",
+      "房地产",
+      "消费",
+      "贵金属",
+      "贸易"
     ],
+    "top_sectors": [],
     "cycle_phase": "decline"
   }
 }

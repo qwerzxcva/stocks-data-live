@@ -1,0 +1,35 @@
+{
+  "date": "2026-10-12",
+  "hot_stocks": [
+    {
+      "rank": 1,
+      "name": "AI",
+      "hit_count": 11,
+      "source": "ths_hot"
+    },
+    {
+      "rank": 2,
+      "name": "机器人",
+      "hit_count": 4,
+      "source": "ths_hot"
+    },
+    {
+      "rank": 3,
+      "name": "半导体",
+      "hit_count": 3,
+      "source": "ths_hot"
+    },
+    {
+      "rank": 4,
+      "name": "通信",
+      "hit_count": 1,
+      "source": "ths_hot"
+    },
+    {
+      "rank": 5,
+      "name": "钢铁",
+      "hit_count": 1,
+      "source": "ths_hot"
+    }
+  ]
+}

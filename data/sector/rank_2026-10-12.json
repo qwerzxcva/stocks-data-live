@@ -1,4 +1,906 @@
 {
   "date": "2026-10-12",
-  "sectors": []
+  "sectors": [
+    {
+      "rank": 1,
+      "code": "BK1298",
+      "name": "文字媒体",
+      "chg_pct": 7.98,
+      "up": 2,
+      "down": 0,
+      "leader": ""
+    },
+    {
+      "rank": 2,
+      "code": "BK1299",
+      "name": "影视动漫制作",
+      "chg_pct": 4.47,
+      "up": 11,
+      "down": 3,
+      "leader": ""
+    },
+    {
+      "rank": 3,
+      "code": "BK1222",
+      "name": "影视院线",
+      "chg_pct": 4.05,
+      "up": 15,
+      "down": 3,
+      "leader": ""
+    },
+    {
+      "rank": 4,
+      "code": "BK1290",
+      "name": "教育出版",
+      "chg_pct": 3.61,
+      "up": 10,
+      "down": 0,
+      "leader": ""
+    },
+    {
+      "rank": 5,
+      "code": "BK1297",
+      "name": "图片媒体",
+      "chg_pct": 3.53,
+      "up": 1,
+      "down": 0,
+      "leader": ""
+    },
+    {
+      "rank": 6,
+      "code": "BK1296",
+      "name": "视频媒体",
+      "chg_pct": 3.52,
+      "up": 1,
+      "down": 0,
+      "leader": ""
+    },
+    {
+      "rank": 7,
+      "code": "BK1218",
+      "name": "出版",
+      "chg_pct": 3.52,
+      "up": 22,
+      "down": 5,
+      "leader": ""
+    },
+    {
+      "rank": 8,
+      "code": "BK1289",
+      "name": "大众出版",
+      "chg_pct": 3.47,
+      "up": 12,
+      "down": 5,
+      "leader": ""
+    },
+    {
+      "rank": 9,
+      "code": "BK1313",
+      "name": "风电零部件",
+      "chg_pct": 3.37,
+      "up": 22,
+      "down": 4,
+      "leader": ""
+    },
+    {
+      "rank": 10,
+      "code": "BK1032",
+      "name": "风电设备",
+      "chg_pct": 2.95,
+      "up": 27,
+      "down": 4,
+      "leader": ""
+    },
+    {
+      "rank": 11,
+      "code": "BK1320",
+      "name": "逆变器",
+      "chg_pct": 2.75,
+      "up": 9,
+      "down": 0,
+      "leader": ""
+    },
+    {
+      "rank": 12,
+      "code": "BK1606",
+      "name": "线下药店",
+      "chg_pct": 2.71,
+      "up": 8,
+      "down": 0,
+      "leader": ""
+    },
+    {
+      "rank": 13,
+      "code": "BK1300",
+      "name": "院线",
+      "chg_pct": 2.59,
+      "up": 4,
+      "down": 0,
+      "leader": ""
+    },
+    {
+      "rank": 14,
+      "code": "BK1292",
+      "name": "广告媒体",
+      "chg_pct": 2.55,
+      "up": 3,
+      "down": 0,
+      "leader": ""
+    },
+    {
+      "rank": 15,
+      "code": "BK0486",
+      "name": "传媒",
+      "chg_pct": 2.21,
+      "up": 89,
+      "down": 34,
+      "leader": ""
+    },
+    {
+      "rank": 16,
+      "code": "BK1291",
+      "name": "电视广播Ⅲ",
+      "chg_pct": 2.21,
+      "up": 9,
+      "down": 4,
+      "leader": ""
+    },
+    {
+      "rank": 17,
+      "code": "BK1219",
+      "name": "电视广播Ⅱ",
+      "chg_pct": 2.21,
+      "up": 9,
+      "down": 4,
+      "leader": ""
+    },
+    {
+      "rank": 18,
+      "code": "BK1311",
+      "name": "输变电设备",
+      "chg_pct": 2.15,
+      "up": 26,
+      "down": 5,
+      "leader": ""
+    },
+    {
+      "rank": 19,
+      "code": "BK1611",
+      "name": "国有大型银行Ⅲ",
+      "chg_pct": 2.06,
+      "up": 6,
+      "down": 0,
+      "leader": ""
+    },
+    {
+      "rank": 20,
+      "code": "BK1602",
+      "name": "诊断服务",
+      "chg_pct": 1.86,
+      "up": 3,
+      "down": 2,
+      "leader": ""
+    },
+    {
+      "rank": 21,
+      "code": "BK1326",
+      "name": "半导体设备",
+      "chg_pct": 1.73,
+      "up": 17,
+      "down": 8,
+      "leader": ""
+    },
+    {
+      "rank": 22,
+      "code": "BK1610",
+      "name": "股份制银行Ⅲ",
+      "chg_pct": 1.66,
+      "up": 9,
+      "down": 0,
+      "leader": ""
+    },
+    {
+      "rank": 23,
+      "code": "BK1283",
+      "name": "银行",
+      "chg_pct": 1.55,
+      "up": 41,
+      "down": 0,
+      "leader": ""
+    },
+    {
+      "rank": 24,
+      "code": "BK0475",
+      "name": "银行Ⅱ",
+      "chg_pct": 1.55,
+      "up": 41,
+      "down": 0,
+      "leader": ""
+    },
+    {
+      "rank": 25,
+      "code": "BK1612",
+      "name": "农商行Ⅲ",
+      "chg_pct": 1.51,
+      "up": 10,
+      "down": 0,
+      "leader": ""
+    },
+    {
+      "rank": 26,
+      "code": "BK1221",
+      "name": "数字媒体",
+      "chg_pct": 1.47,
+      "up": 7,
+      "down": 8,
+      "leader": ""
+    },
+    {
+      "rank": 27,
+      "code": "BK1220",
+      "name": "广告营销",
+      "chg_pct": 1.39,
+      "up": 19,
+      "down": 8,
+      "leader": ""
+    },
+    {
+      "rank": 28,
+      "code": "BK1609",
+      "name": "城商行Ⅲ",
+      "chg_pct": 1.33,
+      "up": 16,
+      "down": 0,
+      "leader": ""
+    },
+    {
+      "rank": 29,
+      "code": "BK1293",
+      "name": "营销代理",
+      "chg_pct": 1.27,
+      "up": 16,
+      "down": 8,
+      "leader": ""
+    },
+    {
+      "rank": 30,
+      "code": "BK1531",
+      "name": "商用载客车",
+      "chg_pct": 1.22,
+      "up": 3,
+      "down": 1,
+      "leader": ""
+    },
+    {
+      "rank": 31,
+      "code": "BK1587",
+      "name": "电信运营商",
+      "chg_pct": 1.21,
+      "up": 3,
+      "down": 0,
+      "leader": ""
+    },
+    {
+      "rank": 32,
+      "code": "BK1546",
+      "name": "电商服务",
+      "chg_pct": 1.11,
+      "up": 4,
+      "down": 4,
+      "leader": ""
+    },
+    {
+      "rank": 33,
+      "code": "BK1365",
+      "name": "租赁",
+      "chg_pct": 1.06,
+      "up": 2,
+      "down": 1,
+      "leader": ""
+    },
+    {
+      "rank": 34,
+      "code": "BK1348",
+      "name": "辅料",
+      "chg_pct": 0.98,
+      "up": 2,
+      "down": 2,
+      "leader": ""
+    },
+    {
+      "rank": 35,
+      "code": "BK1449",
+      "name": "冰洗",
+      "chg_pct": 0.84,
+      "up": 4,
+      "down": 3,
+      "leader": ""
+    },
+    {
+      "rank": 36,
+      "code": "BK1376",
+      "name": "核力发电",
+      "chg_pct": 0.83,
+      "up": 3,
+      "down": 0,
+      "leader": ""
+    },
+    {
+      "rank": 37,
+      "code": "BK1295",
+      "name": "其他数字媒体",
+      "chg_pct": 0.82,
+      "up": 1,
+      "down": 1,
+      "leader": ""
+    },
+    {
+      "rank": 38,
+      "code": "BK1565",
+      "name": "会展服务",
+      "chg_pct": 0.82,
+      "up": 1,
+      "down": 2,
+      "leader": ""
+    },
+    {
+      "rank": 39,
+      "code": "BK1314",
+      "name": "风电整机",
+      "chg_pct": 0.82,
+      "up": 5,
+      "down": 0,
+      "leader": ""
+    },
+    {
+      "rank": 40,
+      "code": "BK1564",
+      "name": "体育Ⅲ",
+      "chg_pct": 0.79,
+      "up": 2,
+      "down": 1,
+      "leader": ""
+    },
+    {
+      "rank": 41,
+      "code": "BK1273",
+      "name": "体育Ⅱ",
+      "chg_pct": 0.79,
+      "up": 2,
+      "down": 1,
+      "leader": ""
+    },
+    {
+      "rank": 42,
+      "code": "BK1301",
+      "name": "游戏Ⅲ",
+      "chg_pct": 0.78,
+      "up": 17,
+      "down": 6,
+      "leader": ""
+    },
+    {
+      "rank": 43,
+      "code": "BK1046",
+      "name": "游戏Ⅱ",
+      "chg_pct": 0.78,
+      "up": 17,
+      "down": 6,
+      "leader": ""
+    },
+    {
+      "rank": 44,
+      "code": "BK1475",
+      "name": "国际工程",
+      "chg_pct": 0.74,
+      "up": 4,
+      "down": 0,
+      "leader": ""
+    },
+    {
+      "rank": 45,
+      "code": "BK1308",
+      "name": "电工仪器仪表",
+      "chg_pct": 0.74,
+      "up": 9,
+      "down": 5,
+      "leader": ""
+    },
+    {
+      "rank": 46,
+      "code": "BK1239",
+      "name": "白色家电",
+      "chg_pct": 0.73,
+      "up": 6,
+      "down": 5,
+      "leader": ""
+    },
+    {
+      "rank": 47,
+      "code": "BK1483",
+      "name": "高速公路",
+      "chg_pct": 0.62,
+      "up": 13,
+      "down": 5,
+      "leader": ""
+    },
+    {
+      "rank": 48,
+      "code": "BK0457",
+      "name": "电网设备",
+      "chg_pct": 0.6,
+      "up": 78,
+      "down": 62,
+      "leader": ""
+    },
+    {
+      "rank": 49,
+      "code": "BK1310",
+      "name": "配电设备",
+      "chg_pct": 0.59,
+      "up": 13,
+      "down": 15,
+      "leader": ""
+    },
+    {
+      "rank": 50,
+      "code": "BK1521",
+      "name": "摩托车",
+      "chg_pct": 0.59,
+      "up": 6,
+      "down": 3,
+      "leader": ""
+    },
+    {
+      "rank": 51,
+      "code": "BK1380",
+      "name": "水力发电",
+      "chg_pct": 0.55,
+      "up": 7,
+      "down": 4,
+      "leader": ""
+    },
+    {
+      "rank": 52,
+      "code": "BK1450",
+      "name": "空调",
+      "chg_pct": 0.54,
+      "up": 2,
+      "down": 2,
+      "leader": ""
+    },
+    {
+      "rank": 53,
+      "code": "BK1416",
+      "name": "粘胶",
+      "chg_pct": 0.51,
+      "up": 1,
+      "down": 2,
+      "leader": ""
+    },
+    {
+      "rank": 54,
+      "code": "BK1443",
+      "name": "橡胶助剂",
+      "chg_pct": 0.5,
+      "up": 1,
+      "down": 1,
+      "leader": ""
+    },
+    {
+      "rank": 55,
+      "code": "BK1584",
+      "name": "熟食",
+      "chg_pct": 0.41,
+      "up": 2,
+      "down": 1,
+      "leader": ""
+    },
+    {
+      "rank": 56,
+      "code": "BK1372",
+      "name": "冶钢辅料",
+      "chg_pct": 0.33,
+      "up": 2,
+      "down": 2,
+      "leader": ""
+    },
+    {
+      "rank": 57,
+      "code": "BK1363",
+      "name": "信托",
+      "chg_pct": 0.31,
+      "up": 2,
+      "down": 1,
+      "leader": ""
+    },
+    {
+      "rank": 58,
+      "code": "BK1323",
+      "name": "综合电力设备商",
+      "chg_pct": 0.3,
+      "up": 2,
+      "down": 0,
+      "leader": ""
+    },
+    {
+      "rank": 59,
+      "code": "BK1458",
+      "name": "个护小家电",
+      "chg_pct": 0.3,
+      "up": 2,
+      "down": 2,
+      "leader": ""
+    },
+    {
+      "rank": 60,
+      "code": "BK1472",
+      "name": "基建市政工程",
+      "chg_pct": 0.27,
+      "up": 18,
+      "down": 9,
+      "leader": ""
+    },
+    {
+      "rank": 61,
+      "code": "BK1264",
+      "name": "商用车",
+      "chg_pct": 0.27,
+      "up": 7,
+      "down": 6,
+      "leader": ""
+    },
+    {
+      "rank": 62,
+      "code": "BK1448",
+      "name": "横向通用软件",
+      "chg_pct": 0.26,
+      "up": 15,
+      "down": 19,
+      "leader": ""
+    },
+    {
+      "rank": 63,
+      "code": "BK1358",
+      "name": "保险Ⅲ",
+      "chg_pct": 0.22,
+      "up": 4,
+      "down": 1,
+      "leader": ""
+    },
+    {
+      "rank": 64,
+      "code": "BK0474",
+      "name": "保险Ⅱ",
+      "chg_pct": 0.22,
+      "up": 4,
+      "down": 1,
+      "leader": ""
+    },
+    {
+      "rank": 65,
+      "code": "BK1534",
+      "name": "印刷",
+      "chg_pct": 0.2,
+      "up": 2,
+      "down": 2,
+      "leader": ""
+    },
+    {
+      "rank": 66,
+      "code": "BK1360",
+      "name": "金融信息服务",
+      "chg_pct": 0.19,
+      "up": 1,
+      "down": 1,
+      "leader": ""
+    },
+    {
+      "rank": 67,
+      "code": "BK1375",
+      "name": "光伏发电",
+      "chg_pct": 0.16,
+      "up": 6,
+      "down": 7,
+      "leader": ""
+    },
+    {
+      "rank": 68,
+      "code": "BK1042",
+      "name": "医药商业",
+      "chg_pct": 0.15,
+      "up": 16,
+      "down": 16,
+      "leader": ""
+    },
+    {
+      "rank": 69,
+      "code": "BK1541",
+      "name": "卫浴制品",
+      "chg_pct": 0.14,
+      "up": 2,
+      "down": 5,
+      "leader": ""
+    },
+    {
+      "rank": 70,
+      "code": "BK1496",
+      "name": "洗护用品",
+      "chg_pct": 0.12,
+      "up": 2,
+      "down": 2,
+      "leader": ""
+    },
+    {
+      "rank": 71,
+      "code": "BK1453",
+      "name": "彩电",
+      "chg_pct": 0.11,
+      "up": 3,
+      "down": 1,
+      "leader": ""
+    },
+    {
+      "rank": 72,
+      "code": "BK1370",
+      "name": "特钢Ⅲ",
+      "chg_pct": 0.11,
+      "up": 6,
+      "down": 5,
+      "leader": ""
+    },
+    {
+      "rank": 73,
+      "code": "BK1227",
+      "name": "特钢Ⅱ",
+      "chg_pct": 0.11,
+      "up": 6,
+      "down": 5,
+      "leader": ""
+    },
+    {
+      "rank": 74,
+      "code": "BK1480",
+      "name": "机场",
+      "chg_pct": 0.11,
+      "up": 3,
+      "down": 2,
+      "leader": ""
+    },
+    {
+      "rank": 75,
+      "code": "BK1457",
+      "name": "厨房小家电",
+      "chg_pct": 0.1,
+      "up": 3,
+      "down": 8,
+      "leader": ""
+    },
+    {
+      "rank": 76,
+      "code": "BK1251",
+      "name": "个护用品",
+      "chg_pct": 0.08,
+      "up": 7,
+      "down": 6,
+      "leader": ""
+    },
+    {
+      "rank": 77,
+      "code": "BK1495",
+      "name": "生活用纸",
+      "chg_pct": 0.07,
+      "up": 5,
+      "down": 4,
+      "leader": ""
+    },
+    {
+      "rank": 78,
+      "code": "BK1481",
+      "name": "港口",
+      "chg_pct": 0.06,
+      "up": 8,
+      "down": 7,
+      "leader": ""
+    },
+    {
+      "rank": 79,
+      "code": "BK0421",
+      "name": "铁路公路",
+      "chg_pct": 0.05,
+      "up": 18,
+      "down": 14,
+      "leader": ""
+    },
+    {
+      "rank": 80,
+      "code": "BK1353",
+      "name": "家纺",
+      "chg_pct": 0.04,
+      "up": 2,
+      "down": 5,
+      "leader": ""
+    },
+    {
+      "rank": 81,
+      "code": "BK1312",
+      "name": "线缆部件及其他",
+      "chg_pct": 0.04,
+      "up": 16,
+      "down": 21,
+      "leader": ""
+    },
+    {
+      "rank": 82,
+      "code": "BK1366",
+      "name": "证券Ⅲ",
+      "chg_pct": 0.04,
+      "up": 22,
+      "down": 21,
+      "leader": ""
+    },
+    {
+      "rank": 83,
+      "code": "BK0473",
+      "name": "证券Ⅱ",
+      "chg_pct": 0.04,
+      "up": 22,
+      "down": 21,
+      "leader": ""
+    },
+    {
+      "rank": 84,
+      "code": "BK1241",
+      "name": "黑色家电",
+      "chg_pct": 0.04,
+      "up": 5,
+      "down": 4,
+      "leader": ""
+    },
+    {
+      "rank": 85,
+      "code": "BK1555",
+      "name": "专业连锁Ⅲ",
+      "chg_pct": 0.04,
+      "up": 3,
+      "down": 4,
+      "leader": ""
+    },
+    {
+      "rank": 86,
+      "code": "BK1270",
+      "name": "专业连锁Ⅱ",
+      "chg_pct": 0.04,
+      "up": 3,
+      "down": 4,
+      "leader": ""
+    },
+    {
+      "rank": 87,
+      "code": "BK1367",
+      "name": "板材",
+      "chg_pct": 0.03,
+      "up": 6,
+      "down": 6,
+      "leader": ""
+    },
+    {
+      "rank": 88,
+      "code": "BK1577",
+      "name": "啤酒",
+      "chg_pct": 0.01,
+      "up": 4,
+      "down": 3,
+      "leader": ""
+    },
+    {
+      "rank": 89,
+      "code": "BK1446",
+      "name": "其他计算机设备",
+      "chg_pct": 0.01,
+      "up": 22,
+      "down": 40,
+      "leader": ""
+    },
+    {
+      "rank": 90,
+      "code": "BK1200",
+      "name": "电力设备",
+      "chg_pct": 0.0,
+      "up": 170,
+      "down": 238,
+      "leader": ""
+    },
+    {
+      "rank": 91,
+      "code": "BK0737",
+      "name": "软件开发",
+      "chg_pct": -0.01,
+      "up": 55,
+      "down": 75,
+      "leader": ""
+    },
+    {
+      "rank": 92,
+      "code": "BK1454",
+      "name": "其他黑色家电",
+      "chg_pct": -0.02,
+      "up": 2,
+      "down": 3,
+      "leader": ""
+    },
+    {
+      "rank": 93,
+      "code": "BK1523",
+      "name": "汽车经销商",
+      "chg_pct": -0.03,
+      "up": 3,
+      "down": 3,
+      "leader": ""
+    },
+    {
+      "rank": 94,
+      "code": "BK0420",
+      "name": "航空机场",
+      "chg_pct": -0.05,
+      "up": 5,
+      "down": 9,
+      "leader": ""
+    },
+    {
+      "rank": 95,
+      "code": "BK1429",
+      "name": "食品及饲料添加剂",
+      "chg_pct": -0.07,
+      "up": 7,
+      "down": 17,
+      "leader": ""
+    },
+    {
+      "rank": 96,
+      "code": "BK1567",
+      "name": "其他专业服务",
+      "chg_pct": -0.07,
+      "up": 2,
+      "down": 2,
+      "leader": ""
+    },
+    {
+      "rank": 97,
+      "code": "BK1447",
+      "name": "垂直应用软件",
+      "chg_pct": -0.1,
+      "up": 40,
+      "down": 56,
+      "leader": ""
+    },
+    {
+      "rank": 98,
+      "code": "BK1509",
+      "name": "水产饲料",
+      "chg_pct": -0.13,
+      "up": 2,
+      "down": 2,
+      "leader": ""
+    },
+    {
+      "rank": 99,
+      "code": "BK1479",
+      "name": "航空运输",
+      "chg_pct": -0.14,
+      "up": 2,
+      "down": 7,
+      "leader": ""
+    },
+    {
+      "rank": 100,
+      "code": "BK1226",
+      "name": "普钢",
+      "chg_pct": -0.14,
+      "up": 6,
+      "down": 11,
+      "leader": ""
+    }
+  ],
+  "source": "eastmoney"
 }

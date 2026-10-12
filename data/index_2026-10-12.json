@@ -1,49 +1,55 @@
 {
   "date": "2026-10-12",
-  "ts": "105258",
+  "ts": "112936",
   "sources": {
     "tencent_quote": {
       "count": 5300,
+      "sh": 2354,
+      "sz": 2945,
+      "bj": 1,
       "sample": [
         [
-          "sz002528",
+          "sh603880",
           {
-            "code": "sz002528",
-            "name": "*ST英飞",
-            "price": 6.04,
-            "prev_close": 6.06,
-            "open": 6.08,
-            "high": 6.2,
-            "low": 5.94,
-            "chg_pct": -0.33,
-            "turnover": 0.95,
-            "vol_ratio": -33.31,
-            "time": "20261012105254"
+            "code": "sh603880",
+            "name": "南卫股份",
+            "price": 8.64,
+            "prev_close": 8.56,
+            "open": 8.5,
+            "high": 8.77,
+            "low": 8.36,
+            "chg_pct": 0.93,
+            "turnover": 1.6,
+            "vol_ratio": 15.67,
+            "time": "20261012112931"
           }
         ],
         [
-          "sz002360",
+          "sh603378",
           {
-            "code": "sz002360",
-            "name": "ST同德",
-            "price": 5.06,
-            "prev_close": 5.22,
-            "open": 5.25,
-            "high": 5.27,
-            "low": 5.06,
-            "chg_pct": -3.07,
-            "turnover": 0.63,
-            "vol_ratio": 2.3,
-            "time": "20261012105257"
+            "code": "sh603378",
+            "name": "*ST亚士",
+            "price": 4.41,
+            "prev_close": 4.45,
+            "open": 4.5,
+            "high": 4.5,
+            "low": 4.3,
+            "chg_pct": -0.9,
+            "turnover": 0.75,
+            "vol_ratio": -6.47,
+            "time": "20261012112926"
           }
         ]
       ]
     },
     "eastmoney_sectors": {
-      "count": 0
+      "count": 100
     },
     "eastmoney_concepts": {
-      "count": 0
+      "count": 100
+    },
+    "ths_hot_reason": {
+      "count": 5
     },
     "limit_pool": {
       "zt_count": 0,
@@ -54,11 +60,66 @@
     "sina_news": {
       "count": 50
     },
-    "cls_news": {
-      "count": 0
-    },
-    "fundamentals": {
-      "count": 0
+    "global_panel": {
+      "count": 15,
+      "mood": "偏多",
+      "metrics": {
+        "a50_pct": 0.579,
+        "kweb_pct": 3.79,
+        "vix": 21.67,
+        "cny_pct": -0.006,
+        "sox_pct": -0.69
+      },
+      "signals": [
+        "富时A50期货 +0.58% → 开盘预期外资流入",
+        "中概KWEB +3.79% → 外资对A股情绪偏多",
+        "VIX 21.7 → 中波动",
+        "离岸人民币 -0.01% → 升值(外资成本降)",
+        "费半ETF -0.69% → A股半导体情绪锚看空",
+        "★ 外部情绪综合分: +12 (偏多) → 大A开盘外部阻力小"
+      ],
+      "sample": [
+        {
+          "code": "usDJI",
+          "name": "道琼斯",
+          "group": "美股指数",
+          "price": 51654.95,
+          "chg_pct": 0.83,
+          "time": "2026-10-09 16:"
+        },
+        {
+          "code": "usIXIC",
+          "name": "纳斯达克",
+          "group": "美股指数",
+          "price": 27366.17,
+          "chg_pct": 0.64,
+          "time": "2026-10-09 17:"
+        },
+        {
+          "code": "usINX",
+          "name": "标普500",
+          "group": "美股指数",
+          "price": 7811.54,
+          "chg_pct": 0.59,
+          "time": "2026-10-09 17:"
+        },
+        {
+          "code": "usVIX",
+          "name": "VIX恐慌",
+          "group": "美股指数",
+          "price": 21.67,
+          "chg_pct": 0.0,
+          "time": "2026-09-14 09:"
+        },
+        {
+          "code": "usSOXX",
+          "name": "费半ETF",
+          "group": "半导体关联",
+          "price": 559.4,
+          "chg_pct": -0.69,
+          "time": "2026-10-09 16:"
+        }
+      ]
     },
     "northbound": {
       "status": "unavailable"

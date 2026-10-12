@@ -1,11 +1,70 @@
 {
   "date": "2026-10-12",
-  "ts": "104359",
-  "snapshot_count": 5302,
-  "ztpool_count": 0,
-  "dtpool_count": 0,
-  "zbpool_count": 0,
-  "sector_count": 100,
-  "sina_news_count": 50,
-  "cls_news_count": 0
+  "ts": "105258",
+  "sources": {
+    "tencent_quote": {
+      "count": 5300,
+      "sample": [
+        [
+          "sz002528",
+          {
+            "code": "sz002528",
+            "name": "*ST英飞",
+            "price": 6.04,
+            "prev_close": 6.06,
+            "open": 6.08,
+            "high": 6.2,
+            "low": 5.94,
+            "chg_pct": -0.33,
+            "turnover": 0.95,
+            "vol_ratio": -33.31,
+            "time": "20261012105254"
+          }
+        ],
+        [
+          "sz002360",
+          {
+            "code": "sz002360",
+            "name": "ST同德",
+            "price": 5.06,
+            "prev_close": 5.22,
+            "open": 5.25,
+            "high": 5.27,
+            "low": 5.06,
+            "chg_pct": -3.07,
+            "turnover": 0.63,
+            "vol_ratio": 2.3,
+            "time": "20261012105257"
+          }
+        ]
+      ]
+    },
+    "eastmoney_sectors": {
+      "count": 0
+    },
+    "eastmoney_concepts": {
+      "count": 0
+    },
+    "limit_pool": {
+      "zt_count": 0,
+      "dt_count": 0,
+      "zb_count": 0,
+      "zt_rate": 0
+    },
+    "sina_news": {
+      "count": 50
+    },
+    "cls_news": {
+      "count": 0
+    },
+    "fundamentals": {
+      "count": 0
+    },
+    "northbound": {
+      "status": "unavailable"
+    },
+    "dragon_tiger": {
+      "count": 0
+    }
+  }
 }

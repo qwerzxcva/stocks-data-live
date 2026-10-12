@@ -1,11 +1,11 @@
 {
   "date": "2026-10-12",
-  "ts": "112936",
+  "ts": "145158",
   "sources": {
     "tencent_quote": {
-      "count": 5300,
-      "sh": 2354,
-      "sz": 2945,
+      "count": 5278,
+      "sh": 2333,
+      "sz": 2944,
       "bj": 1,
       "sample": [
         [
@@ -13,15 +13,19 @@
           {
             "code": "sh603880",
             "name": "南卫股份",
-            "price": 8.64,
+            "price": 8.57,
             "prev_close": 8.56,
             "open": 8.5,
             "high": 8.77,
             "low": 8.36,
-            "chg_pct": 0.93,
-            "turnover": 1.6,
-            "vol_ratio": 15.67,
-            "time": "20261012112931"
+            "chg_pct": 0.12,
+            "turnover": 2.37,
+            "pe": -23.25,
+            "mktcap": 2477000000.0,
+            "floatcap": 2477000000.0,
+            "pb": 15.54,
+            "vol_ratio": 1.0,
+            "time": "20261012145155"
           }
         ],
         [
@@ -29,27 +33,31 @@
           {
             "code": "sh603378",
             "name": "*ST亚士",
-            "price": 4.41,
+            "price": 4.34,
             "prev_close": 4.45,
             "open": 4.5,
             "high": 4.5,
             "low": 4.3,
-            "chg_pct": -0.9,
-            "turnover": 0.75,
-            "vol_ratio": -6.47,
-            "time": "20261012112926"
+            "chg_pct": -2.47,
+            "turnover": 1.07,
+            "pe": -1.32,
+            "mktcap": 1860000000.0000002,
+            "floatcap": 1860000000.0000002,
+            "pb": -6.36,
+            "vol_ratio": 1.0,
+            "time": "20261012145156"
           }
         ]
       ]
     },
     "eastmoney_sectors": {
-      "count": 100
+      "count": 9
     },
     "eastmoney_concepts": {
-      "count": 100
+      "count": 9
     },
     "ths_hot_reason": {
-      "count": 5
+      "count": 9
     },
     "limit_pool": {
       "zt_count": 0,
@@ -62,21 +70,21 @@
     },
     "global_panel": {
       "count": 15,
-      "mood": "偏多",
+      "mood": "中性",
       "metrics": {
-        "a50_pct": 0.579,
+        "a50_pct": -0.001,
         "kweb_pct": 3.79,
         "vix": 21.67,
-        "cny_pct": -0.006,
+        "cny_pct": -0.004,
         "sox_pct": -0.69
       },
       "signals": [
-        "富时A50期货 +0.58% → 开盘预期外资流入",
+        "富时A50期货 -0.00% → 开盘预期外资流出",
         "中概KWEB +3.79% → 外资对A股情绪偏多",
         "VIX 21.7 → 中波动",
-        "离岸人民币 -0.01% → 升值(外资成本降)",
+        "离岸人民币 -0.00% → 升值(外资成本降)",
         "费半ETF -0.69% → A股半导体情绪锚看空",
-        "★ 外部情绪综合分: +12 (偏多) → 大A开盘外部阻力小"
+        "★ 外部情绪综合分: +7 (中性) → 大A开盘外部阻力小"
       ],
       "sample": [
         {
@@ -109,7 +117,7 @@
           "group": "美股指数",
           "price": 21.67,
           "chg_pct": 0.0,
-          "time": "2026-09-14 09:"
+          "time": "2026-09-15 09:"
         },
         {
           "code": "usSOXX",

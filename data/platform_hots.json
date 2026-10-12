@@ -1,5 +1,5 @@
 {
-  "ts": "2026-10-12T01:09:45.838550+08:00",
+  "ts": "2026-10-12T01:51:20.054756+08:00",
   "date": "2026-10-12",
   "items": [
     {
@@ -8,7 +8,7 @@
       "theme": [],
       "sentiment": "neu",
       "src": "douyin-hot",
-      "hot_value": 12143882,
+      "hot_value": 12138744,
       "note_count": null
     },
     {
@@ -17,7 +17,7 @@
       "theme": [],
       "sentiment": "neu",
       "src": "douyin-hot",
-      "hot_value": 12109285,
+      "hot_value": 11939849,
       "note_count": null
     },
     {
@@ -26,7 +26,7 @@
       "theme": [],
       "sentiment": "neu",
       "src": "douyin-hot",
-      "hot_value": 11695000,
+      "hot_value": 11379291,
       "note_count": null
     },
     {
@@ -55,7 +55,9 @@
     "sources": [
       "douyin-hot",
       "xhs-explore",
-      "weibo-hot"
+      "weibo-hot",
+      "xueqiu-hot",
+      "qq-news-author"
     ],
     "zero_cred": true
   }

@@ -1,0 +1,504 @@
+{
+  "timestamp": "2026-10-13T20:15:00+08:00",
+  "source": "reverse_crawl_pcap",
+  "methods_used": ["reverse", "crawl", "pcap-logical"],
+  "tools_available": [
+    "curl 8.18.0 (aarch64-unknown-linux-gnu, OpenSSL 3.5.5, brotli/zstd)",
+    "python3 3.14.4 (urllib/ssl/gzip/http.cookiejar, pandas 3.0.6, lxml 6.1.3, bs4 4.15.0)",
+    "node v22.22.1",
+    "jq",
+    "openssl 3.5.5"
+  ],
+  "tools_missing": [
+    "tshark（未安装，无法做 pcap 解析）",
+    "tcpdump（未安装，无法抓包）",
+    "wireshark（未安装）",
+    "frida（未安装，无法动态 hook App）",
+    "ghidra-cli decompiler（本容器 Ghidra-RPC 仅提供 x86_64 decompile 原生库，aarch64 下 decompile/pcode 命令返回空，已由环境预置说明确认）"
+  ],
+  "findings": [
+    {
+      "id": "em_push2his_clist",
+      "name": "东财全市场快照 clist（push2his 绕行，解 WAF）",
+      "method": "reverse",
+      "target_site": "东方财富 data.eastmoney.com / quote.eastmoney.com",
+      "url": "https://push2his.eastmoney.com/api/qt/clist/get?pn=1&pz=20&po=1&np=1&fs=m:0+t:6,m:0+t:80,m:1+t:2,m:1+t:23,m:0+t:81+s:2048&fields=f12,f14,f2,f3,f4,f5,f6,f7,f8,f9,f10,f20,f21&fid=f8",
+      "auth": "none",
+      "sign_algorithm": "无签名、无 token、无时间戳；仅需普通 UA。Referer 可选（实测 plain/带 Referer 均 200，见 hdr-probe）",
+      "reproduce": {
+        "curl": "curl -s 'https://push2his.eastmoney.com/api/qt/clist/get?pn=1&pz=20&po=1&np=1&fs=m:0+t:6,m:0+t:80,m:1+t:2,m:1+t:23,m:0+t:81+s:2048&fields=f12,f14,f2,f3,f4,f5,f6,f7,f8,f9,f10,f20,f21&fid=f8' -H 'User-Agent: Mozilla/5.0'",
+        "python": "import urllib.request, json\nurl='https://push2his.eastmoney.com/api/qt/clist/get?pn=1&pz=20&po=1&np=1&fs=m:0+t:6,m:0+t:80,m:1+t:2,m:1+t:23,m:0+t:81+s:2048&fields=f12,f14,f2,f3,f4,f5,f6,f7,f8,f9,f10,f20,f21&fid=f8'\nreq=urllib.request.Request(url, headers={'User-Agent':'Mozilla/5.0'})\nd=json.load(urllib.request.urlopen(req))['data']\n# d['total'] 全市场只数, d['diff'] 列表"
+      },
+      "status": "ok",
+      "evidence": {
+        "http_code": 200,
+        "sample": "total=5923（全A），diff[0]={\"f2\":1157,\"f3\":-136,\"f4\":-16,\"f5\":994937,\"f6\":1157375141.24,\"f8\":51,\"f12\":\"000001\",\"f14\":\"平安银行\",\"f20\":224526473551,\"f21\":224523775346}",
+        "probe_time": "2026-10-13T19:44:00+08:00",
+        "notes": "关键：push2.eastmoney.com 的同路径在容器内被 TLS reset 墙掉（catalog: em_push2_clist/em_push2_data waf_blocked），但 push2his.eastmoney.com 域完全可用。fid 可换 f3(涨跌幅)/f8(换手率)/f20/f21 排序"
+      },
+      "fields": "f12=代码 f13=市场 f14=名称 f2=现价(分) f3=涨跌幅(百分点的100倍) f4=涨跌额 f5=成交量(手) f6=成交额(元) f7=振幅 f8=换手率 f9=市盈率 f10=量比 f20=总市值 f21=流通市值",
+      "notes": "对 catalog 中 em_push2_clist/em_push2_data waf_blocked 的实质绕行。fs 板块筛选已验证：m:90+t:2 行业板块(496)、m:90+t:3 概念板块(506)、m:90+t:1 地区板块(31)、m:1+t:23 科创板(621)、b:MK0021 场内基金(1357)、m:116+t:3 港股(2623)。价格单位是分，需 /100",
+      "degrade_to": ["tencent_quote", "sina_hq"]
+    },
+    {
+      "id": "em_push2his_etf_onsite",
+      "name": "东财场内基金/ETF 全量快照",
+      "method": "reverse",
+      "target_site": "东方财富 quote.eastmoney.com/center/gridlist.html#fund_etf",
+      "url": "https://push2his.eastmoney.com/api/qt/clist/get?pn=1&pz=50&po=1&np=1&fs=b:MK0021&fields=f12,f13,f14,f2,f3,f6",
+      "auth": "none",
+      "sign_algorithm": "无",
+      "reproduce": {
+        "curl": "curl -s 'https://push2his.eastmoney.com/api/qt/clist/get?pn=1&pz=50&po=1&np=1&fs=b:MK0021&fields=f12,f13,f14,f2,f3,f6' -H 'User-Agent: Mozilla/5.0'",
+        "python": "req=urllib.request.Request('https://push2his.eastmoney.com/api/qt/clist/get?pn=1&pz=50&po=1&np=1&fs=b:MK0021&fields=f12,f13,f14,f2,f3,f6', headers={'User-Agent':'Mozilla/5.0'}); diff=json.load(urllib.request.urlopen(req))['data']['diff']"
+      },
+      "status": "ok",
+      "evidence": {
+        "http_code": 200,
+        "sample": "total=1357，diff[0]={\"f2\":3177,\"f3\":-25,\"f6\":438367452.84,\"f12\":\"159901\",\"f13\":0,\"f14\":\"深证100ETF易方达\"}；ulist.np 交叉验证 1.510300 沪深300ETF华泰柏瑞 f6=4679165883.0",
+        "probe_time": "2026-10-13T20:12:00+08:00",
+        "notes": "fs 参数是逐个试出来的：m:0+t:81 返回老三板(6844)，m:1+t:81 空，b:MK0021 才是场内基金。单只 ETF 用 secid=1.510300 / 0.159919 / 1.588000"
+      },
+      "fields": "f12=代码 f13=市场(1沪/0深) f14=名称 f2=现价(分) f3=涨跌幅 f6=成交额(元)",
+      "notes": "ETF 在用户交易范围内，这是 catalog 里缺失的 ETF 全量快照源；与 jisilu_etf_list（含 IOPV/费率）互补。",
+      "degrade_to": ["jisilu_etf_list"]
+    },
+    {
+      "id": "em_push2his_fflow_daykline",
+      "name": "东财个股历史资金流（每日主力净流入）",
+      "method": "reverse",
+      "target_site": "东方财富 data.eastmoney.com/zjlx（JS bundle: /newstatic/js/zjlx/default.js）",
+      "url": "https://push2his.eastmoney.com/api/qt/stock/fflow/daykline/get?lmt=0&klt=101&secid=1.600519&fields1=f1,f2,f3,f7&fields2=f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61,f62,f63,f64,f65",
+      "auth": "none",
+      "sign_algorithm": "无",
+      "reproduce": {
+        "curl": "curl -s 'https://push2his.eastmoney.com/api/qt/stock/fflow/daykline/get?lmt=0&klt=101&secid=1.600519&fields1=f1,f2,f3,f7&fields2=f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61,f62,f63,f64,f65' -H 'User-Agent: Mozilla/5.0'",
+        "python": "secid='1.600519'  # 1=沪 0=深\nreq=urllib.request.Request('https://push2his.eastmoney.com/api/qt/stock/fflow/daykline/get?lmt=0&klt=101&secid='+secid+'&fields1=f1,f2,f3,f7&fields2=f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61,f62,f63,f64,f65', headers={'User-Agent':'Mozilla/5.0'})\nklines=json.load(urllib.request.urlopen(req))['data']['klines']  # 逗号分隔字符串数组"
+      },
+      "status": "ok",
+      "evidence": {
+        "http_code": 200,
+        "sample": "data.code=600519, data.name=贵州茅台, klines[0]=\"2026-04-14,-221951568.0,-155712.0,222107296.0,-244462304.0,22510736.0,-6.36,-0.00,6.36,-7.00,0.64,1418.88,0.25,...\"",
+        "probe_time": "2026-10-13T19:45:00+08:00",
+        "notes": "端点由 data.eastmoney.com/newstatic/js/zjlx/default.js 提取（api/qt/stock/fflow/daykline/get）"
+      },
+      "fields": "klines 每项: 日期,主力净流入,小单净流入,中单净流入,大单净流入,超大单净流入,主力净占比,小单占比,中单占比,大单占比,超大单占比,收盘价,涨跌幅",
+      "notes": "klt=101 日线；同族 api/qt/stock/fflow/kline/get（klt=1 分钟）也可用但只返回当日 tradePeriods。金额单位为元。",
+      "degrade_to": []
+    },
+    {
+      "id": "em_push2his_trends2",
+      "name": "东财分时走势 trends2（可扩展至 tick）",
+      "method": "reverse",
+      "target_site": "东方财富 quote.eastmoney.com",
+      "url": "https://push2his.eastmoney.com/api/qt/stock/trends2/get?secid=1.600519&fields1=f1,f2,f3,f4,f5,f6,f7,f8&fields2=f51,f53,f56,f58&iscr=0&ndays=1",
+      "auth": "none",
+      "sign_algorithm": "无",
+      "reproduce": {
+        "curl": "curl -s 'https://push2his.eastmoney.com/api/qt/stock/trends2/get?secid=1.600519&fields1=f1,f2,f3,f4,f5,f6,f7,f8&fields2=f51,f53,f56,f58&iscr=0&ndays=1' -H 'User-Agent: Mozilla/5.0'",
+        "python": "req=urllib.request.Request('https://push2his.eastmoney.com/api/qt/stock/trends2/get?secid=1.600519&fields1=f1,f2,f3,f4,f5,f6,f7,f8&fields2=f51,f53,f56,f58&iscr=0&ndays=1', headers={'User-Agent':'Mozilla/5.0'}); d=json.load(urllib.request.urlopen(req))['data']"
+      },
+      "status": "ok",
+      "evidence": {
+        "http_code": 200,
+        "sample": "9697 bytes（分时），18353 bytes（fields1 加 f9..f13 的 tick 版）；data.name=贵州茅台",
+        "probe_time": "2026-10-13T19:45:00+08:00",
+        "notes": "push2his 域可用；push2 域同路径被墙"
+      },
+      "fields": "trends: 时间,开盘,收盘,最高,最低,成交量(手),成交额,均价；fields1 扩展 f9-f13 得逐笔 tick",
+      "notes": "ndays>1 可取多日分时。",
+      "degrade_to": ["tencent_quote"]
+    },
+    {
+      "id": "em_push2his_ulist_np",
+      "name": "东财批量实时行情 ulist.np（多标的单请求）",
+      "method": "reverse",
+      "target_site": "东方财富",
+      "url": "https://push2his.eastmoney.com/api/qt/ulist.np/get?secids=1.600519,0.000001,1.600000&fields=f1,f2,f3,f4,f12,f13,f14",
+      "auth": "none",
+      "sign_algorithm": "无",
+      "reproduce": {
+        "curl": "curl -s 'https://push2his.eastmoney.com/api/qt/ulist.np/get?secids=1.600519,0.000001,1.600000&fields=f1,f2,f3,f4,f12,f13,f14' -H 'User-Agent: Mozilla/5.0'",
+        "python": "secids=','.join(['1.600519','0.000001','1.510300'])\nreq=urllib.request.Request('https://push2his.eastmoney.com/api/qt/ulist.np/get?secids='+secids+'&fields=f1,f2,f3,f4,f12,f13,f14', headers={'User-Agent':'Mozilla/5.0'})\ndiff=json.load(urllib.request.urlopen(req))['data']['diff']"
+      },
+      "status": "ok",
+      "evidence": {
+        "http_code": 200,
+        "sample": "data.total=3, diff[0]={\"f1\":2,\"f2\":127489,\"f3\":-102,\"f4\":-1311,\"f12\":\"600519\",\"f13\":1,\"f14\":\"贵州茅台\"}",
+        "probe_time": "2026-10-13T19:45:00+08:00",
+        "notes": "端点源自 zjlx/default.js 中的 api/qt/ulist，实际可用路径为 ulist.np/get；ETF 也可查（1.510300 f6=4679165883.0）"
+      },
+      "fields": "f2=现价(分) f3=涨跌幅 f4=涨跌额 f12=代码 f13=市场 f14=名称",
+      "notes": "多标的单请求，字段比腾讯/SINA 更规整；push2his 域不触发 WAF。",
+      "degrade_to": ["tencent_quote", "sina_hq"]
+    },
+    {
+      "id": "xueqiu_v5_quote",
+      "name": "雪球 v5 实时行情（匿名 cookie 可用，纠正 catalog 的 unavailable）",
+      "method": "reverse",
+      "target_site": "雪球 xueqiu.com / stock.xueqiu.com",
+      "url": "https://stock.xueqiu.com/v5/stock/quote.json?symbol=SH600519&extend=detail",
+      "auth": "cookie",
+      "sign_algorithm": "无签名；需一次预热请求让服务端 set-cookie 下发 xq_a_token(40位)/xq_r_token/u/s，之后自动携带。主站 xueqiu.com 有阿里云 WAF JS 挑战（返回 aliyun_waf_aa 的 HTML 壳），但 stock.xueqiu.com 与 /service/ 路径不触发",
+      "reproduce": {
+        "curl": "curl -s -c /tmp/xq.txt 'https://xueqiu.com/service/screener/screen?category=CN&size=1' >/dev/null\ncurl -s -b /tmp/xq.txt 'https://stock.xueqiu.com/v5/stock/quote.json?symbol=SH600519&extend=detail' -H 'User-Agent: Mozilla/5.0'",
+        "python": "import http.cookiejar, urllib.request, json\ncj=http.cookiejar.CookieJar()\nop=urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cj))\nop.open(urllib.request.Request('https://xueqiu.com/service/screener/screen?category=CN&size=1', headers={'User-Agent':'Mozilla/5.0'}))\nr=op.open(urllib.request.Request('https://stock.xueqiu.com/v5/stock/quote.json?symbol=SH600519&extend=detail', headers={'User-Agent':'Mozilla/5.0','Accept':'application/json'}))\nd=json.load(r)['data']"
+      },
+      "status": "ok",
+      "evidence": {
+        "http_code": 200,
+        "sample": "data.market.status=已收盘, data.quote.symbol=SH600519, current_ext=1274.89",
+        "probe_time": "2026-10-13T19:36:00+08:00",
+        "notes": "catalog 中 xueqiu_hot 记为 unavailable 部分有误：无预热 cookie 时 stock.xueqiu.com 返回 400016「遇到错误，请刷新页面」，预热后即通"
+      },
+      "fields": "current/percent/amplitude/volume/amount/turnover_rate/pe_ttm/pb/market_capital/float_market_capital/high/low/open/last_close/limit_up/limit_down",
+      "notes": "xq_a_token 有效期短，需在每次会话重取。",
+      "degrade_to": ["tencent_quote", "em_push2his_ulist_np"]
+    },
+    {
+      "id": "xueqiu_v5_kline",
+      "name": "雪球 v5 K线（日/周/月/多分钟周期）",
+      "method": "reverse",
+      "target_site": "雪球 stock.xueqiu.com",
+      "url": "https://stock.xueqiu.com/v5/stock/chart/kline.json?symbol=SH600519&begin=1735689600000&period=day&type=before&count=-5",
+      "auth": "cookie",
+      "sign_algorithm": "同 xq_a_token 预热",
+      "reproduce": {
+        "curl": "curl -s -c /tmp/xq.txt 'https://xueqiu.com/service/screener/screen?category=CN&size=1' >/dev/null\ncurl -s -b /tmp/xq.txt 'https://stock.xueqiu.com/v5/stock/chart/kline.json?symbol=SH600519&begin=1735689600000&period=day&type=before&count=-5'",
+        "python": "period 可选 day/week/month/1m/5m/15m/30m/60m/120m；count=-N 表示取 begin 前 N 条"
+      },
+      "status": "ok",
+      "evidence": {
+        "http_code": 200,
+        "sample": "data.column=[timestamp,volume,open,high,low,close,chg,percent,turnoverrate,amount,volume_post,amount_post], item[0]=[1735056000000,1712339,1449.6451,1449.6451,1437.6809,1441.3549,-8.309,-0.57,0.14,2.62...]",
+        "probe_time": "2026-10-13T19:36:00+08:00",
+        "notes": "column 名随响应给出，解析更稳"
+      },
+      "fields": "timestamp(ms) volume open high low close chg percent turnoverrate amount(亿元) volume_post amount_post",
+      "notes": "amount 单位是亿元，与东财口径（元）不同，入库需换算；可与 em_push2his_kline 互为校验。",
+      "degrade_to": ["em_push2his_kline", "tencent_kline"]
+    },
+    {
+      "id": "xueqiu_v5_minute",
+      "name": "雪球当日分时（含盘后 15:00-15:30）",
+      "method": "reverse",
+      "target_site": "雪球 stock.xueqiu.com",
+      "url": "https://stock.xueqiu.com/v5/stock/chart/minute.json?symbol=SH600519&period=1d",
+      "auth": "cookie",
+      "sign_algorithm": "同 xq_a_token 预热",
+      "reproduce": {
+        "curl": "curl -s -b /tmp/xq.txt 'https://stock.xueqiu.com/v5/stock/chart/minute.json?symbol=SH600519&period=1d'",
+        "python": "d=json.load(...)['data']; d['last_close']; d['after'] 为盘后列表，每项含 current/volume/avg_price/chg/percent/timestamp/amount_total/volume_total"
+      },
+      "status": "ok",
+      "evidence": {
+        "http_code": 200,
+        "sample": "data.last_close=1288.0, data.after[0]={current:1274.89, volume:0, avg_price:1276.99, chg:-13.11, percent:-1.02, timestamp:1791874860000, amount_total:3.393315572E9}",
+        "probe_time": "2026-10-13T19:37:00+08:00",
+        "notes": "返回盘后逐分钟，东财 trends2 需扩展 fields 才给盘后"
+      },
+      "fields": "last_close, after[].{current,volume,avg_price,chg,percent,timestamp,amount_total,volume_total}",
+      "notes": "盘后数据对计算真实成交均价有帮助。",
+      "degrade_to": []
+    },
+    {
+      "id": "xueqiu_v5_f10_indicator",
+      "name": "雪球财务指标（ROE/资产负债率/毛利率，多报告期）",
+      "method": "reverse",
+      "target_site": "雪球 stock.xueqiu.com F10",
+      "url": "https://stock.xueqiu.com/v5/stock/f10/cn/indicator.json?symbol=SH600519",
+      "auth": "cookie",
+      "sign_algorithm": "同 xq_a_token 预热",
+      "reproduce": {
+        "curl": "curl -s -b /tmp/xq.txt 'https://stock.xueqiu.com/v5/stock/f10/cn/indicator.json?symbol=SH600519'",
+        "python": "items=json.load(...)['data']['items']; items[i]['avg_roe'], items[i]['asset_liab_ratio'], items[i]['net_selling_rate']"
+      },
+      "status": "ok",
+      "evidence": {
+        "http_code": 200,
+        "sample": "items[0]={asset_liab_ratio:15.1931, pledge_ratio:0.06, net_profit_atsopc_yoy:-1.9516, basic_eps:35.57, net_selling_rate:50.7516, avg_roe:16.75,...}",
+        "probe_time": "2026-10-13T19:37:00+08:00",
+        "notes": "多报告期一次返回；数值为百分点口径"
+      },
+      "fields": "avg_roe/asset_liab_ratio/pledge_ratio/net_selling_rate/basic_eps/net_profit_atsopc_yoy/operating_income_yoy/goodwill_in_net_assets",
+      "notes": "与 ths_financial_abstract 互补：雪球给比率型指标，同花顺给绝对值型指标。",
+      "degrade_to": ["ths_financial_abstract_v2"]
+    },
+    {
+      "id": "xueqiu_v5_f10_skholder",
+      "name": "雪球高管持股与简历",
+      "method": "reverse",
+      "target_site": "雪球 stock.xueqiu.com F10",
+      "url": "https://stock.xueqiu.com/v5/stock/f10/cn/skholder.json?symbol=SH600519",
+      "auth": "cookie",
+      "sign_algorithm": "同 xq_a_token 预热",
+      "reproduce": {
+        "curl": "curl -s -b /tmp/xq.txt 'https://stock.xueqiu.com/v5/stock/f10/cn/skholder.json?symbol=SH600519'",
+        "python": "items=json.load(...)['data']['items']; items[i]['personal_name'], items[i]['position_name'], items[i]['resume_cn']"
+      },
+      "status": "ok",
+      "evidence": {
+        "http_code": 200,
+        "sample": "items[0]={personal_name:陈华, position_name:董事长、董事, employ_date:1764259200000, resume_cn:陈华，男，1972年3月生...}",
+        "probe_time": "2026-10-13T19:37:00+08:00",
+        "notes": "高管名单+简历全文"
+      },
+      "fields": "personal_name/position_name/employ_date/resume_cn",
+      "notes": "低优先级，可作治理风险补充。",
+      "degrade_to": []
+    },
+    {
+      "id": "xueqiu_screener_attention",
+      "name": "雪球关注度选股器（7日新增关注排序）",
+      "method": "reverse",
+      "target_site": "雪球 xueqiu.com/service",
+      "url": "https://xueqiu.com/service/screener/screen?category=CN&size=20&order_by=follow7d&only_count=0",
+      "auth": "cookie",
+      "sign_algorithm": "无；首次请求即触发 set-cookie",
+      "reproduce": {
+        "curl": "curl -s -c /tmp/xq.txt 'https://xueqiu.com/service/screener/screen?category=CN&size=1' >/dev/null\ncurl -s -b /tmp/xq.txt 'https://xueqiu.com/service/screener/screen?category=CN&size=20&order_by=follow7d&only_count=0'",
+        "python": "d=json.load(...)['data']; d['count'], d['list'][i]={pct,symbol,current,follow7d,name,type,tick_size,has_follow}"
+      },
+      "status": "ok",
+      "evidence": {
+        "http_code": 200,
+        "sample": "data.count=5654, list[0]={pct:4.72, symbol:SH600418, current:23.09, follow7d:6105, name:江淮汽车, type:11}",
+        "probe_time": "2026-10-13T19:38:00+08:00",
+        "notes": "only_count=0 才返回 list；仅 order_by=follow7d 有效，market_capital/change_percent 排序返回空 data{}"
+      },
+      "fields": "pct(涨跌幅%) symbol current follow7d name type tick_size has_follow",
+      "notes": "follow7d=近7日新增关注数，是稀缺的 A 股散户情绪代理指标，可补足抖音/头条之外的股票级情绪。",
+      "degrade_to": []
+    },
+    {
+      "id": "sina_vip_kline",
+      "name": "新浪 K线（多周期+MA+指数+长历史）",
+      "method": "reverse",
+      "target_site": "新浪财经 vip.stock.finance.sina.com.cn",
+      "url": "https://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php/CN_MarketData.getKLineData?symbol=sh600519&scale=240&ma=no&datalen=5",
+      "auth": "none",
+      "sign_algorithm": "无",
+      "reproduce": {
+        "curl": "curl -s 'https://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php/CN_MarketData.getKLineData?symbol=sh600519&scale=240&ma=5&datalen=5' -H 'Referer: https://finance.sina.com.cn/'",
+        "python": "scale: 5/15/30/60/240 分钟；ma: no 或 5/10/20；datalen: 最多 1023；symbol: sh600519 / sz000001 / sh000001(指数)\nreq=urllib.request.Request(url, headers={'User-Agent':'Mozilla/5.0','Referer':'https://finance.sina.com.cn/'})\nrows=json.load(urllib.request.urlopen(req))"
+      },
+      "status": "ok",
+      "evidence": {
+        "http_code": 200,
+        "sample": "scale=240: [{\"day\":\"2026-09-30\",\"open\":\"1239.530\",\"high\":\"1268.000\",\"low\":\"1236.050\",\"close\":\"1258.620\",\"volume\":\"3833098\"},...]；scale=60: day=\"2026-10-13 10:30:00\"；ma=5 时附 ma_price5/ma_volume5；datalen=1000 回溯到 2022-08-23",
+        "probe_time": "2026-10-13T20:06:00+08:00",
+        "notes": "MoneyFlow.* 系列全部 Service not found（已失效），但 CN_MarketData.getKLineData 完全可用"
+      },
+      "fields": "day(YYYY-MM-DD 或 YYYY-MM-DD HH:MM:SS) open high low close volume [ma_price5/ma_volume5]",
+      "notes": "价格为不复权价；字符串型数值需 float 转换。与东财/腾讯 K 线可三方交叉校验。",
+      "degrade_to": ["em_push2his_kline", "tencent_kline"]
+    },
+    {
+      "id": "sina_roll_feed",
+      "name": "新浪财经滚动资讯流（分类 lid）",
+      "method": "reverse",
+      "target_site": "新浪财经 feed.mix.sina.com.cn",
+      "url": "https://feed.mix.sina.com.cn/api/roll/get?pageid=153&lid=2516&num=20&page=1",
+      "auth": "none",
+      "sign_algorithm": "无",
+      "reproduce": {
+        "curl": "curl -s 'https://feed.mix.sina.com.cn/api/roll/get?pageid=153&lid=2516&num=20&page=1' -H 'User-Agent: Mozilla/5.0'",
+        "python": "d=json.load(urllib.request.urlopen(urllib.request.Request(url, headers={'User-Agent':'Mozilla/5.0'}))); items=d['result']['data']"
+      },
+      "status": "ok",
+      "evidence": {
+        "http_code": 200,
+        "sample": "result.status.code=0, total=100311, lid=2516, pdps/cre 数组存在",
+        "probe_time": "2026-10-13T20:06:00+08:00",
+        "notes": "lid=2516 为财经要闻分类；其他 lid 可枚举更多分类"
+      },
+      "fields": "title/url/ctime/intro/media_name/wapsummary",
+      "notes": "作为 sina_7x24 zhibo（容器内不稳）的降级替代。lid 全集未枚举。",
+      "degrade_to": ["em_np_listapi_7x24"]
+    },
+    {
+      "id": "em_fund_lsjz_history",
+      "name": "天天基金历史净值（Referer 静默鉴权）",
+      "method": "reverse",
+      "target_site": "天天基金 fundf10.eastmoney.com / api.fund.eastmoney.com",
+      "url": "https://api.fund.eastmoney.com/f10/lsjz?fundCode=161005&pageIndex=1&pageSize=50",
+      "auth": "cookie",
+      "sign_algorithm": "无签名，但**必须带 Referer: https://fundf10.eastmoney.com/**；不带时返回 HTTP 200 + ErrCode=-999 + Data=\"\"（静默空数据，极易误判为接口失效）",
+      "reproduce": {
+        "curl": "curl -s 'https://api.fund.eastmoney.com/f10/lsjz?fundCode=510300&pageIndex=1&pageSize=50' -H 'Referer: https://fundf10.eastmoney.com/jjjz_510300.html' -H 'User-Agent: Mozilla/5.0'",
+        "python": "req=urllib.request.Request('https://api.fund.eastmoney.com/f10/lsjz?fundCode=510300&pageIndex=1&pageSize=50', headers={'User-Agent':'Mozilla/5.0','Referer':'https://fundf10.eastmoney.com/jjjz_510300.html'})\nd=json.load(urllib.request.urlopen(req))\n# d['TotalCount'] 总记录数, d['Data']['LSJZList'] 净值列表"
+      },
+      "status": "ok",
+      "evidence": {
+        "http_code": 200,
+        "sample": "161005: TotalCount 全量; LSJZList[0]={FSRQ:2026-10-13, DWJZ:2.7757, LJJZ:5.8237, JZZZL:-0.68, SGZT:限制大额申购, SHZT:开放赎回}；510300: TotalCount=3508, DWJZ:4.3479, LJJZ:1.9393",
+        "probe_time": "2026-10-13T20:10:00+08:00",
+        "notes": "Referer 依赖经请求头差异实验确认：plain→ErrCode=-999 空数据(97B)；+Referer→622B 正常数据；+Referer+XHR/Cookie 与 +Referer 无差异。同族 /f10/FundJJZx、/f10/gmbd、/f10/ccmx、/f10/jbgk 均 404（ErrCode=4）"
+      },
+      "fields": "FSRQ(净值日期) DWJZ(单位净值) LJJZ(累计净值) JZZZL(日增长率%) SDATE ACTUALSYI NAVTYPE SGZT(申购状态) SHZT(赎回状态) FHFCZ/FHFCZ10/FHFCBZ(分红) DTYPE FHSP",
+      "notes": "覆盖 ETF（510300）与 LOF；pageSize=50 单页约 4.5KB。申购/赎回状态字段对场内 ETF 意义有限，但分红字段对 LOF 有用。",
+      "degrade_to": ["em_fund_pingzhong"]
+    },
+    {
+      "id": "em_fund_rankhandler",
+      "name": "天天基金收益排行（按类型 ft + 排序 sc）",
+      "method": "reverse",
+      "target_site": "天天基金 fund.eastmoney.com/data/fundranking.html",
+      "url": "https://fund.eastmoney.com/data/rankhandler.aspx?op=ph&dt=kf&ft=zs&rs=&gs=0&sc=6yzf&st=desc&sd=2026-01-01&ed=2026-10-13&qdii=&tabSubtype=,,,,,&pi=1&pn=20&dx=1",
+      "auth": "cookie",
+      "sign_algorithm": "无；Referer 需为 fund.eastmoney.com 域",
+      "reproduce": {
+        "curl": "curl -s 'https://fund.eastmoney.com/data/rankhandler.aspx?op=ph&dt=kf&ft=zs&rs=&gs=0&sc=6yzf&st=desc&sd=2026-01-01&ed=2026-10-13&qdii=&tabSubtype=,,,,,&pi=1&pn=20&dx=1' -H 'Referer: https://fund.eastmoney.com/data/fundranking.html' -H 'User-Agent: Mozilla/5.0'",
+        "python": "ft: zs=指数型 gp=股票型 hh=混合型 zq=债券型 qdii fof；sc: 6yzf(近1年) 1nzf(近1月) 3nzf 6nzf jzrq(净值日期)；st: desc/asc\nreq=urllib.request.Request(url, headers={'User-Agent':'Mozilla/5.0','Referer':'https://fund.eastmoney.com/data/fundranking.html'})\ntxt=urllib.request.urlopen(req).read().decode('utf-8','replace')  # var rankData = {datas:[...]}\n# 每项逗号分隔: 代码,名称,拼音,日期,单位净值,累计净值,日增长率,近1周,近1月,近3月,近6月,近1年,近2年,近3年,今年来,成立日,..."
+      },
+      "status": "ok",
+      "evidence": {
+        "http_code": 200,
+        "sample": "ft=zs: \"024417,华夏上证科创板半导体材料设备主题ETF发起式联接A,...,2.113,2.113,1.07,-3.74,-2.35,-25.78,50.64,63.51,,,67.71,111.3,2025-09-02,1,60.2822,1.00%,0.10%,1,0.10%,1,\"；响应头含 allNum=20544, zs_count=4606, gp_count=1092, hh_count=8593, zq_count=5002, qdii_count=229, fof_count=1017",
+        "probe_time": "2026-10-13T20:12:00+08:00",
+        "notes": "ft=et/ETF/index 返回空 datas（无效值）。返回的是 JS 变量赋值而非纯 JSON，需字符串切片"
+      },
+      "fields": "代码,名称,拼音缩写,日期,单位净值,累计净值,日增长率%,近1周%,近1月%,近3月%,近6月%,近1年%,近2年%,近3年%,今年来%,成立日,?,手续费,管理费,托管费",
+      "notes": "扩展 catalog 的 eastmoney_fund_rank；sc 排序字段全集未完全枚举。",
+      "degrade_to": []
+    },
+    {
+      "id": "jisilu_cb_list",
+      "name": "集思录可转债列表（价格/溢价率/双低）",
+      "method": "reverse",
+      "target_site": "集思录 jisilu.cn/data/cbnew（JS: /static/js/app/data_cb.js）",
+      "url": "https://www.jisilu.cn/data/cbnew/cb_list_new/",
+      "auth": "cookie",
+      "sign_algorithm": "无；Referer 实测非必需（plain 与 +Referer 均 200 且同长度 40672B）",
+      "reproduce": {
+        "curl": "curl -s 'https://www.jisilu.cn/data/cbnew/cb_list_new/' -H 'User-Agent: Mozilla/5.0'",
+        "python": "import json\nd=json.load(urllib.request.urlopen(urllib.request.Request('https://www.jisilu.cn/data/cbnew/cb_list_new/', headers={'User-Agent':'Mozilla/5.0'})))\nrows=[r['cell'] for r in d['rows']]  # jqGrid 风格 rows/cell 双层结构"
+      },
+      "status": "ok",
+      "evidence": {
+        "http_code": 200,
+        "sample": "page=1, rows[0].cell={bond_id:127117, bond_nm:奥士转债, price:100, increase_rt:0, stock_id:002913, stock_nm:奥士康, sprice:89.87, pb:6.48, convert_price:83.96, convert_value:107.04, premium_rt:-6.58, dblow:93.42, market_cd:szmb, btype:C}",
+        "probe_time": "2026-10-13T19:47:00+08:00",
+        "notes": "老路径 data/cbnew/cb_list_ajax.php 已 404（catalog/网上教程均过期）；现行端点为 /data/cbnew/cb_list_new/"
+      },
+      "fields": "bond_id bond_nm bond_py price increase_rt stock_id stock_nm sprice sincrease_rt pb convert_price convert_value premium_rt dblow market_cd btype list_dt remain_size",
+      "notes": "用户交易范围是股票+ETF，可转债本身不用；但 premium_rt/dblow 等权涨跌可作市场风险偏好情绪指标。",
+      "degrade_to": []
+    },
+    {
+      "id": "jisilu_etf_list",
+      "name": "集思录 ETF 列表（IOPV 折价率/费率/规模变动）",
+      "method": "reverse",
+      "target_site": "集思录 jisilu.cn/data/etf（JS: /static/js/app/data_etf.js）",
+      "url": "https://www.jisilu.cn/data/etf/etf_list/",
+      "auth": "cookie",
+      "sign_algorithm": "无",
+      "reproduce": {
+        "curl": "curl -s 'https://www.jisilu.cn/data/etf/etf_list/' -H 'User-Agent: Mozilla/5.0'",
+        "python": "d=json.load(urllib.request.urlopen(urllib.request.Request('https://www.jisilu.cn/data/etf/etf_list/', headers={'User-Agent':'Mozilla/5.0'})))\nrows=[r['cell'] for r in d['rows']]"
+      },
+      "status": "ok",
+      "evidence": {
+        "http_code": 200,
+        "sample": "rows=20, rows[0].cell={fund_id:158001, fund_nm:价值ETF嘉实, fee:0.60, m_fee:0.50, t_fee:0.10, creation_unit:100, issuer_nm:嘉实基金, t0:N, amount:11839, discount_rt, iopv}",
+        "probe_time": "2026-10-13T19:48:00+08:00",
+        "notes": "同族 /data/etf/gold_list/（黄金ETF 14 行）与 /data/etf/money_list/（货币ETF 20 行）均可用"
+      },
+      "fields": "fund_id fund_nm index_id fee m_fee t_fee creation_unit issuer_nm t0 amount amount_incr amount_increase_rt price pre_close volume increase_rt estimate_value discount_rt iopv last_dt",
+      "notes": "ETF 在用户交易范围内；discount_rt/IOPV 是折溢价套利信号；amount_increase_rt 反映资金申赎流向；费率三分（管理/托管/交易）可用于成本排序。翻页参数未完全逆向（默认 20 行/页）。",
+      "degrade_to": ["em_push2his_etf_onsite", "em_fund_etf_hist_min"]
+    },
+    {
+      "id": "jisilu_etf_gold_list",
+      "name": "集思录黄金 ETF 列表",
+      "method": "reverse",
+      "target_site": "集思录 jisilu.cn/data/etf",
+      "url": "https://www.jisilu.cn/data/etf/gold_list/",
+      "auth": "cookie",
+      "sign_algorithm": "无",
+      "reproduce": {
+        "curl": "curl -s 'https://www.jisilu.cn/data/etf/gold_list/' -H 'User-Agent: Mozilla/5.0'",
+        "python": "d=json.load(...); [r['cell'] for r in d['rows']]"
+      },
+      "status": "ok",
+      "evidence": {
+        "http_code": 200,
+        "sample": "rows=14, rows[0].cell={fund_id:159812, fund_nm:黄金ETF前海开源, index_id:AU9999, fee:0.60, creation_unit:30, t0:Y}",
+        "probe_time": "2026-10-13T19:48:00+08:00",
+        "notes": "黄金 ETF 独立分组"
+      },
+      "fields": "同 etf_list，另含 index_id=AU9999 等标的指数",
+      "notes": "黄金 ETF 与 A 股相关性低，可作组合分散观察。",
+      "degrade_to": []
+    },
+    {
+      "id": "jisilu_etf_money_list",
+      "name": "集思录货币 ETF 列表（收益率/万份收益）",
+      "method": "reverse",
+      "target_site": "集思录 jisilu.cn/data/etf",
+      "url": "https://www.jisilu.cn/data/etf/money_list/",
+      "auth": "cookie",
+      "sign_algorithm": "无",
+      "reproduce": {
+        "curl": "curl -s 'https://www.jisilu.cn/data/etf/money_list/' -H 'User-Agent: Mozilla/5.0'",
+        "python": "d=json.load(...); [r['cell'] for r in d['rows']]"
+      },
+      "status": "ok",
+      "evidence": {
+        "http_code": 200,
+        "sample": "rows=20, rows[0].cell={fund_id:511600, fund_nm:货币ETF, profit_dt:2026-10-12, profit_rt:0.779, profit_rt_1m:0.870, profit_rt_1y:1.0..., profit_per_million, net_value}",
+        "probe_time": "2026-10-13T19:48:00+08:00",
+        "notes": "含 T+0 交易标记 tradeable_fl 与 rule_tp 规则类型"
+      },
+      "fields": "fund_id fund_nm profit_dt profit_rt profit_rt_1m/3m/6m/1y profit_per_million net_value today_net_value sell_price tradeable_fl rule_tp",
+      "notes": "货币 ETF 是现金管理工具，收益率为百分数口径。",
+      "degrade_to": []
+    },
+    {
+      "id": "probe_ths90_dns_fail",
+      "name": "同花顺 ths90 域名当前 DNS 不可解析（catalog 记录需修正）",
+      "method": "reverse",
+      "target_site": "同花顺 ths90.10jqka.com.cn",
+      "url": "https://ths90.10jqka.com.cn/webapi/stock/abstract?code=600519",
+      "auth": "none",
+      "sign_algorithm": "未验证（域名不可达）",
+      "reproduce": {
+        "curl": "curl -s -m 10 'https://ths90.10jqka.com.cn/webapi/stock/abstract?code=600519' -H 'User-Agent: Mozilla/5.0' -w '\\nHTTP=%{http_code}\\n'",
+        "python": "# 直接请求即复现失败"
+      },
+      "status": "blocked",
+      "evidence": {
+        "http_code": 0,
+        "sample": "urllib.error.URLError: <urlopen error [Errno -2] Name or service not known>",
+        "probe_time": "2026-10-13T19:39:00+08:00",
+        "notes": "catalog 中 ths_financial_abstract / ths_financial_abstract_v2 记为 available（走 akshare），但本次直连 ths90.10jqka.com.cn DNS 解析失败。两种可能：(a) akshare 内部走别的域名/代理；(b) 该域临时故障。未进一步核实 akshare 实际请求目标。d.10jqka.com.cn 本次 502/504（graydatacenter 后端不稳），zx.10jqka.com.cn 未测"
+      },
+      "fields": "（未取得）",
+      "notes": "这是观测记录而非结论：容器 DNS 对该域失败，不能推出接口本身失效。建议后续核实 akshare 的 HTTP 层实际域名。",
+      "degrade_to": ["xueqiu_v5_f10_indicator"]
+    },
+    {
+      "id": "probe_jisilu_old_paths_404",
+      "name": "集思录旧接口路径已全部 404（教程过期证据）",
+      "method": "reverse",
+      "target_site": "集思录 jisilu.cn",
+      "url": "https://www.jisilu.cn/data/cbnew/cb_list_ajax.php",
+      "auth": "none",
+      "sign_algorithm": "无",
+      "reproduce": {
+        "curl": "curl -s -o /dev/null -w '%{http_code}\\n' 'https://www.jisilu.cn/data/cbnew/cb_list_ajax.php' -H 'User-Agent: Mozilla/5.0'",
+        "python": "# 逐个 404"
+      },
+      "status": "blocked",
+      "evidence": {
+        "http_code": 404,
+        "sample": "cb_list_ajax.php / etf_list_ajax.php / qdii_list_ajax.php / sf_list_ajax.php / reits_list_ajax.php 全部 404（36B 压缩体）",
+        "probe_time": "2026-10-13T19:47:00+08:00",
+        "notes": "现行命名规则为 <type>_list_new/（cb_list_new/ etf_list/ gold_list/ money_list/）。qdii/lof/sfnew 的 _list_new 变体也 404，需从各自页面 JS 提取（data_etf.js 给出了 etf/gold/money 三组）"
+      },
+      "fields": "（无）",
+      "notes": "记录为负面证据，避免后续重复试旧路径。",
+      "degrade_to": []
+    }
+  ]
+}

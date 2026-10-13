@@ -1,0 +1,168 @@
+# v2 新域采集 + 本地 WAF 源的 GitHub Actions 出口采集
+#
+# 背景 (2026-10-13 实测):
+#   本地容器 (alpine-aarch64) 对东财 push2 / np-listapi / 新浪 zhibo 是 TLS reset 或空数据,
+#   但 GitHub Actions 出口 (北美 IP) 对这些域全部 200。这是按域名分级的针对性风控。
+#   本工作流让 Actions 承担「本地采不到的源」+ v2 新域 (公告/新闻/基金净值/财务),
+#   采完推回 GitHub, 本地/网站服务器 git pull 即可拿到。
+#
+# 采集内容:
+#   1. v2 extras: financial_summary / fund_nav / fund_rebalance / news_items / announcements
+#   2. 本地墙源: 东财 7x24 新闻 (np-listapi) + 新浪 7x24 (zhibo)
+#   3. 集思录 10 接口 (LOF/ETF/可转债/新股) — Actions 出口同样通
+#
+# 免费额度: 私有仓 2000 分钟/月; 每轮 ~3-4 分钟, 3 轮/天 × 22 天 ≈ 290 分钟/月 ✅
+name: v2-extras-collect
+on:
+  schedule:
+    # CST 09:00 / 13:00 / 18:30 → UTC 1:00 / 5:00 / 10:30, 工作日
+    # 18:30 那轮是关键: 龙虎榜/业绩快报/净值都是收盘后才出
+    - cron: '0 1,5 * * 1-5'
+    - cron: '30 10 * * 1-5'
+  workflow_dispatch: {}
+permissions:
+  contents: write
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      TZ: Asia/Shanghai
+      STOCKS_DB: ${{ github.workspace }}/stocks.duckdb
+    steps:
+      - name: Checkout live data repo
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Sync remote main
+        run: |
+          git fetch origin main
+          git merge --ff-only origin/main || echo "already up to date"
+
+      - name: Checkout ai-view scripts
+        uses: actions/checkout@v4
+        with:
+          repository: qwerzxcva/stocks-ai-view
+          token: ${{ secrets.GITHUB_TOKEN }}
+          path: ai-view
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install deps
+        run: |
+          pip install duckdb akshare pandas lxml --quiet
+
+      # ── 1. v2 新域 (财务/基金净值/基金重仓/公告) ──
+      - name: Collect v2 extras (financial/fund/announcements)
+        env:
+          STOCKS_DB: ${{ github.workspace }}/stocks.duckdb
+        run: |
+          cd ai-view/scripts
+          python3 collect_v2_extras.py --group financial --limit 50 --max-pages 4 || echo "financial failed"
+          python3 collect_v2_extras.py --group fund --limit 5 || echo "fund failed"
+          python3 collect_v2_extras.py --group announcements --limit 10 || echo "ann failed"
+
+      # ── 2. 本地墙源: 7x24 新闻 (Actions 出口可用) ──
+      - name: Collect news (sina/em 7x24)
+        run: |
+          cd ai-view/scripts
+          python3 collect_v2_extras.py --group news --news-limit 50 || echo "news failed"
+
+      # ── 3. 集思录 10 接口 (匿名 session) ──
+      - name: Collect jisilu (LOF/ETF/新股)
+        run: |
+          cd ai-view/scripts
+          python3 collect_jisilu.py --out ../data/research/jisilu_$(date +%Y%m%d).json || echo "jisilu failed"
+
+      # ── 4. 本地墙源验证: push2delay / np-listapi 在 Actions 的通达性 ──
+      - name: Probe blocked sources (informational)
+        run: |
+          cd ai-view/scripts
+          python3 - <<'PY' || true
+          import json, urllib.request, uuid
+          UA={"User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120"}
+          def probe(name,url,hdr=None):
+              h=dict(UA); h.update(hdr or {})
+              try:
+                  r=urllib.request.urlopen(urllib.request.Request(url,headers=h),timeout=12)
+                  b=r.read()
+                  print(f"  {name:24s} -> {r.status} {len(b)}B")
+                  return r.status,len(b)
+              except Exception as e:
+                  print(f"  {name:24s} -> ERR {type(e).__name__}")
+                  return None,0
+          print("=== Actions 出口探测 (本地被墙的源) ===")
+          probe("push2 stock/get","https://push2.eastmoney.com/api/qt/stock/get?secid=1.600519&fields=f43,f57,f58")
+          probe("push2 clist","https://push2.eastmoney.com/api/qt/clist/get?fs=m:90+t:2&fields=f2,f3,f12,f14")
+          probe("np-listapi 7x24","https://np-listapi.eastmoney.com/comm/web/getNewsByColumns?client=web&biz=web7_24&fastColumn=100&column=100&req_trace="+uuid.uuid4().hex)
+          probe("sina zhibo","https://zhibo.sina.com.cn/api/zhibo/feed?page=1",{"Referer":"https://finance.sina.com.cn/"})
+          probe("jisilu lof","https://www.jisilu.cn/data/lof/index_lof_list/",{"Referer":"https://www.jisilu.cn/data/lof/"})
+          PY
+
+      # ── 5. 导出 DB 为 JSON 快照 (网站服务器直接读, 不必装 duckdb) ──
+      - name: Export DB snapshot
+        run: |
+          cd ai-view/scripts
+          python3 - <<'PY' || true
+          import json, duckdb, os
+          db = os.environ.get("STOCKS_DB") or "stocks.duckdb"
+          if not os.path.exists(db):
+              print("no db, skip"); raise SystemExit(0)
+          con = duckdb.connect(db, read_only=True)
+          out = {}
+          for t in ["financial_summary","fund_nav","fund_rebalance",
+                    "announcements","news_items"]:
+              try:
+                  rows = con.execute(f"SELECT * FROM {t}").fetchall()
+                  cols = [d[0] for d in con.description]
+                  out[t] = [dict(zip(cols,r)) for r in rows]
+                  print(f"  {t}: {len(rows)} rows")
+              except Exception as e:
+                  out[t] = []
+          con.close()
+          from datetime import datetime, timezone, timedelta
+          CST = timezone(timedelta(hours=8))
+          out["timestamp"] = datetime.now(CST).isoformat(timespec="seconds")
+          out["source"] = "gha_v2_snapshot"
+          os.makedirs("data/research", exist_ok=True)
+          p = f"data/research/v2_snapshot_{datetime.now(CST).strftime('%Y%m%d')}.json"
+          json.dump(out, open(p,"w",encoding="utf-8"), ensure_ascii=False, indent=2, default=str)
+          print(f"  -> {p}")
+          PY
+
+      # ── 6. 推送 ──
+      - name: Commit & push
+        run: |
+          git config user.name "v2-collect-bot"
+          git config user.email "741059079@qq.com"
+          git fetch origin main
+          git reset --soft origin/main
+          # DB 文件不入库 (二进制 + 大); 只推 JSON 快照
+          git add data/research/ || true
+          ts=$(TZ=Asia/Shanghai date '+%Y%m%d_%H%M')
+          if git diff --quiet --cached HEAD; then
+            echo "no changes"
+          else
+            git commit -m "v2-extras: $ts" || echo "commit failed (empty?)"
+          fi
+          git -c http.version=HTTP/1.1 push origin main || {
+            echo "push raced, retrying"
+            git fetch origin main
+            git reset --soft origin/main
+            git add data/research/ || true
+            git commit -m "v2-extras: $ts" 2>/dev/null || true
+            git push origin main
+          }
+
+      - name: Summary
+        run: |
+          echo "## v2 Extras Collect Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- Time: $(TZ=Asia/Shanghai date '+%Y-%m-%d %H:%M CST')" >> $GITHUB_STEP_SUMMARY
+          echo "- Runner IP egress: GitHub Actions (北美), 可采本地被墙源" >> $GITHUB_STEP_SUMMARY
+          ls -la data/research/v2_snapshot_*.json 2>/dev/null | tail -1 >> $GITHUB_STEP_SUMMARY || echo "- no snapshot" >> $GITHUB_STEP_SUMMARY

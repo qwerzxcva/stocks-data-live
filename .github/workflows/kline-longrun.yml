@@ -1,0 +1,95 @@
+# K线长跑补录 — 用 Actions 兜底 (Codespaces 不可用时)
+# 每 6 小时跑一轮, 每轮最多 5.5 小时, 断点续传
+# 目标: 覆盖率 48% → 90%+
+name: kline-longrun
+on:
+  schedule:
+    - cron: '0 2,8,14,20 * * *'   # 每天4轮 (UTC 10/16/22/02 CST)
+  workflow_dispatch: {}
+    inputs:
+      max_hours:
+        description: '本轮最长运行小时数'
+        default: '5'
+        required: false
+permissions:
+  contents: write
+jobs:
+  longrun:
+    runs-on: ubuntu-latest
+    timeout-minutes: 355      # Actions 上限 6h, 留 5 分钟余量
+    env:
+      TZ: Asia/Shanghai
+      STOCKS_KLINE_BULK: ${{ github.workspace }}/data-kline/bulk
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      # 分片仓 (d5/d6) 是 K 线主存储
+      - name: Checkout kline shard A (沪市)
+        uses: actions/checkout@v4
+        with:
+          repository: dufuwuxin/d5-kline-shard-a
+          token: ${{ secrets.GITHUB_TOKEN }}
+          path: shard-a
+          sparse-checkout: |
+            day_qfq
+          sparse-checkout-cone-mode: false
+
+      - name: Checkout kline shard B (深市+北交所)
+        uses: actions/checkout@v4
+        with:
+          repository: dufuwuxin/d6-kline-shard-b
+          token: ${{ secrets.GITHUB_TOKEN }}
+          path: shard-b
+          sparse-checkout: |
+            day_qfq
+          sparse-checkout-cone-mode: false
+
+      - name: Merge shards into bulk
+        run: |
+          mkdir -p data-kline/bulk
+          cp -n shard-a/day_qfq/*.csv data-kline/bulk/ 2>/dev/null || true
+          cp -n shard-b/day_qfq/*.csv data-kline/bulk/ 2>/dev/null || true
+          # 主仓 universe 与进度
+          echo "bulk files: $(ls data-kline/bulk/ | wc -l)"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Longrun kline collect (resumable)
+        run: |
+          python3 scripts/longrun_collect.py kline \
+            --max-hours ${{ github.event.inputs.max_hours || '5' }} || true
+          echo "--- 覆盖率 ---"
+          python3 -c "
+          import glob, os
+          bulk = os.environ['STOCKS_KLINE_BULK']
+          have = set()
+          for p in glob.glob(os.path.join(bulk, 'day_qfq_*.csv')):
+              with open(p, encoding='utf-8', errors='replace') as f:
+                  for line in f:
+                      line = line.strip()
+                      if line and not line.startswith('#') and '|' in line:
+                          have.add(line.split('|')[0].strip())
+          print(f'covered: {len(have)} stocks')
+          "
+
+      # 把新增数据写回分片仓 (按交易所分)
+      - name: Push new data back to shards
+        run: |
+          ts=$(TZ=Asia/Shanghai date '+%Y%m%d_%H%M')
+          for shard in shard-a shard-b; do
+            cd $shard
+            git config user.name "longrun-bot"
+            git config user.email "741059079@qq.com"
+            git fetch origin main
+            git reset --soft origin/main
+            cp -n $GITHUB_WORKSPACE/data-kline/bulk/*.csv day_qfq/ 2>/dev/null || true
+            git add -A day_qfq/
+            git commit -m "kline: $ts" 2>/dev/null || echo "no change"
+            git push origin main || echo "push raced, next run continues"
+            cd $GITHUB_WORKSPACE
+          done

@@ -1,0 +1,615 @@
+{
+  "timestamp": "2026-10-13T18:59:00+08:00",
+  "source": "e2e_lhb_pipeline",
+  "data_date": "2026-10-13",
+  "lhb": [
+    {
+      "type": "lhb",
+      "code": "301139",
+      "name": "元道退",
+      "close": 0.78,
+      "chg": -4.878,
+      "deal_amt": 5929133.43,
+      "premium": -1261475.43,
+      "vol": 9355831,
+      "expl": "主力做T，成功率32.67%",
+      "trade_date": "2026-10-13",
+      "sources": [
+        "em_datacenter"
+      ]
+    },
+    {
+      "type": "lhb",
+      "code": "301583",
+      "name": "托伦斯",
+      "close": 124.1,
+      "chg": 5.2141,
+      "deal_amt": 457396242.93,
+      "premium": -76491079.61,
+      "vol": 1318176996,
+      "expl": "2家机构买入，成功率18.13%",
+      "trade_date": "2026-10-13",
+      "sources": [
+        "em_datacenter"
+      ]
+    },
+    {
+      "type": "lhb",
+      "code": "002640",
+      "name": "跨境通",
+      "close": 3.89,
+      "chg": 9.887,
+      "deal_amt": 306719164.89,
+      "premium": 122855610.89,
+      "vol": 990419762,
+      "expl": "1家机构买入，成功率42.06%",
+      "trade_date": "2026-10-13",
+      "sources": [
+        "em_datacenter"
+      ]
+    },
+    {
+      "type": "lhb",
+      "code": "301660",
+      "name": "粤芯半导体",
+      "close": 38.8,
+      "chg": 223.0641,
+      "deal_amt": 702670828.04,
+      "premium": 381817645.48,
+      "vol": 7140360939,
+      "expl": "西藏自治区资金买入，成功率30.54%",
+      "trade_date": "2026-10-13",
+      "sources": [
+        "em_datacenter"
+      ]
+    },
+    {
+      "type": "lhb",
+      "code": "300107",
+      "name": "建新股份",
+      "close": 8.63,
+      "chg": 20.0278,
+      "deal_amt": 176775406.08,
+      "premium": 32759310.08,
+      "vol": 591176938,
+      "expl": "普通席位买入，成功率38.16%",
+      "trade_date": "2026-10-13",
+      "sources": [
+        "em_datacenter"
+      ]
+    },
+    {
+      "type": "lhb",
+      "code": "301041",
+      "name": "金百泽",
+      "close": 40.14,
+      "chg": 20,
+      "deal_amt": 197624928.1,
+      "premium": 29552894.1,
+      "vol": 410407020,
+      "expl": "3家机构买入，成功率31.46%",
+      "trade_date": "2026-10-13",
+      "sources": [
+        "em_datacenter"
+      ]
+    },
+    {
+      "type": "lhb",
+      "code": "301010",
+      "name": "晶雪节能",
+      "close": 23.7,
+      "chg": 20,
+      "deal_amt": 108937921.6,
+      "premium": 18826153.6,
+      "vol": 333320108,
+      "expl": "1家机构买入，成功率35.20%",
+      "trade_date": "2026-10-13",
+      "sources": [
+        "em_datacenter"
+      ]
+    },
+    {
+      "type": "lhb",
+      "code": "301030",
+      "name": "*ST仕净",
+      "close": 5.4,
+      "chg": 20,
+      "deal_amt": 57178823,
+      "premium": -22472495,
+      "vol": 236508698,
+      "expl": "西藏自治区资金买入，成功率28.92%",
+      "trade_date": "2026-10-13",
+      "sources": [
+        "em_datacenter"
+      ]
+    },
+    {
+      "type": "lhb",
+      "code": "301030",
+      "name": "*ST仕净",
+      "close": 5.4,
+      "chg": 20,
+      "deal_amt": 65892160.8,
+      "premium": -14844597.2,
+      "vol": 294967640,
+      "expl": "1家机构买入，成功率22.46%",
+      "trade_date": "2026-10-13",
+      "sources": [
+        "em_datacenter"
+      ]
+    },
+    {
+      "type": "lhb",
+      "code": "301689",
+      "name": "电科思仪",
+      "close": 71.65,
+      "chg": 4.9048,
+      "deal_amt": 399675095.04,
+      "premium": -81873652.26,
+      "vol": 1421442600,
+      "expl": "4家机构买入，成功率15.73%",
+      "trade_date": "2026-10-13",
+      "sources": [
+        "em_datacenter"
+      ]
+    },
+    {
+      "type": "lhb",
+      "code": "002579",
+      "name": "中京电子",
+      "close": 16.43,
+      "chg": 9.9732,
+      "deal_amt": 555252223.99,
+      "premium": -9357839.19,
+      "vol": 1263571237,
+      "expl": "2家机构买入，成功率16.53%",
+      "trade_date": "2026-10-13",
+      "sources": [
+        "em_datacenter"
+      ]
+    },
+    {
+      "type": "lhb",
+      "code": "002579",
+      "name": "中京电子",
+      "close": 16.43,
+      "chg": 9.9732,
+      "deal_amt": 555252223.99,
+      "premium": -9357839.19,
+      "vol": 1263571237,
+      "expl": "2家机构买入，成功率16.53%",
+      "trade_date": "2026-10-13",
+      "sources": [
+        "em_datacenter"
+      ]
+    },
+    {
+      "type": "lhb",
+      "code": "002768",
+      "name": "国恩股份",
+      "close": 61.91,
+      "chg": -10.0015,
+      "deal_amt": 351619576.19,
+      "premium": -11909436.65,
+      "vol": 707450116,
+      "expl": "4家机构卖出，成功率15.20%",
+      "trade_date": "2026-10-13",
+      "sources": [
+        "em_datacenter"
+      ]
+    },
+    {
+      "type": "lhb",
+      "code": "301513",
+      "name": "尚水智能",
+      "close": 69.15,
+      "chg": 2.7184,
+      "deal_amt": 120726725.13,
+      "premium": -13261423.43,
+      "vol": 625779753,
+      "expl": "1家机构买入，成功率46.40%",
+      "trade_date": "2026-10-13",
+      "sources": [
+        "em_datacenter"
+      ]
+    },
+    {
+      "type": "lhb",
+      "code": "002980",
+      "name": "华盛昌",
+      "close": 116.05,
+      "chg": 10,
+      "deal_amt": 711674156.09,
+      "premium": 36630394.83,
+      "vol": 1805614149,
+      "expl": "2家机构买入，成功率27.87%",
+      "trade_date": "2026-10-13",
+      "sources": [
+        "em_datacenter"
+      ]
+    },
+    {
+      "type": "lhb",
+      "code": "002639",
+      "name": "雪人集团",
+      "close": 14.59,
+      "chg": 10.0302,
+      "deal_amt": 386290626.31,
+      "premium": 133289730.25,
+      "vol": 1296895576,
+      "expl": "3家机构买入，成功率41.71%",
+      "trade_date": "2026-10-13",
+      "sources": [
+        "em_datacenter"
+      ]
+    },
+    {
+      "type": "lhb",
+      "code": "002692",
+      "name": "远程股份",
+      "close": 4.93,
+      "chg": -5.916,
+      "deal_amt": 145332154.8,
+      "premium": -30882856.8,
+      "vol": 835504139,
+      "expl": "2家机构卖出，成功率23.76%",
+      "trade_date": "2026-10-13",
+      "sources": [
+        "em_datacenter"
+      ]
+    },
+    {
+      "type": "lhb",
+      "code": "002636",
+      "name": "金安国纪",
+      "close": 67.18,
+      "chg": 4.155,
+      "deal_amt": 578894676.77,
+      "premium": 92782047.59,
+      "vol": 3104131606,
+      "expl": "3家机构买入，成功率39.64%",
+      "trade_date": "2026-10-13",
+      "sources": [
+        "em_datacenter"
+      ]
+    },
+    {
+      "type": "lhb",
+      "code": "002591",
+      "name": "恒大高新",
+      "close": 6.69,
+      "chg": -6.5642,
+      "deal_amt": 131936816.42,
+      "premium": 15576633.14,
+      "vol": 399853820,
+      "expl": "5家机构卖出，成功率18.89%",
+      "trade_date": "2026-10-13",
+      "sources": [
+        "em_datacenter"
+      ]
+    },
+    {
+      "type": "lhb",
+      "code": "002866",
+      "name": "传艺科技",
+      "close": 17.24,
+      "chg": -9.9739,
+      "deal_amt": 30488166.44,
+      "premium": -15895916.44,
+      "vol": 102676860,
+      "expl": "主力做T，成功率34.01%",
+      "trade_date": "2026-10-13",
+      "sources": [
+        "em_datacenter"
+      ]
+    }
+  ],
+  "blocktrade": [
+    {
+      "type": "blocktrade",
+      "code": "920190",
+      "name": "雷神科技",
+      "close": 22.92,
+      "chg": -0.6502,
+      "deal_amt": 1513110,
+      "premium": -0.290139616056,
+      "vol": 93000,
+      "expl": "长江证券股份有限公司青岛香港东路证券营业部 → 中信证券（山东）有限责任公司青岛秦岭路营业部",
+      "trade_date": "2026-10-13",
+      "sources": [
+        "em_datacenter"
+      ]
+    },
+    {
+      "type": "blocktrade",
+      "code": "688268",
+      "name": "华特气体",
+      "close": 114.91,
+      "chg": 0.9754,
+      "deal_amt": 15534000,
+      "premium": -0.098772952746,
+      "vol": 150000,
+      "expl": "国泰海通证券股份有限公司总部 → 金圆统一证券有限公司厦门分公司",
+      "trade_date": "2026-10-13",
+      "sources": [
+        "em_datacenter"
+      ]
+    },
+    {
+      "type": "blocktrade",
+      "code": "688268",
+      "name": "华特气体",
+      "close": 114.91,
+      "chg": 0.9754,
+      "deal_amt": 7974100,
+      "premium": -0.098772952746,
+      "vol": 77000,
+      "expl": "机构专用 → 金圆统一证券有限公司厦门分公司",
+      "trade_date": "2026-10-13",
+      "sources": [
+        "em_datacenter"
+      ]
+    },
+    {
+      "type": "blocktrade",
+      "code": "688268",
+      "name": "华特气体",
+      "close": 114.91,
+      "chg": 0.9754,
+      "deal_amt": 3417500,
+      "premium": -0.098772952746,
+      "vol": 33000,
+      "expl": "机构专用 → 金圆统一证券有限公司厦门分公司",
+      "trade_date": "2026-10-13",
+      "sources": [
+        "em_datacenter"
+      ]
+    },
+    {
+      "type": "blocktrade",
+      "code": "508091",
+      "name": "凯德消费",
+      "close": 5.257,
+      "chg": -0.038,
+      "deal_amt": 1978300,
+      "premium": -0.008940460339,
+      "vol": 380000,
+      "expl": "中信证券股份有限公司客户资产管理部 → 机构专用",
+      "trade_date": "2026-10-13",
+      "sources": [
+        "em_datacenter"
+      ]
+    },
+    {
+      "type": "blocktrade",
+      "code": "600525",
+      "name": "长园集团",
+      "close": 4.66,
+      "chg": 1.3043,
+      "deal_amt": 2230600,
+      "premium": -0.030042918455,
+      "vol": 493500,
+      "expl": "国海证券股份有限公司北海北海大道证券营业部 → 国海证券股份有限公司北海北海大道证券营业部",
+      "trade_date": "2026-10-13",
+      "sources": [
+        "em_datacenter"
+      ]
+    },
+    {
+      "type": "blocktrade",
+      "code": "688268",
+      "name": "华特气体",
+      "close": 114.91,
+      "chg": 0.9754,
+      "deal_amt": 2071200,
+      "premium": -0.098772952746,
+      "vol": 20000,
+      "expl": "机构专用 → 金圆统一证券有限公司厦门分公司",
+      "trade_date": "2026-10-13",
+      "sources": [
+        "em_datacenter"
+      ]
+    },
+    {
+      "type": "blocktrade",
+      "code": "600525",
+      "name": "长园集团",
+      "close": 4.66,
+      "chg": 1.3043,
+      "deal_amt": 2649600,
+      "premium": -0.030042918455,
+      "vol": 586200,
+      "expl": "国海证券股份有限公司北海北海大道证券营业部 → 国海证券股份有限公司北海北海大道证券营业部",
+      "trade_date": "2026-10-13",
+      "sources": [
+        "em_datacenter"
+      ]
+    },
+    {
+      "type": "blocktrade",
+      "code": "508091",
+      "name": "凯德消费",
+      "close": 5.257,
+      "chg": -0.038,
+      "deal_amt": 2967400,
+      "premium": -0.008940460339,
+      "vol": 570000,
+      "expl": "中信证券股份有限公司客户资产管理部 → 机构专用",
+      "trade_date": "2026-10-13",
+      "sources": [
+        "em_datacenter"
+      ]
+    },
+    {
+      "type": "blocktrade",
+      "code": "688268",
+      "name": "华特气体",
+      "close": 114.91,
+      "chg": 0.9754,
+      "deal_amt": 2589000,
+      "premium": -0.098772952746,
+      "vol": 25000,
+      "expl": "机构专用 → 金圆统一证券有限公司厦门分公司",
+      "trade_date": "2026-10-13",
+      "sources": [
+        "em_datacenter"
+      ]
+    },
+    {
+      "type": "blocktrade",
+      "code": "688268",
+      "name": "华特气体",
+      "close": 114.91,
+      "chg": 0.9754,
+      "deal_amt": 2009100,
+      "premium": -0.098772952746,
+      "vol": 19400,
+      "expl": "机构专用 → 金圆统一证券有限公司厦门分公司",
+      "trade_date": "2026-10-13",
+      "sources": [
+        "em_datacenter"
+      ]
+    },
+    {
+      "type": "blocktrade",
+      "code": "508091",
+      "name": "凯德消费",
+      "close": 5.257,
+      "chg": -0.038,
+      "deal_amt": 1978300,
+      "premium": -0.008940460339,
+      "vol": 380000,
+      "expl": "中信证券股份有限公司客户资产管理部 → 机构专用",
+      "trade_date": "2026-10-13",
+      "sources": [
+        "em_datacenter"
+      ]
+    },
+    {
+      "type": "blocktrade",
+      "code": "688256",
+      "name": "寒武纪",
+      "close": 976.49,
+      "chg": 0.4743,
+      "deal_amt": 2929500,
+      "premium": 0,
+      "vol": 3000,
+      "expl": "中信证券股份有限公司上海分公司 → 中国国际金融股份有限公司北京建国门外大街证券营业部",
+      "trade_date": "2026-10-13",
+      "sources": [
+        "em_datacenter"
+      ]
+    },
+    {
+      "type": "blocktrade",
+      "code": "600525",
+      "name": "长园集团",
+      "close": 4.66,
+      "chg": 1.3043,
+      "deal_amt": 6822500,
+      "premium": -0.030042918455,
+      "vol": 1509400,
+      "expl": "国海证券股份有限公司北海北海大道证券营业部 → 国海证券股份有限公司北海北海大道证券营业部",
+      "trade_date": "2026-10-13",
+      "sources": [
+        "em_datacenter"
+      ]
+    },
+    {
+      "type": "blocktrade",
+      "code": "601066",
+      "name": "中信建投",
+      "close": 23.06,
+      "chg": -0.1299,
+      "deal_amt": 25366000,
+      "premium": 0,
+      "vol": 1100000,
+      "expl": "民生证券股份有限公司河南分公司 → 广发证券股份有限公司总部",
+      "trade_date": "2026-10-13",
+      "sources": [
+        "em_datacenter"
+      ]
+    },
+    {
+      "type": "blocktrade",
+      "code": "603259",
+      "name": "药明康德",
+      "close": 157.35,
+      "chg": -0.3168,
+      "deal_amt": 3619100,
+      "premium": 0,
+      "vol": 23000,
+      "expl": "中信证券股份有限公司上海分公司 → 中国国际金融股份有限公司北京建国门外大街证券营业部",
+      "trade_date": "2026-10-13",
+      "sources": [
+        "em_datacenter"
+      ]
+    },
+    {
+      "type": "blocktrade",
+      "code": "688268",
+      "name": "华特气体",
+      "close": 114.91,
+      "chg": 0.9754,
+      "deal_amt": 2071200,
+      "premium": -0.098772952746,
+      "vol": 20000,
+      "expl": "长城证券股份有限公司总部 → 金圆统一证券有限公司厦门分公司",
+      "trade_date": "2026-10-13",
+      "sources": [
+        "em_datacenter"
+      ]
+    },
+    {
+      "type": "blocktrade",
+      "code": "600525",
+      "name": "长园集团",
+      "close": 4.66,
+      "chg": 1.3043,
+      "deal_amt": 5215600,
+      "premium": -0.030042918455,
+      "vol": 1153900,
+      "expl": "国海证券股份有限公司北海北海大道证券营业部 → 国海证券股份有限公司北海北海大道证券营业部",
+      "trade_date": "2026-10-13",
+      "sources": [
+        "em_datacenter"
+      ]
+    },
+    {
+      "type": "blocktrade",
+      "code": "508091",
+      "name": "凯德消费",
+      "close": 5.257,
+      "chg": -0.038,
+      "deal_amt": 2967400,
+      "premium": -0.008940460339,
+      "vol": 570000,
+      "expl": "中信证券股份有限公司客户资产管理部 → 机构专用",
+      "trade_date": "2026-10-13",
+      "sources": [
+        "em_datacenter"
+      ]
+    },
+    {
+      "type": "blocktrade",
+      "code": "601377",
+      "name": "兴业证券",
+      "close": 5.74,
+      "chg": -0.692,
+      "deal_amt": 18368000,
+      "premium": 0,
+      "vol": 3200000,
+      "expl": "民生证券股份有限公司河南分公司 → 广发证券股份有限公司总部",
+      "trade_date": "2026-10-13",
+      "sources": [
+        "em_datacenter"
+      ]
+    }
+  ],
+  "meta": {
+    "lhb_count": 50,
+    "blocktrade_count": 50,
+    "fetch_source": "em_datacenter",
+    "fetch_ts": "2026-10-13T18:59:00+08:00"
+  }
+}

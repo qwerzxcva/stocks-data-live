@@ -1,0 +1,942 @@
+{
+  "timestamp": "2026-10-13T23:30:00+08:00",
+  "source": "github_research",
+  "agent": "破甲",
+  "env": {
+    "note": "容器内 github.com git clone 不可达; api.github.com + raw.githubusercontent.com 可用",
+    "method": "GitHub REST API (repo/tree) + raw 文件拉取到 /tmp/gh_research/ 后本地阅读",
+    "python": "3.14",
+    "verified_at": "2026-10-13"
+  },
+  "repos": [
+    {
+      "name": "akfamily/akshare",
+      "stars": 22918,
+      "url": "https://github.com/akfamily/akshare",
+      "category": "data",
+      "verified": "star 数来自 api.github.com /repos/akfamily/akshare (2026-10-13)",
+      "architecture": {
+        "layers": [
+          "接口层: akshare/<域>/<数据源>_<接口>.py 一个函数一个接口, 公开 API 集中在 akshare/__init__.py (240KB, 约 1000+ 函数)",
+          "域分组: stock/fund/bond/futures/option/macro/currency/crypto/article/air/bank/cal — 每域独立 cons.py 存常量",
+          "适配器: 同一逻辑多数据源实现 (如 bond_zh_sina / bond_zh_cov / bond_convert), 调用方按源选函数",
+          "工具层: akshare/utils/ 下 pymysql/pd/requests 等公共函数, 各接口不重复写 HTTP 细节",
+          "数据层: 直接返回 pandas.DataFrame (无自建存储), 存储交由使用方 (DuckDB/MySQL)",
+          "许可: MIT"
+        ],
+        "patterns": [
+          "函数式接口命名规范: <域>_<市场>_<数据>_<源> (stock_zh_a_daily_sina)",
+          "单文件单职责: 一个数据源一个 py 文件, 便于独立维护与 WAF 变更时局部替换",
+          "cons.py 常量集中: URL/字段映射/枚举集中, 接口文件只写逻辑",
+          "无抽象基类, 无依赖注入 — 用约定代替框架 (1000+ 接口下框架成本反而高)",
+          "装饰器式参数校验 (@validate_call from pydantic)"
+        ],
+        "data_flow": "用户调用函数 → 组装 URL/参数 → requests 直取 → 文本/JSON 解析 → DataFrame 规范化(列名中文化/类型转换) → 返回; 无中间缓存层"
+      },
+      "key_algorithms": [
+        {
+          "name": "接口命名与发现约定",
+          "formula": "<domain>_<market>_<subject>_<source>(**params) -> pd.DataFrame",
+          "code_sketch": "# akshare/stock/stock_zh_a_daily_sina.py\n# 1) cons.py 集中常量\n# 2) 单文件单源实现\n# 3) __init__.py 用 from .stock import * 平铺导出\ndef stock_zh_a_daily_sina(symbol='sh600000', start_date='20200101', end_date='20500101', adjust=''):\n    ...\n    return pd.DataFrame(columns=[...])",
+          "params": {
+            "命名分段": "domain/market/subject/source",
+            "返回类型": "pandas.DataFrame"
+          }
+        },
+        {
+          "name": "多源适配器并列 (同逻辑多源)",
+          "formula": "同一数据存在 N 个源实现, 调用方显式选源; 失败即换源",
+          "code_sketch": "sources = {'sina': stock_zh_a_daily_sina, 'em': stock_zh_a_hist_em}\nfor name, fn in sources.items():\n    try:\n        return fn(**params)\n    except Exception:\n        continue\n# 注: akshare 内部不做自动 fallback, fallback 由调用方或上层封装负责",
+          "params": {}
+        }
+      ],
+      "gap_vs_ours": "我们已有 sources_registry.py 统一注册表 + collect_all_sources.py 合并, 比 akshare 的函数平铺更集中; 但缺 akshare 的『一个源一个文件』隔离与 WAF 变更时的局部替换能力 — 我们 collect_*.py 单文件过大 (collect_all_sources 29KB/collect_v2_extras 21KB), 源变更要改大文件。可借鉴: 把每源采集拆成独立小模块 + cons 常量集中。",
+      "landing_priority": "P1",
+      "landing_reason": "数据层架构我们已更成熟, 仅文件组织粒度值得借鉴, 不影响推股准确度。"
+    },
+    {
+      "name": "waditu/tushare",
+      "stars": 15447,
+      "url": "https://github.com/waditu/tushare",
+      "category": "data",
+      "verified": "star 来自 api.github.com (2026-10-13); 默认分支 master",
+      "architecture": {
+        "layers": [
+          "Tushare Pro API: pro_api(token) 对象, 统一 query 入口",
+          "积分/限流: 不同接口按积分分级, 批量接口 (pro_bar/ daily) 一次返回多标的",
+          "数据模型: ts_code 标准化 (000001.SZ), 字段中文化与英文双轨",
+          "本地缓存: set_token 后自动在本地维护更新 (依赖 tushare 的 update 机制)"
+        ],
+        "patterns": [
+          "统一入口 pro_api(token).<接口>(**params) — 比 akshare 的函数平铺更内聚",
+          "标准化主键 ts_code 带交易所后缀, 避免裸码歧义 (我们 engine_v5 里 _code_match 做 sh/sz/bj 前缀剥离就是为了解决同一问题)",
+          "限流内置: 每分钟调用上限, 超限返回等待提示而非报错",
+          "积分制激励数据质量而非接口数量"
+        ],
+        "data_flow": "pro_api → HTTP POST (json body) → 服务端鉴权+积分扣减 → 返回 records → DataFrame; 客户端无解析逻辑, 全在服务端"
+      },
+      "key_algorithms": [
+        {
+          "name": "pro_bar 批量多标的取数",
+          "formula": "一次请求 N 个 ts_code, 返回长表 (ts_code, trade_date, open, high, low, close, vol, amount)",
+          "code_sketch": "df = pro.daily(ts_code='600000.SH,000001.SZ', start_date='20200101', end_date='20201018')",
+          "params": {
+            "批量上限": "依积分而定",
+            "复权": "adj 参数 qfq/hfq/None"
+          }
+        },
+        {
+          "name": "积分制限流",
+          "formula": "每分钟调用数上限 = f(积分); 超限阻塞而非失败",
+          "code_sketch": "# 客户端侧等价实现: 令牌桶\nclass RateLimiter:\n    def __init__(self, per_minute):\n        self.capacity = per_minute\n        self.tokens = per_minute\n        self.ts = time.time()\n    def acquire(self):\n        now = time.time()\n        self.tokens = min(self.capacity, self.tokens + (now-self.ts)*self.capacity/60)\n        self.ts = now\n        if self.tokens < 1:\n            time.sleep((1-self.tokens)*60/self.capacity)\n            self.tokens = 0\n        else:\n            self.tokens -= 1",
+          "params": {
+            "容量": "每分钟调用数",
+            "补充速率": "capacity/60 per second"
+          }
+        }
+      ],
+      "gap_vs_ours": "我们无统一限流器 — 各采集脚本各写 sleep, 频率策略不一致 (违反 AGENTS.md 的 1-2 QPS 约定时无法自动拦截)。tushare 的积分制/令牌桶可直接落地为 scripts/rate_limit.py, 让所有采集走同一个限流门。这是数据侧最实用的改进。",
+      "landing_priority": "P0",
+      "landing_reason": "统一限流是硬需求: 我们的探测节流只在源级 (24h), 缺秒级 QPS 控制, WAF 风险实际存在。"
+    },
+    {
+      "name": "shidenggui/easyquotation",
+      "stars": 5462,
+      "url": "https://github.com/shidenggui/easyquotation",
+      "category": "data",
+      "verified": "star 来自 api.github.com (2026-10-13); 默认分支 master",
+      "architecture": {
+        "layers": [
+          "BaseQuotation 抽象基类: stock_api 属性 + gen_stock_list 分批 + _fetch_stock_data 线程池并发 + format_response_data 子类实现",
+          "源子类: Sina / Tencent / Jsl(集思录) / Boc / DayKline / HKQuote — 每个只写 format_response_data 与 stock_api",
+          "分批策略: max_num 类属性 (腾讯 60, 新浪 800), 超长自动切片",
+          "代码补全: helpers.get_stock_type(code) 自动加 sh/sz/bj 前缀",
+          "stock_codes.conf 静态代码表 (101KB) — 无网络依赖的全市场代码清单"
+        ],
+        "patterns": [
+          "模板方法模式: 基类定流程 (fetch→format), 子类只填差异",
+          "类属性做配置 (max_num), 而非构造参数 — 简单直接",
+          "线程池并发取分批请求 (ThreadPool(len(stock_list)))",
+          "无重试/无故障转移 — 失败了调用方自己处理 (与 akshare 同哲学)"
+        ],
+        "data_flow": "use('tencent') → 实例化时读 stock_codes.conf → real(codes) → gen_stock_list 切片 → ThreadPool 并发 GET → format_response_data 按 ~ 分隔解析 → dict"
+      },
+      "key_algorithms": [
+        {
+          "name": "腾讯行情 ~ 分隔字段解析",
+          "formula": "v_sh600000=\"1~浦发银行~600000~10.51~...~\"; split(';') 再 split('~'), 固定 49+ 字段索引",
+          "code_sketch": "stock_detail.split('~')\n# stock[0]=v_sh600000 (代码), [1]=名称, [3]=现价, [4]=昨收, [5]=开盘,\n# [6]=成交量(手), [9..19]=买1-5价量, [20..28]=卖1-5价量, [30]=时间,\n# [31]=涨跌额, [32]=涨跌幅, [33]=最高, [34]=最低, [36]=成交量(股),\n# [37]=成交额, [38]=换手率, [39]=PE, [44]=流通市值, [45]=总市值, [46]=PB,\n# [47]=涨停价, [48]=跌停价, [49]=量比",
+          "params": {
+            "max_num": 60,
+            "字段数": "49-53 (不同证券略有差异, 用 _safe_acquire_float 容错)"
+          }
+        },
+        {
+          "name": "代码前缀推断",
+          "formula": "60xxxx→sh, 00xxxx/30xxxx→sz, 8xxxx/4xxxx→bj, 5xxxx→sh(基金/ETF)",
+          "code_sketch": "def get_stock_type(stock_code):\n    if stock_code.startswith(('6', '5', '9')): return 'sh'\n    if stock_code.startswith(('0', '3', '2', '1')): return 'sz'\n    if stock_code.startswith(('4', '8')): return 'bj'",
+          "params": {}
+        },
+        {
+          "name": "分批切片取数",
+          "formula": "chunks = [codes[i:i+max_num] for i in range(0, len(codes), max_num)]",
+          "code_sketch": "for i in range(0, len(stock_codes), self.max_num):\n    request_list = ','.join(stock_with_exchange_list[i:i+self.max_num])\n    stock_list.append(request_list)",
+          "params": {
+            "腾讯": 60,
+            "新浪": 800
+          }
+        }
+      ],
+      "gap_vs_ours": "我们的 query_api.py 已有腾讯/新浪源与代码归一化 (_code_match), 但缺『单次请求批量 N 只』的分批策略说明与 60/800 上限常量化; 另外 easyquotation 的 stock_codes.conf 静态全市场清单可作 offline fallback — 我们 collect_market_extras 若 push2his clist 被 WAF 拦, 无本地代码表兜底。可借鉴: 把 max_num 上限与代码前缀规则提为 registry 字段。",
+      "landing_priority": "P1",
+      "landing_reason": "分批上限与代码前缀规则细节能降低 WAF 触发率, 但我们的源已实测可用, 属稳健性增强。"
+    },
+    {
+      "name": "shidenggui/easytrader",
+      "stars": 10236,
+      "url": "https://github.com/shidenggui/easytrader",
+      "category": "engine",
+      "verified": "star 来自 api.github.com (2026-10-13); 默认分支 master",
+      "architecture": {
+        "layers": [
+          "客户端层: ClientTrader (同花顺通用) + 各券商子类 (yh/ht/wk/htzq/gj/gf) + XueQiuTrader + MiniqmtTrader",
+          "策略层: IRefreshStrategy 抽象 (Switch 快捷键刷新 / Toolbar 按钮刷新) — 客户端刷新方式可插拔",
+          "跟单层: BaseFollower 抽象 (JoinQuant/RiceQuant/XueQiu Follower), 轮询调仓记录 → 交易队列 → 执行线程",
+          "工具层: utils/captcha, utils/win_gui, utils/perf (装饰器计时)"
+        ],
+        "patterns": [
+          "策略模式: IRefreshStrategy 把『怎么刷新行情』与『客户端是谁』解耦",
+          "工厂函数: easytrader.use(broker, **kwargs) 按名返回实例, 类名中文别名映射",
+          "生产者-消费者: trade_queue (queue.Queue) + start_trader_thread 解耦『信号到达』与『下单执行』",
+          "指令幂等: expired_cmds 集合 + pickle 持久化, 防重启后重复下单 (generate_expired_cmd_key 六元组)",
+          "指令过期: trade_cmd_expire_seconds (默认 120s), 超时指令丢弃并 warning",
+          "滑点参数: slippage ∈ [0,1], 买价×(1+s), 卖价×(1-s)",
+          "先卖后买: order_transactions_sell_first 重排调仓顺序, 避免资金不足"
+        ],
+        "data_flow": "follower 轮询平台调仓 API → extract_transactions → project_transactions 统一格式 → order_transactions_sell_first → trade_queue → trade_worker 取指令 → 校验(过期/价格/数量) → 加滑点 → user.buy/sell"
+      },
+      "key_algorithms": [
+        {
+          "name": "指令幂等键 (防重复下单)",
+          "formula": "key = f\"{strategy_name}_{code}_{action}_{amount}_{price}_{datetime}\"; key in expired_cmds → 跳过",
+          "code_sketch": "CMD_CACHE_FILE = 'cmd_cache.pk'\ndef is_cmd_expired(self, cmd):\n    return self.generate_expired_cmd_key(cmd) in self.expired_cmds\ndef add_cmd_to_expired_cmds(self, cmd):\n    self.expired_cmds.add(self.generate_expired_cmd_key(cmd))\n    with open(self.CMD_CACHE_FILE, 'wb') as f:\n        pickle.dump(self.expired_cmds, f)",
+          "params": {
+            "过期时间": "120s",
+            "持久化": "pickle"
+          }
+        },
+        {
+          "name": "滑点价格调整",
+          "formula": "actual_price = price * (1 + slippage) for buy; price * (1 - slippage) for sell",
+          "code_sketch": "def _calculate_price_by_slippage(self, action, price):\n    if action == 'buy':   return price * (1 + self.slippage)\n    if action == 'sell':  return price * (1 - self.slippage)\n    return price",
+          "params": {
+            "滑点范围": "[0,1], 0.05 = 5%"
+          }
+        },
+        {
+          "name": "先卖后买排序",
+          "formula": "sell 指令 insert(0) (置顶), buy 指令 append",
+          "code_sketch": "def order_transactions_sell_first(self, transactions):\n    out = []\n    for t in transactions:\n        if t['action'] == 'sell': out.insert(0, t)\n        else: out.append(t)\n    return out",
+          "params": {}
+        }
+      ],
+      "gap_vs_ours": "我们完全不做实盘交易 (只出推股), 但 easytrader 的三个机制可直接搬到我们的『推股→复盘』链路: (1) 指令幂等键 → 防止同一天同一股票重复入 pick_tracker; (2) 滑点 → kline_sim/winrate_matrix 回测目前按收盘价成交, 加滑点后才接近真实; (3) 先卖后买 → 不影响我们, 但『指令过期』思路可用于 stale 数据判定 (推股信号超过 N 分钟不采信)。",
+      "landing_priority": "P1",
+      "landing_reason": "滑点与幂等键直接提升回测/复盘的真实性, 属于准确度相关改进。"
+    },
+    {
+      "name": "zvtvz/zvt",
+      "stars": 4312,
+      "url": "https://github.com/zvtvz/zvt",
+      "category": "factor",
+      "verified": "star 来自 api.github.com (2026-10-13); 默认分支 master; 注意原 zvtvzvt/zvt 404, 实际 owner 是 zvtvz",
+      "architecture": {
+        "layers": [
+          "数据层 (domain): Stock / Stock1dKdata / Index1dKdata / FinanceFactor 等 schema 类, 每类带 provider 字段",
+          "采集层 (recorder): 每数据源一个 Recorder 类, 定时跑, 写入 schema",
+          "因子层 (factors): Factor 基类 = DataReader + EntityStateService + DataListener (增量计算)",
+          "因子三件套: Transformer (向量化全量转换) / Accumulator (增量累加, 带 acc_window) / Scorer (打分)",
+          "选择层: TargetSelector 聚合多因子 → filter_result (and/or) + score_result (均值) → open_long/short/keep 三态",
+          "交易层 (trader): 基于 target 调仓",
+          "存储: SQLAlchemy + 多后端 (mysql/sqlite), 因子结果可持久化 (factor_schema)"
+        ],
+        "patterns": [
+          "FactorMeta 元类自动注册: 所有 Factor 子类进 factor_cls_registry, 可按名查找",
+          "Transformer 优先于 transform_one: transform 做 groupby 向量化, transform_one 单标的兜底 (性能优先)",
+          "因子结果三态: positive (开多) / negative (开空) / keep (持仓保持) — 与我们的 ban_pick 负向过滤同构",
+          "select_mode: condition_and / condition_or 多因子聚合方式可配",
+          "阈值分位: long_threshold=0.8 / short_threshold=0.2 (分位数而非绝对分)",
+          "keep_window 增量窗口: 只算最近 N 根, 不重算全史"
+        ],
+        "data_flow": "Recorder 写 Kdata → Factor(data_schema).move_on(to_timestamp) 增量读新 bar → transformer 计算指标列 → compute_result 得 filter/score → TargetSelector.run 聚合 → get_targets(timestamp) → trader 调仓"
+      },
+      "key_algorithms": [
+        {
+          "name": "多因子聚合 (filter + score 双轨)",
+          "formula": "filter_result = AND/OR(各因子 filter_result); score_result = mean(各因子 score_result)",
+          "code_sketch": "if self.select_mode == SelectMode.condition_and:\n    self.filter_result = list(accumulate(filters, func=operator.__and__))[-1]\nelse:\n    self.filter_result = list(accumulate(filters, func=operator.__or__))[-1]\nif scores:\n    self.score_result = list(accumulate(scores, func=operator.__add__))[-1] / len(scores)",
+          "params": {
+            "select_mode": "condition_and | condition_or",
+            "long_threshold": 0.8,
+            "short_threshold": 0.2
+          }
+        },
+        {
+          "name": "分位数打分 (QuantileScorer)",
+          "formula": "score = 因子值在全市场当日分位中所处档位 (0, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0)",
+          "code_sketch": "class QuantileScorer(Scorer):\n    def __init__(self, score_levels=[0, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0]):\n        self.score_levels = score_levels\n    def score(self, input_df):\n        quantile_df = input_df.groupby(level=1).quantile(self.score_levels)\n        # 每个 timestamp 一份分位表, 因子值 >= 某档位即取该档位分",
+          "params": {
+            "档位": "[0,0.1,0.3,0.5,0.7,0.9,1.0]",
+            "分组": "按 timestamp (横截面)"
+          }
+        },
+        {
+          "name": "排名打分 (RankScorer)",
+          "formula": "score = 因子值在当日横截面上的 pct rank (ascending 可配)",
+          "code_sketch": "class RankScorer(Scorer):\n    def __init__(self, ascending=True): self.ascending = ascending\n    def score(self, input_df):\n        return input_df.groupby(level=1).rank(ascending=self.ascending, pct=True)",
+          "params": {
+            "ascending": "True=值大排前"
+          }
+        },
+        {
+          "name": "均线多头排列 (CrossMaFactor)",
+          "formula": "ma5 > ma10 > ma34 > ma55 > ma89 > ma144 > ma120 > ma250 全部成立",
+          "code_sketch": "cols = [f'ma{w}' for w in self.windows]  # windows=[5,10,34,55,89,144,120,250]\ns = factor_df[cols[0]] > factor_df[cols[1]]\nfor col in cols[2:]:\n    s = s & (factor_df[current_col] > factor_df[col]); current_col = col",
+          "params": {
+            "windows": [
+              5,
+              10,
+              34,
+              55,
+              89,
+              144,
+              120,
+              250
+            ]
+          }
+        },
+        {
+          "name": "突破后保持 N 日 (up_intervals ffill)",
+          "formula": "突破信号为 True 后, 在 up_intervals 个交易日内保持有效 (ffill limit=N)",
+          "code_sketch": "s[s == False] = None\ns = s.groupby(level=0).fillna(method='ffill', limit=self.up_intervals)\ns[s.isna()] = False",
+          "params": {
+            "up_intervals": 40,
+            "用途": "突破后回调仍算有效"
+          }
+        },
+        {
+          "name": "MACD 多头计数 (live_count)",
+          "formula": "live = sign(diff>dea); live_count = 连续同号天数; bull = (diff>0)&(dea>0)",
+          "code_sketch": "live = (diff > dea).apply(live_or_dead)\nbull = (diff > 0) & (dea > 0)\nlive_count = live * (live.groupby((live != live.shift()).cumsum()).cumcount() + 1)",
+          "params": {
+            "参数": "fast=12, slow=26, n=9"
+          }
+        },
+        {
+          "name": "VolumeUpMaFactor (均线+放量+流动性过滤)",
+          "formula": "(close 在 ma 上方且 < 1.1~1.15*ma) AND (volume > 2*vol_ma) AND (turnover > 3亿) AND (turnover_rate > 2%)",
+          "code_sketch": "filter_up = (close > ma) & (close < 1.15 * ma)\nfilter_vol = volume > 2 * vol_ma\nfilter_turnover = (turnover > 3e8) & (turnover_rate > 0.02)\ns = filter_up & filter_vol & filter_turnover\n# 然后 ffill(limit=up_intervals) 保持",
+          "params": {
+            "turnover_threshold": 300000000,
+            "turnover_rate_threshold": 0.02,
+            "vol 倍数": 2.0,
+            "up_intervals": 40
+          }
+        }
+      ],
+      "gap_vs_ours": "最大可借鉴点: (1) 横截面分位/排名打分 — 我们 engine_v5 的 score 是绝对分 (0-100), 无法回答『在全市场排第几』, 而 zvt 的 RankScorer/QuantileScorer 天然解决; 我们的 TSP v3 综合分若改用当日横截面分位, 排序稳定性与可解释性都提升。(2) 三态目标 (positive/negative/keep) — 我们 ban_pick 只有负向过滤, 缺 keep 态 (持仓观察), 导致每天全量重排。(3) 突破后保持 N 日 (up_intervals) — 我们 kline_sim 可加『信号有效期』避免同一信号反复触发。(4) MACD live_count 连续同号计数可作为强度因子。",
+      "landing_priority": "P0",
+      "landing_reason": "横截面分位打分是最能提升推股排序质量的单点改进, 直接决定 top-N 选谁。"
+    },
+    {
+      "name": "quantOS-org/JAQS",
+      "stars": 631,
+      "url": "https://github.com/quantOS-org/JAQS",
+      "category": "engine",
+      "verified": "star 来自 api.github.com (2026-10-13); 默认分支 master; joinquant/jaqs 已 404, 实际 owner 是 quantOS-org",
+      "architecture": {
+        "layers": [
+          "事件引擎 EventEngine: 私有 queue + 单线程消费者 + defaultdict(list) 处理器表 + 通用处理器列表",
+          "事件类型 EVENT_TYPE 枚举: TIMER/MARKET_DATA/ORDER_RSP/TRADE_IND/PLACE_ORDER/QUERY_*/GOAL_PORTFOLIO",
+          "数据层 DataView: 144KB 单文件, panel 化行情 (date x symbol 矩阵) + align 对齐 + continue_contract",
+          "策略层 strategy.py + portfoliomanager.py: 目标组合 GOAL_PORTFOLIO 驱动调仓",
+          "研究层 signaldigger: 信号分析 (IC / 分位收益 / 多空组合 / tear sheet)"
+        ],
+        "patterns": [
+          "事件驱动: 生产者 put(event) -> 消费者线程 dispatch 给该 type 的所有 handler",
+          "私有化封装: 队列/开关/线程/处理器表全部 __ 前缀, 防外部误改状态",
+          "register/unregister 幂等: handler 已在列表则不重复注册",
+          "面板数据对齐: signal/price/mask 三张同形矩阵, 逐格有效性掩码",
+          "前视偏差防护: signal.shift(1) 后再与 forward return 对齐"
+        ],
+        "data_flow": "market_data 事件 -> EventEngine.__process -> handler(event) -> strategy 生成 signal -> GOAL_PORTFOLIO -> portfoliomanager 下 PLACE_ORDER -> ORDER_RSP/TRADE_IND 回报更新持仓"
+      },
+      "key_algorithms": [
+        {
+          "name": "信号前视偏差防护 (shift 对齐)",
+          "formula": "signal = signal.shift(1); 若 forward=True 则 residual_ret.shift(-period) 取未来收益",
+          "code_sketch": "if forward:\n    residual_ret = residual_ret.shift(-self.period)\nelse:\n    signal = signal.shift(self.period)",
+          "params": {
+            "period": 5,
+            "forward": true
+          }
+        },
+        {
+          "name": "分位化 quantilize_without_nan",
+          "formula": "rank = argsort().argsort(); quantile = floor(rank / (count/n_quantiles)) + 1",
+          "code_sketch": "def quantilize_without_nan(mat, n_quantiles=5, axis=-1):\n    mask = pd.isnull(mat)\n    rank = mat.argsort(axis=axis).argsort(axis=axis)\n    count = np.sum(~mask, axis=axis)\n    divisor = count * 1. / n_quantiles\n    res = np.floor(rank / divisor) + 1.0\n    res[mask] = np.nan\n    return res",
+          "params": {
+            "n_quantiles": 5,
+            "axis": "横截面"
+          }
+        },
+        {
+          "name": "IC (信息系数) 及 IC 统计表",
+          "formula": "IC_t = spearman(signal_t, forward_return_t); IC_mean/std/t-stat(ttest_1samp)/skew/kurtosis; IR = IC_mean/IC_std",
+          "code_sketch": "def calc_signal_ic(signal_data):\n    return signal_data.groupby(['trade_date']).apply(\n        lambda df: scst.spearmanr(df['signal'], df['return'])[0])\n\ndef calc_ic_stats_table(ic_data):\n    t = pd.DataFrame()\n    t['IC Mean'] = ic_data.mean(); t['IC Std.'] = ic_data.std()\n    t_stat, p = scst.ttest_1samp(ic_data, 0)\n    t['t-stat(IC)'] = t_stat; t['p-value(IC)'] = p\n    t['Ann. IR'] = ic_data.mean() / ic_data.std()",
+          "params": {
+            "方法": "spearman (rank IC)",
+            "显著性": "t-test vs 0"
+          }
+        },
+        {
+          "name": "信号加权组合收益 (long_only / long_short)",
+          "formula": "long_only: w=(s+|s|)/2 再除 Σ|w| (gross leverage=1); long_short: w=s-mean(s) 再归一",
+          "code_sketch": "def calc_norm_weights(ser, method):\n    if method == 'long_only':  ser = (ser + ser.abs()) / 2.0\n    elif method == 'long_short': ser = ser - ser.mean()\n    return ser / ser.abs().sum()\nweighted = signal_data['return'].multiply(weights, axis=0)\nret = weighted.groupby(level='trade_date').sum()",
+          "params": {
+            "gross_leverage": 1.0
+          }
+        },
+        {
+          "name": "Top-Minus-Bottom 多空价差",
+          "formula": "tmb_ret = mean(ret | quantile==n_quantiles) - mean(ret | quantile==1)",
+          "code_sketch": "tmb = pfm.calc_return_diff_mean_std(\n    quantile_ret_stats[n_quantiles], quantile_ret_stats[1])",
+          "params": {
+            "n_quantiles": 5
+          }
+        },
+        {
+          "name": "停牌处理 (mask)",
+          "formula": "T 日停牌不用其 signal; T+d 停牌不算其 return; 用 mask 矩阵逐格剔除",
+          "code_sketch": "mask_all = np.logical_or(mask, np.logical_or(\n    residual_ret.isnull(), signal.isnull()))\nres = res.loc[~(mask_all.iloc[:, 0]), :]",
+          "params": {}
+        }
+      ],
+      "gap_vs_ours": "这是我们最缺的一块: 因子/信号有效性量化检验。reflect_engine 只统计指标投票方向命中率 (单指标胜率 + Wilson CI), 但缺 (1) 横截面 IC/ICIR (score 与未来收益的秩相关, 直接衡量排序能力); (2) 分位分组收益 (score 分 5 组看 top 组是否显著跑赢 bottom); (3) t 检验显著性。有了 IC/ICIR 才能回答『71 分比 55 分真的更好吗』。另外 JAQS 的 shift(1) 前视防护值得对照检查我们的 reflect (现用 pred_date 当天收盘作 entry, 若信号在收盘后生成则含前视, 需核实)。",
+      "landing_priority": "P0",
+      "landing_reason": "IC/ICIR + 分位分组是验证推股排序有效性的黄金标准, 目前我们完全没有。"
+    },
+    {
+      "name": "ricequant/rqalpha",
+      "stars": 6822,
+      "url": "https://github.com/ricequant/rqalpha",
+      "category": "backtest",
+      "verified": "star 来自 api.github.com (2026-10-13); 默认分支 master",
+      "architecture": {
+        "layers": [
+          "Strategy: 用户 init/handle_bar/handle_tick/before_trading/after_trading/open_auction 函数, 构造时按存在性注册到对应 EVENT",
+          "Executor: 遍历 event_source.events(start,end,frequency), _split_and_publish 把 BAR 拆成 PRE_BAR/BAR/POST_BAR",
+          "EventBus: add_listener/prepend_listener/publish_event; 系统监听器返回 True 可中断传递",
+          "Mod 系统: AbstractMod.start_up(env, mod_config)/tear_down(success, exception); load_mod() 工厂约定",
+          "数据层 bundle: daybar recorder + checker + automatic_update"
+        ],
+        "patterns": [
+          "事件三分割: 每阶段事件拆 pre/main/post, Mod 可插入任意一侧而不改策略代码",
+          "ExecutionContext + ModifyExceptionFromType: 用户异常与系统异常分类包装",
+          "run_when_strategy_not_hold 装饰器: 策略暂停时统一跳过用户回调",
+          "Mod 注册表: rqalpha mod enable/list, PyPI 包名约定 rqalpha-mod-xxx",
+          "register_api: Mod 可向框架注入新 API 函数",
+          "配置驱动: config.yml + extra.context_vars 传参, 命令行 --extra-vars JSON"
+        ],
+        "data_flow": "run(config) -> Executor.run(bar_dict) -> event_source 逐 bar 产 EVENT.BAR -> EventBus.publish -> Strategy.handle_bar(context, bar_dict) -> api.order_* -> 账户更新 -> after_trading/settlement"
+      },
+      "key_algorithms": [
+        {
+          "name": "事件三分割 (pre/main/post)",
+          "formula": "EVENT_SPLIT_MAP = {BAR: (PRE_BAR, BAR, POST_BAR), TICK: (...), SETTLEMENT: (...)}",
+          "code_sketch": "def _split_and_publish(self, event):\n    for event_type in self.EVENT_SPLIT_MAP[event.event_type]:\n        e = copy(event); e.event_type = event_type\n        self._env.event_bus.publish_event(e)",
+          "params": {
+            "事件": "BAR/TICK/SETTLEMENT/BEFORE_TRADING/AFTER_TRADING/OPEN_AUCTION"
+          }
+        },
+        {
+          "name": "Settlement 边界补齐",
+          "formula": "若本次事件 trading_dt 日期 != 上一个 before_trading 日期, 先把时间回退到 previous_trading_date 并发 SETTLEMENT",
+          "code_sketch": "def _ensure_before_trading(self, event):\n    if self._last_before_trading == event.trading_dt.date(): return True\n    if self._last_before_trading:\n        prev = data_proxy.get_previous_trading_date(event.trading_dt).date()\n        if self._env.trading_dt.date() != prev:\n            self._env.update_time(combine(prev, ct), combine(prev, tt))\n        self._split_and_publish(Event(EVENT.SETTLEMENT))",
+          "params": {}
+        },
+        {
+          "name": "并行参数扫描 (ProcessPoolExecutor)",
+          "formula": "每参数组合一个 config dict, executor.submit(run_bt, config), 结果 pkl 落盘后统一汇总排序",
+          "code_sketch": "with ProcessPoolExecutor(max_workers=cpu_count()) as ex:\n    for task in tasks: ex.submit(run_bt, task)\nresults_df = pd.DataFrame([read_pickle(n)['summary'] for n in glob('results/*.pkl')])\nresults_df.sort_values('sharpe', ascending=False)[:10]",
+          "params": {
+            "summary 字段": "annualized_returns / sharpe / max_drawdown"
+          }
+        }
+      ],
+      "gap_vs_ours": "我们的 kline_sim/optimizer 是单标的顺序循环, 无事件总线与 Mod 插槽; 但我们是离线批量扫全市场, 不需要实时事件循环。可借鉴: (1) pre/main/post 三分割 -> engine 可在打分前 (数据校验)/打分后 (过滤加权) 插钩子而不改 engine_v5.py; (2) ProcessPoolExecutor 并行扫描 -> optimizer.brute_force 目前单进程, 大网格很慢; (3) summary pkl 落盘再汇总 -> 我们 optimizer 只在内存返回 top_n, 参数扫描历史不可追溯。",
+      "landing_priority": "P1",
+      "landing_reason": "并行参数扫描与结果落盘能直接扩大 optimizer 搜索空间与可复现性。"
+    },
+    {
+      "name": "yutiansut/QUANTAXIS",
+      "stars": 11278,
+      "url": "https://github.com/yutiansut/QUANTAXIS",
+      "category": "engine",
+      "verified": "star 来自 api.github.com (2026-10-13); 默认分支 master; QUANTAXIS/QUANTAXIS 已迁到 yutiansut",
+      "architecture": {
+        "layers": [
+          "QAFetch: 每数据源一个 Fetcher (EastMoney/Baostock/Clickhouse/Tushare...)",
+          "QAData: base_datastruct (DataStruct 面板) + data_fq (复权) + data_resample (周/月/分钟重采样)",
+          "QAEngine: QAThreadEngine 任务引擎 + QAAsyncTask/QAAsyncThread + QAPubSub 生产者消费者",
+          "QAFactor: feature (单因子 calc -> [date, code, factor]) + featureAnalysis (IC/IR/tear sheet) + featurebacktest (分位选股回测)",
+          "QAMarket: QAOrder/QAPosition/market_preset (回测/实盘同一账户模型)",
+          "QIFI/QARSBridge: 标准账户协议 (回测与实盘账户结构一致, 可序列化)"
+        ],
+        "patterns": [
+          "因子标准接口: calc() 返回 [date, code, factor] 三列长表, 全部因子同构",
+          "因子元数据表: factormetadata (name/version/description/create/update) + ReplacingMergeTree 去重",
+          "回测账户与实盘账户同一 QIFI_Account 模型, model='BACKTEST' 切换",
+          "next_open 收益口径: 信号日次日开盘买入 (更真实), 而非收盘价",
+          "分位选股: 每日取因子值 > 全市场 quantile(0.998) 的股票",
+          "rolling sell: 持有 rolling 天后卖出 (固定持有期)"
+        ],
+        "data_flow": "QAFetch 写库 -> QAData 面板化 -> QAFactor.feature.calc() -> featurebacktest 按日取 buy_list (次日开盘价)/sell_list (N 日前信号) -> QIFI_Account.send_order/make_deal/on_price_change/settle"
+      },
+      "key_algorithms": [
+        {
+          "name": "因子标准接口 + 元数据注册",
+          "formula": "calc() -> DataFrame[date, code, factor]; 首次实例化自动 register 到 factormetadata",
+          "code_sketch": "class QASingleFactor_DailyBase:\n    def calc(self): raise NotImplementedError   # ['date','code','factor']\n    def update_to_database(self):\n        self.insert_data(self.calc()); self.update_metadb()",
+          "params": {
+            "表引擎": "ReplacingMergeTree ORDER BY (date, code)"
+          }
+        },
+        {
+          "name": "分位选股回测 (next_open + rolling sell)",
+          "formula": "buy_list(t) = {code: factor(t-1) > quantile(0.998)}; sell_list(t) = 持仓中 signal 日 = t-(rolling-1) 的; 成交价 = 次日 open / 第 N 日 close",
+          "code_sketch": "def slice_feature(self, data):\n    return data[data > data.quantile(self.quantile)].dropna()\nbuy = self.preload.loc[parse(get_last_day(date)).date()]\n# 买入次日 open: datacenter.selects(buylist, date, date).open\n# 卖出 N 日 close: closepanel.loc[date, selllist]\n# volume = int(0.01*cashpre/price)*100",
+          "params": {
+            "quantile": 0.998,
+            "rolling": 5,
+            "单票仓位": "总资金/rolling 再平分"
+          }
+        },
+        {
+          "name": "因子预处理四件套",
+          "formula": "fill_na (行业中位数) -> winsorize (5 MAD) -> neutralize (行业哑变量 + ln 市值回归取残差) -> standardize (z-score)",
+          "code_sketch": "dm = np.nanmedian(v, axis=0); dm1 = np.nanmedian(np.abs(v-dm), axis=0)\nv = np.where(v > dm+n*dm1, dm+n*dm1, v)\ndef neut(y, X, w=None):\n    return sm.WLS(y, sm.add_constant(X), weights=w).fit().resid",
+          "params": {
+            "winsorize": "5 倍 MAD",
+            "中性化变量": "industry dummy + ln(MKT_CAP_FLOAT)"
+          }
+        },
+        {
+          "name": "IC/IR 计算",
+          "formula": "ic(t) = spearman(factor(t), return(t+returnday)); ir = ic.rolling(20).mean()/ic.rolling(20).std()",
+          "code_sketch": "@property\ndef ic(self):\n    return self.concatRes.dropna().groupby(level=0).apply(\n        lambda x: x.corr('spearman').values[0, 1])\n@property\ndef ir(self):\n    return self.ic.rolling(20).apply(lambda x: x.mean()/x.std())\n# 收益口径: r = open.pct_change(day).shift(-day-1)",
+          "params": {
+            "returnday": 5,
+            "IR 窗口": 20
+          }
+        },
+        {
+          "name": "Hurst 指数 (R/S 分析)",
+          "formula": "按 2^i 等分序列, 每段算 R/S (累积偏离极差/标准差), log(R/S) 对 log(size) 拟合斜率 = H; H<0.5 均值回复, H=0.5 随机, H>0.5 趋势持续",
+          "code_sketch": "for i in range(exponent):\n    parts = 2**i; size = len(series)//parts\n    for x in range(parts):\n        seg = series[x*size:(x+1)*size]\n        dev = np.cumsum(seg - seg.mean())\n        rs[i] += (dev.max()-dev.min())/seg.std()\nslope, _ = np.polyfit(np.log10(sizeRange), np.log10(rsMean), 1)",
+          "params": {
+            "等分": "2^i"
+          }
+        }
+      ],
+      "gap_vs_ours": "三点高价值: (1) next_open 收益口径 - reflect_engine 用 pred_date 收盘价作 entry, 若预测在收盘后生成实际只能次日开盘买, 当前口径高估收益; (2) 因子预处理四件套 - factor_lib 因子直接打分, 未去极值/中性化/标准化, 量纲差异大的因子会主导加权; (3) 固定持有期 + 分位分层检验 - winrate_matrix 已按 1/3/5/10 日分组, 但缺按 score 分 5 层看层间收益差。",
+      "landing_priority": "P0",
+      "landing_reason": "next_open 口径修正直接影响胜率数字真实性, 因子预处理是打分公平性前提。"
+    },
+    {
+      "name": "ranaroussi/quantstats",
+      "stars": 7705,
+      "url": "https://github.com/ranaroussi/quantstats",
+      "category": "analysis",
+      "verified": "star 来自 api.github.com (2026-10-13); 默认分支 main; polakowo/quantstats 与 bdzholars/quantstats 均已 404, 真实 owner 是 ranaroussi",
+      "architecture": {
+        "layers": [
+          "stats.py (128KB): 全部绩效指标纯函数 (sharpe/sortino/cagr/calmar/ulcer/kelly/var/cvar...)",
+          "utils.py: _prepare_returns (去 inf/na, 复合/简单收益互转) + _prepare_prices",
+          "_plotting: matplotlib tear sheet (HTML 报告)",
+          "_montecarlo: 收益路径重排模拟 (bust/goal 概率)",
+          "reports.py: 一键 tear sheet 聚合"
+        ],
+        "patterns": [
+          "统一入口约定: 每指标函数签名 (returns, prepare_returns=True), 内部先规范化",
+          "rolling_ 前缀变体: rolling_sharpe/rolling_sortino 时序版本",
+          "smart_ 前缀: 加自相关惩罚 (autocorr_penalty) 的夏普",
+          "复合指标: cpc_index = profit_factor x win_rate x win_loss_ratio; common_sense_ratio = profit_factor x tail_ratio",
+          "phantom baseline: max_drawdown 在序列前插基线点, 避免首日下跌算不出回撤"
+        ],
+        "data_flow": "returns Series -> _prepare_returns -> 指标函数 -> float; rolling_ 变体 -> Series; reports 聚合成 HTML"
+      },
+      "key_algorithms": [
+        {
+          "name": "Sharpe (含自相关惩罚)",
+          "formula": "sharpe = mean(r) / (std(r) * autocorr_penalty(r)) * sqrt(periods)",
+          "code_sketch": "divisor = returns.std(ddof=1)\nif smart: divisor = divisor * autocorr_penalty(returns)\nres = returns.mean() / divisor\nreturn res * np.sqrt(periods) if annualize else res",
+          "params": {
+            "periods": 252,
+            "ddof": 1
+          }
+        },
+        {
+          "name": "Sortino (下行偏差)",
+          "formula": "downside = sqrt(Σ(r<0)² / count); sortino = mean(r)/downside * sqrt(periods); adjusted = sortino/sqrt(2)",
+          "code_sketch": "downside = np.sqrt((returns[returns < 0] ** 2).sum() / returns.count())\nres = returns.mean() / downside.replace(0, np.nan)\nreturn res * np.sqrt(periods)",
+          "params": {
+            "分母": "全样本数 (含正收益), 非仅负收益数"
+          }
+        },
+        {
+          "name": "CAGR (几何年化)",
+          "formula": "cagr = |total+1|^(periods/count) - 1; total<0 (亏光) 返回 NaN",
+          "code_sketch": "total = (1+returns).prod() - 1\nyears = returns.count() / periods\nwealth = np.asarray(total + 1.0)\nres = np.where(wealth < 0, np.nan, np.abs(wealth) ** (1.0/years) - 1)",
+          "params": {
+            "periods": 252,
+            "compounded": true
+          }
+        },
+        {
+          "name": "Kelly 仓位分数",
+          "formula": "f* = (b·p - q)/b, b=payoff_ratio (均盈/均亏), p=win_rate, q=1-p",
+          "code_sketch": "b = payoff_ratio(returns); p = win_rate(returns)\nreturn ((b * p) - (1 - p)) / b",
+          "params": {
+            "注意": "scale-invariant; 0.0.82 曾误用杠杆公式 (日收益下达 3716%), 0.0.84 已回退"
+          }
+        },
+        {
+          "name": "Ulcer Index / UPI",
+          "formula": "ulcer = sqrt(Σ dd² / (n-1)); upi = (comp(r) - rf) / ulcer",
+          "code_sketch": "dd = to_drawdown_series(returns)\nulcer = np.sqrt((dd**2).sum() / (len(returns)-1))\nupi = ((1+returns).prod()-1 - rf) / ulcer",
+          "params": {
+            "用途": "回撤深度+持续时长综合风险"
+          }
+        },
+        {
+          "name": "Profit Factor / Payoff / Win Rate",
+          "formula": "pf = Σ(r>=0)/|Σ(r<0)|; payoff = avg_win/|avg_loss|; win_rate = #(r>0)/#(r≠0)",
+          "code_sketch": "wins = returns[returns >= 0].sum(); losses = abs(returns[returns < 0].sum())\npf = wins / losses\n# win_rate 先 dropna 再剔 0 收益, 否则 NaN != 0 会混进分母",
+          "params": {
+            "confidence": 0.95
+          }
+        },
+        {
+          "name": "Monte Carlo 路径重排 (bust/goal 概率)",
+          "formula": "sims 条路径 = 原收益序列随机置换; cumulative = (1+r).cumprod()-1; bust_prob = #(min_dd < threshold)/sims",
+          "code_sketch": "rng = np.random.default_rng(seed)\nsim = np.empty((n, sims)); sim[:,0] = ret\nfor i in range(1, sims): sim[:,i] = rng.permutation(ret)\ncum = np.cumprod(1+sim, axis=0) - 1\n# 每路径 maxdd: running_max = (path+1).cummax(); dd = (path+1-running_max)/running_max",
+          "params": {
+            "sims": 1000,
+            "bust": -0.1,
+            "goal": 0.5
+          }
+        },
+        {
+          "name": "Risk of Ruin (赌徒破产)",
+          "formula": "ror = ((1-w)/(1+w))^n, w=win_rate, n=样本数",
+          "code_sketch": "w = win_rate(returns)\nreturn ((1 - w) / (1 + w)) ** returns.count()",
+          "params": {}
+        }
+      ],
+      "gap_vs_ours": "optimizer.backtest 只输出 pnl/sharpe/max_dd/win_rate/profit_dd/expectancy 六项, 缺 Sortino (下行风险, A 股跌得快更适用)、Calmar、Ulcer/UPI、Kelly 仓位、Profit Factor、VaR/CVaR、连续盈亏次数、Monte Carlo 破产概率。特别是 Kelly f* 可直接回答『该给推股组合配多少仓位』— 现在只有分数没有仓位建议。公式都是 10 行内纯函数, 落地成本极低。",
+      "landing_priority": "P0",
+      "landing_reason": "绩效指标补全 + Kelly 仓位建议是把推股分数变成可执行建议的最短路径。"
+    },
+    {
+      "name": "edtechre/pybroker",
+      "stars": 3611,
+      "url": "https://github.com/edtechre/pybroker",
+      "category": "backtest",
+      "verified": "star 来自 api.github.com (2026-10-13); 默认分支 master",
+      "architecture": {
+        "layers": [
+          "slippage.py: SlippageModel 抽象 + Fixed / Volatility(ATR) / Volume(参与率+平方冲击) 三种模型",
+          "eval.py: 全部 numba njit 指标 + BCa bootstrap 置信区间",
+          "model.py: ModelLoader (加载已训模型) + ModelTrainer (train_fn(symbol, train_data, test_data))",
+          "strategy.py: 策略执行",
+          "scope.py: ColumnScope/IndicatorScope — 因果读取 (必须带 end_index, 否则拿到未来数据)"
+        ],
+        "patterns": [
+          "滑点模型可插拔: apply_slippage(ctx) -> (shares, fill_price)",
+          "基点制: bps < 10000, buy×(1+bps/1e4), sell×(1-bps/1e4)",
+          "BCa bootstrap: 对 profit_factor / sharpe 给偏差校正加速置信区间 (2.5%/5%/10% 三档)",
+          "lookahead 保护: 训练集末尾持有 lookahead 根 bar 不用; scope 读取必须 end_index 界定",
+          "pooled vs per-symbol 训练: 多标的合并训练或每标的单独训"
+        ],
+        "data_flow": "strategy 注册 indicator/model -> 每 bar 取 scope 数据 (带 end_index) -> 模型 predict -> 下单 -> SlippageModel.apply_slippage 调整成交价与股数 -> eval 统计 + bootstrap CI"
+      },
+      "key_algorithms": [
+        {
+          "name": "固定基点滑点 (FixedSlippageModel)",
+          "formula": "buy_fill = price × (1 + bps/10000); sell_fill = price × (1 - bps/10000)",
+          "code_sketch": "factor = Decimal(str(bps)) / Decimal(10000)\nbuy_mult = 1 + factor; sell_mult = 1 - factor\n# bps 必须 < 10000, 否则卖价 <= 0",
+          "params": {
+            "bps 默认": 5,
+            "上限": "< 10000"
+          }
+        },
+        {
+          "name": "ATR 波动率滑点 (VolatilitySlippageModel)",
+          "formula": "adjustment = scale × ATR(atr_period); buy +adj, sell -adj; warmup 期 (end_index < atr_period+1) 不调整",
+          "code_sketch": "window = self.atr_period + 1   # 每根 true range 需前收\nif end_index < window: return shares, fill_price\nreturn adverse_price(side, fill_price, scale * atr)",
+          "params": {
+            "atr_period": 14,
+            "scale": 0.1
+          }
+        },
+        {
+          "name": "成交量参与率 + 平方冲击 (VolumeSlippageModel)",
+          "formula": "shares_capped = min(shares, volume_limit × bar_volume); impact = price_impact × (filled/bar_volume)²",
+          "code_sketch": "shares = min(shares, volume_limit_dec * volume)\nimpact = price_impact * (shares / volume) ** 2\nreturn shares, adverse_price(side, fill_price, impact * fill_price)",
+          "params": {
+            "price_impact": 0.1,
+            "volume_limit": 0.025
+          }
+        },
+        {
+          "name": "BCa bootstrap 置信区间",
+          "formula": "对统计量 fn 重采样 n_boot 次, 用偏差校正 z0 与加速因子 a 调分位点; profit_factor 先取 log 再 exp 回",
+          "code_sketch": "def bca_boot_conf(x, n_boot, fn):\n    if fn is profit_factor: return _bca_boot_conf_pf(x, n_boot, use_log=False)\n    if fn is sharpe_ratio: return _bca_boot_conf_sharpe(x, n_boot)\n    return _bca_boot_conf_generic(x, n_boot, fn)",
+          "params": {
+            "档位": "2.5% / 5% / 10%"
+          }
+        },
+        {
+          "name": "max_drawdown (现金口径)",
+          "formula": "cum = cumsum(changes); dd = max(cum) - cum 的极值; 返回负数",
+          "code_sketch": "cumulative = max_equity = dd = 0\nfor c in changes:\n    cumulative += c\n    if cumulative > max_equity: max_equity = cumulative\n    else: dd = max(dd, max_equity - cumulative)\nreturn -dd",
+          "params": {}
+        }
+      ],
+      "gap_vs_ours": "我们有 Wilson CI (胜率) 但无 bootstrap CI (收益类指标)。pybroker 三层滑点比 easytrader 单一 slippage 更细: ATR 滑点对 A 股实用 (涨跌停附近滑点剧增)。scope 的因果读取约束 (end_index) 是防前视的工程化手段, 我们 reflect 靠人工约定, 可改为强制参数。",
+      "landing_priority": "P1",
+      "landing_reason": "ATR 滑点与 bootstrap CI 让回测结论更可信, 属精度改进而非准确度瓶颈。"
+    },
+    {
+      "name": "myhhub/stock",
+      "stars": 14783,
+      "url": "https://github.com/myhhub/stock",
+      "category": "strategy",
+      "verified": "star 来自 api.github.com (2026-10-13); 默认分支 master",
+      "architecture": {
+        "layers": [
+          "core/crawling: 每数据源一个模块 (stock_hist_em / stock_fund_em / stock_lhb_em / stock_dzjy_em / stock_cpbd / stock_chip_race...)",
+          "core/kline: cyq (筹码分布) + indicator_web_dic",
+          "core/indicator: calculate_indicator.py (26KB 指标计算)",
+          "core/backtest: rate_stats (区间涨幅统计)",
+          "bin: run_job.sh / run_cron.sh / run_web.sh 定时调度 + Web 服务"
+        ],
+        "patterns": [
+          "单例代理: singleton_proxy.proxys() 统一管理代理配置",
+          "通达信 TQLEX 接口直调 (excalc.icfqs.com:7616, funcId 20, modname JJQC) 取竞价抢筹数据",
+          "筹码分布三角衰减模型",
+          "区间统计 get_rates: 从 start_date 起 threshold 根的累计涨跌幅序列"
+        ],
+        "data_flow": "crawling 模块采集 -> 本地存储 -> indicator/cyq 计算 -> 选股/回测 -> web 展示; cron 定时跑"
+      },
+      "key_algorithms": [
+        {
+          "name": "筹码分布 (CYQ) 三角衰减",
+          "formula": "每日筹码按换手率衰减 chips *= (1 - turnover_rate); 当日成交量按三角分布摊到价格档 (顶点=四价均价 avg, 向 high/low 线性衰减); 一字板用矩形 (面积为三角 2 倍)",
+          "code_sketch": "accuracy = max(0.01, (maxprice-minprice)/(factor-1))\navg = (open+close+high+low)/4\nturnover_rate = min(1, turnover/100)\nG = [factor-1 if high==low else 2/(high-low), int((avg-minprice)/accuracy)]\nfor n in range(len(x)): x[n] *= (1 - turnover_rate)\nif high == low:\n    x[G[1]] += G[0]*turnover_rate/2\nelse:\n    for j in range(L, H+1):\n        p = minprice + accuracy*j\n        if p <= avg: x[j] += (p-low)/(avg-low)*G[0]*turnover_rate\n        else:       x[j] += (high-p)/(high-avg)*G[0]*turnover_rate\n# 指标: benefit_part(获利盘) / avg_cost(50%分位成本) / percent_chips 90/70 集中度",
+          "params": {
+            "accuracy_factor": 150,
+            "range": 120,
+            "cyq_days": 210,
+            "集中度": "(hi-lo)/(hi+lo)"
+          }
+        },
+        {
+          "name": "通达信竞价抢筹 (JJQC)",
+          "formula": "POST http://excalc.icfqs.com:7616/TQLEX?Entry=HQServ.hq_nlp, body=[{funcId:20, offset:0, count:100, sort:1, period:0|1, modname:'JJQC'}]; period 0=早盘 1=尾盘; 抢筹占比 = 抢筹成交金额/开盘金额",
+          "code_sketch": "params = [{'funcId':20,'offset':0,'count':100,'sort':1,'period':0,'modname':'JJQC'}]\n# 返回: 代码/名称/昨收/今开/开盘金额/抢筹幅度/抢筹委托金额/抢筹成交金额/最新价/天/板\n# UA: TdxW",
+          "params": {
+            "sort": "1=委托金额,2=成交金额,3=开盘金额,4=幅度,5=占比"
+          }
+        }
+      ],
+      "gap_vs_ours": "我们已有 cyq.py (从 myhhub 移植过, 见文件头), 但量化差异明显: 原版用 turnover/100 作换手率衰减 (需 turnover 字段), 我们用 volume/volume.mean() 近似 — 放量日衰减过快。原版三指标 (获利盘/90%集中度/平均成本) 我们已算但未进 engine_v5 投票列表。新发现是竞价抢筹 JJQC 源: probe_log 未登记, 可作打板策略额外输入 (早盘抢筹占比高的涨停股次日溢价更明显 — 此为待验证假设)。",
+      "landing_priority": "P2",
+      "landing_reason": "cyq 已移植且换手率口径需数据源支持; JJQC 源未实测, 属探索性。"
+    },
+    {
+      "name": "henrylzl/Factor_analysis_system",
+      "stars": 24,
+      "url": "https://github.com/henrylzl/Factor_analysis_system",
+      "category": "factor",
+      "verified": "star 来自 api.github.com (2026-10-13); 默认分支 main; 低星但代码结构完整可参考",
+      "architecture": {
+        "layers": [
+          "raw_data_fetch.py: Tushare 取原始数据 (缓存 + 重试)",
+          "factor_generate.py: Data 类 (日期/频率/路径) + FactorGenerater (因子计算)",
+          "factor_preprocess.py: 清洗四件套 (fill_na/winsorize/neutralize/standardize)",
+          "single_factor_test.py: IC 检验 + 分层回测 + 回归 t 值",
+          "factor_synthesis.py: 多因子合成 + 正交化 + 指数增强"
+        ],
+        "patterns": [
+          "截面文件按月组织 (每月一个 csv, 行=股票, 列=因子 + 下期收益率)",
+          "info_cols 基准列与因子列分离 (code/name/industry/MKT_CAP_FLOAT/is_open1/PCT_CHG_NM)",
+          "行业哑变量 + ln 市值作控制变量的中性化",
+          "流通市值开根号作 WLS 回归权重",
+          "缺失率 > 30% 的因子直接弃用 (不填充)"
+        ],
+        "data_flow": "Tushare -> 月度截面 csv -> 预处理 -> 单因子检验 (IC/t 值/分层收益) -> 合成 -> 指数增强回测"
+      },
+      "key_algorithms": [
+        {
+          "name": "5 MAD 去极值",
+          "formula": "clip to [median - 5×MAD, median + 5×MAD], MAD = median(|x - median(x)|)",
+          "code_sketch": "dm = np.nanmedian(v, axis=0); dm1 = np.nanmedian(np.abs(v-dm), axis=0)\nv = np.where(v > dm+n*dm1, dm+n*dm1, np.where(v < dm-n*dm1, dm-n*dm1, v))",
+          "params": {
+            "n": 5
+          }
+        },
+        {
+          "name": "市值+行业中性化 (WLS 残差)",
+          "formula": "factor_resid = factor - X·β, X = [ln(流通市值), industry_dummies], WLS 权重 = sqrt(流通市值)",
+          "code_sketch": "lncap = np.log(datdf['MKT_CAP_FLOAT'])\nind = pd.get_dummies(datdf['industry_zx'], prefix='ind')\nX = pd.concat([lncap, ind], axis=1)\nresid = y - np.dot(X, sm.WLS(y, X, weights=np.sqrt(cap)).fit().coef_.T)",
+          "params": {
+            "权重": "sqrt(MKT_CAP_FLOAT)",
+            "行业": "中信一级 / 申万一级"
+          }
+        },
+        {
+          "name": "单因子检验汇总指标",
+          "formula": "|t| 均值 / |t|>2 概率 / 因子收益均值+标准差+t 值 / IC 均值+标准差+ICIR / IC>0 概率",
+          "code_sketch": "res['ICIR'] = np.mean(ics)/np.std(ics)\nres['|t|>2概率'] = len(ts[np.abs(ts)>2])/len(ts)\nres['因子收益t值'] = stats.ttest_1samp(frets, 0).statistic\nres['IC>0概率'] = len(ics[ics>0])/len(ics)",
+          "params": {
+            "频率": "月频 (12 截面/年)"
+          }
+        },
+        {
+          "name": "行业中位数填充",
+          "formula": "缺失且缺失率 ≤ 30% 的因子用同行业中位数填充; 仍缺失则该因子整列弃用",
+          "code_sketch": "med = datdf[[ind_col, fac]].groupby(ind_col).median().to_dict()[fac]\ndatdf.loc[isnull, fac] = datdf.loc[isnull, ind_col].map(med)",
+          "params": {
+            "缺失率阈值": 0.3
+          }
+        }
+      ],
+      "gap_vs_ours": "该仓库把 JAQS/QUANTAXIS 的因子检验方法落成可复现的 A 股实现 (中信行业 + 月频截面)。我们 engine_v5 投票权重等权或 optimizer 网格搜, 但从未做单因子 IC 检验来决定保留哪个指标。按 reflect_engine 数据, HullMA 的 bear_win_rate 81% 而 bull 仅 36% (n=341), 说明它在 A 股更适合做空向信号 — 这类结论应用 IC + t 值正式量化。",
+      "landing_priority": "P1",
+      "landing_reason": "因子预处理 + IC 检验流程可直接复用我们的 reflect 数据, 成本低。"
+    },
+    {
+      "name": "robertmartin8/MachineLearningStocks",
+      "stars": 1963,
+      "url": "https://github.com/robertmartin8/MachineLearningStocks",
+      "category": "ml",
+      "verified": "star 来自 api.github.com (2026-10-13); 默认分支 master",
+      "architecture": {
+        "layers": [
+          "parsing_keystats.py: 抓基本面 keystats (每股一行快照)",
+          "stock_prediction.py: RandomForest 二分类 (beat S&P by >10% -> 1)",
+          "backtesting.py: 按预测结果调仓验证",
+          "utils.py: data_string_to_float / status_calc (标签生成)"
+        ],
+        "patterns": [
+          "相对收益标签: y = 1 if (stock_change - benchmark_change) > OUTPERFORMANCE",
+          "RandomForestClassifier(n_estimators=100, random_state=0) — 无需特征缩放",
+          "train/forward 两套 csv (训练集 + 当前样本), 不用未来数据训练",
+          "特征即原始基本面字段 (features = columns[6:])"
+        ],
+        "data_flow": "keystats.csv (历史) -> 特征 + 相对收益标签 -> RF fit -> forward_sample.csv -> predict -> invest_list -> backtesting 验证"
+      },
+      "key_algorithms": [
+        {
+          "name": "相对收益标签 (超额收益分类)",
+          "formula": "y = 1 if (stock_p_change - benchmark_p_change) > OUTPERFORMANCE else 0",
+          "code_sketch": "def status_calc(stock_chg, bench_chg, outperformance):\n    return 1 if stock_chg - bench_chg > outperformance else 0",
+          "params": {
+            "OUTPERFORMANCE": 10
+          }
+        },
+        {
+          "name": "时序交叉验证 (sklearn TimeSeriesSplit)",
+          "formula": "n_splits 折, 每折 train=过去 test=未来, 不打乱 (shuffle=False)",
+          "code_sketch": "from sklearn.model_selection import TimeSeriesSplit\ntscv = TimeSeriesSplit(n_splits=5)\nfor tr, te in tscv.split(X):\n    clf.fit(X[tr], y[tr]); clf.score(X[te], y[te])",
+          "params": {
+            "n_splits": 5,
+            "关键": "绝不用 KFold (会泄漏未来)"
+          }
+        },
+        {
+          "name": "滚动训练 (walk-forward ML)",
+          "formula": "每步用最近 train_size 根训练, 预测下一根, 窗口前移; 避免全样本训练导致分布漂移",
+          "code_sketch": "for i in range(train_size, len(X)):\n    clf.fit(X[i-train_size:i], y[i-train_size:i])\n    pred[i] = clf.predict(X[i:i+1])[0]",
+          "params": {
+            "train_size": ">= 250 (一年)"
+          }
+        }
+      ],
+      "gap_vs_ours": "我们无 ML 层 — 全部是指标投票 + 权重搜索。可低成本借鉴: (1) 相对收益标签 — reflect 胜率是绝对涨跌, 但 A 股牛熊差异大, 跑赢指数才是真 alpha; 用 (个股收益 - 指数收益) 作标签更公平。(2) TimeSeriesSplit — optimizer.walk_forward 已实现类似逻辑。(3) RandomForest 可直接跑在 factor_lib 因子上做对照实验, 看 ML 是否胜过等权共振。",
+      "landing_priority": "P2",
+      "landing_reason": "ML 需更多样本与防泄漏工程, 指标共振已够用, 优先级低。"
+    }
+  ],
+  "recommendations": [
+    {
+      "title": "统一限流门 (令牌桶), 所有采集脚本共用",
+      "from_repos": [
+        "waditu/tushare"
+      ],
+      "action": "新建 scripts/rate_limit.py, 实现 RateLimiter(per_minute) 令牌桶 + @rate_limited 装饰器; 把 collect_*.py 里散落的 time.sleep 替换为统一门, 每源在 sources_registry.py 里声明 qps 上限。",
+      "priority": "P0"
+    },
+    {
+      "title": "推股打分改为横截面分位/排名",
+      "from_repos": [
+        "zvtvz/zvt"
+      ],
+      "action": "在 engine_v5/ai_screener 输出里增加 rank_pct 字段 (当日全市场 score 的 pct rank), top-N 改按 rank_pct 取; 保留原绝对分做展示。QuantileScorer 的 7 档位可用于分层展示 (强/中/弱)。",
+      "priority": "P0"
+    },
+    {
+      "title": "回测加滑点与信号有效期",
+      "from_repos": [
+        "shidenggui/easytrader",
+        "zvtvz/zvt"
+      ],
+      "action": "kline_sim / optimizer.backtest 增加 slippage_pct 参数 (默认 0.05%), 买入价×(1+s)、卖出价×(1-s); 信号加 valid_bars=up_intervals (默认 5) 有效期, 过期不重复触发。",
+      "priority": "P1"
+    },
+    {
+      "title": "IC / ICIR / 分位分层检验 (信号有效性量化)",
+      "from_repos": [
+        "quantOS-org/JAQS",
+        "yutiansut/QUANTAXIS",
+        "henrylzl/Factor_analysis_system"
+      ],
+      "action": "新建 scripts/factor_eval.py: 输入 engine_v5 历史 top 预测 (含 score) + K线, 按 pred_date 横截面算 spearman(score, 未来 N 日收益) 得日 IC 序列, 输出 IC_mean/IC_std/ICIR/t-stat/p-value; 同时按 score 分 5 组算组均收益与 top-minus-bottom 价差。无前视: score 用 pred_date 当时值, 收益用之后 N 日。",
+      "priority": "P0"
+    },
+    {
+      "title": "绩效指标补全 + Kelly 仓位建议",
+      "from_repos": [
+        "ranaroussi/quantstats"
+      ],
+      "action": "在 optimizer/kline_sim 输出中增加 sortino/calmar/ulcer/upi/profit_factor/payoff_ratio/kelly_f/var95/cvar95/连续盈亏/montecarlo_bust_prob; 并基于 Kelly f* 给出建议仓位 (建议保守取 f*/2), 写入推股 JSON 让页面展示。",
+      "priority": "P0"
+    },
+    {
+      "title": "回测口径修正: next_open + 滑点 + 信号有效期",
+      "from_repos": [
+        "yutiansut/QUANTAXIS",
+        "edtechre/pybroker",
+        "shidenggui/easytrader"
+      ],
+      "action": "reflect_engine 的 entry 从 pred_date 收盘改为次日开盘 (next_open); kline_sim/optimizer.backtest 增加 slippage_bps (默认 5) 与 ATR 滑点选项; 信号加 valid_bars (默认 5) 有效期, 过期不重复触发。",
+      "priority": "P0"
+    },
+    {
+      "title": "因子预处理四件套后再打分",
+      "from_repos": [
+        "yutiansut/QUANTAXIS",
+        "henrylzl/Factor_analysis_system"
+      ],
+      "action": "在 factor_lib 输出后加 preprocess(df): MAD 去极值 (n=5) -> 行业中性化 (若有行业标签, WLS 残差) -> z-score 标准化; 处理后再喂 engine_v5 加权, 消除量纲差异导致的因子主导。",
+      "priority": "P1"
+    },
+    {
+      "title": "横截面分位展示 + 三态目标 (positive/negative/keep)",
+      "from_repos": [
+        "zvtvz/zvt",
+        "quantOS-org/JAQS"
+      ],
+      "action": "engine_v5 输出增加 rank_pct (当日全市场 score 的 pct rank) 与 5 档分层标签 (强/中强/中/中弱/弱); 引入 keep 态: 已在池中且分数未掉出阈值的标记 keep, 不再每日全量重排。",
+      "priority": "P1"
+    },
+    {
+      "title": "并行参数扫描 + 结果落盘",
+      "from_repos": [
+        "ricequant/rqalpha"
+      ],
+      "action": "optimizer.brute_force 改 ProcessPoolExecutor 并行, 每次回测结果写 data/optimizer_runs/<ts>_<hash>.json, 便于复现与横向对比; 与现有 walk_forward 共用结果目录。",
+      "priority": "P1"
+    },
+    {
+      "title": "推股打分改相对收益 (跑赢指数) 口径",
+      "from_repos": [
+        "robertmartin8/MachineLearningStocks"
+      ],
+      "action": "reflect_engine 增加 excess_return = 个股 N 日收益 - 指数 (000001/000300) N 日收益 的统计列; 胜率同时报绝对与超额两种口径, 页面标注。牛熊切换时超额口径更稳定。",
+      "priority": "P1"
+    },
+    {
+      "title": "bootstrap 置信区间替代/补充 Wilson",
+      "from_repos": [
+        "edtechre/pybroker"
+      ],
+      "action": "对收益类指标 (profit_factor/sharpe) 用 BCa bootstrap (n_boot=1000) 给 5%/10% 置信区间; Wilson 保留用于二值胜率。两者都输出, 让用户看到指标不确定性。",
+      "priority": "P2"
+    }
+  ],
+  "repos_count": 13,
+  "last_update": "batch2 (JAQS/rqalpha/QUANTAXIS/quantstats/pybroker/myhhub-stock/Factor_analysis_system/MachineLearningStocks)"
+}

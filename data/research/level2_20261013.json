@@ -1,0 +1,656 @@
+{
+ "timestamp": "2026-10-14T00:19:12+08:00",
+ "source": "level2_reverse",
+ "findings": [
+  {
+   "id": "em_push2delay_details_tick",
+   "name": "东财逐笔成交明细 (3秒快照级, push2delay 域)",
+   "domain": "push2delay",
+   "url": "https://push2delay.eastmoney.com/api/qt/stock/details/get?secid=1.600519&fields1=f1,f2,f3,f4,f5,f6&fields2=f51,f52,f53,f54,f55,f56,f57,f58&pos=-30&ut=7eea3edcaed734bea9cbfc24409ed989&fltt=2",
+   "auth": "none (Referer: quote.eastmoney.com)",
+   "fields": {
+    "f51": "成交时间 HH:MM:SS (3秒聚合快照)",
+    "f52": "成交价",
+    "f53": "该3秒内成交笔数",
+    "f54": "该3秒内成交量(手)",
+    "f55": "买卖方向 1=主买/2=主卖",
+    "f56-f58": "\\u0000 占位/0 占位 (实测无内容)"
+   },
+   "freq": "realtime (3s 快照, 非逐笔原始)",
+   "status": "ok",
+   "reproduce": {
+    "curl": "curl -s 'https://push2delay.eastmoney.com/api/qt/stock/details/get?secid=1.600519&fields1=f1,f2,f3,f4,f5,f6&fields2=f51,f52,f53,f54,f55,f56,f57,f58&pos=-30&ut=7eea3edcaed734bea9cbfc24409ed989&fltt=2' -H 'Referer: https://quote.eastmoney.com/'",
+    "python": "import requests; r=requests.get('https://push2delay.eastmoney.com/api/qt/stock/details/get', params={'secid':'1.600519','fields1':'f1,f2,f3,f4,f5,f6','fields2':'f51,f52,f53,f54,f55,f56,f57,f58','pos':-30,'ut':'7eea3edcaed734bea9cbfc24409ed989','fltt':2}, headers={'Referer':'https://quote.eastmoney.com/'}, timeout=15); d=r.json()['data']['details']"
+   },
+   "evidence": {
+    "http_code": 200,
+    "sample": "{\"code\":\"600519\",\"market\":1,\"decimal\":2,\"prePrice\":1288.0,\"details\":[\"14:56:02,1271.62,12,12,1,\\u0000,0\",\"14:56:08,1271.66,9,8,2,\\u0000,0\",\"15:00:02,1274.89,814,234,1,\\u0000,0\"]}",
+    "probe_time": "2026-10-13T23:20:00+08:00"
+   },
+   "notes": "pos 为负=取最近 N 条; pos=-30 实测拿 30 条, 从最新往前。实测容器 IP 对 push2delay 间歇 reset (~30% 失败率), 重试即可。这是 3 秒聚合快照而非 Level2 逐笔原文; 收盘后含 15:00-15:30 盘后固定价格成交。push2his 同路径被 reset (WAF 域分级), 只能用 push2delay。",
+   "degrade_to": [
+    "tencent_tick_detail",
+    "sina_translist_v2"
+   ]
+  },
+  {
+   "id": "em_push2delay_fflow_kline",
+   "name": "东财历史资金流 (分时/日/周/月, 五档资金)",
+   "domain": "push2delay",
+   "url": "https://push2delay.eastmoney.com/api/qt/stock/fflow/kline/get?secid=1.600519&fields1=f1,f2,f3,f7&fields2=f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61,f62,f63,f64,f65&klt=101&lmt=5",
+   "auth": "none (Referer: quote.eastmoney.com)",
+   "fields": {
+    "f51": "日期 YYYY-MM-DD",
+    "f52": "主力净流入(元)",
+    "f53": "小单净流入(元)",
+    "f54": "中单净流入(元)",
+    "f55": "大单净流入(元)",
+    "f56": "超大单净流入(元)",
+    "f57": "收盘价(元)",
+    "f58": "涨跌幅(%)",
+    "f59-f65": "fltt=2 时为空/备用; 历史 kline 里 f59=名称占位"
+   },
+   "freq": "minute (klt=1) | daily (klt=101)",
+   "status": "ok",
+   "reproduce": {
+    "curl": "curl -s 'https://push2delay.eastmoney.com/api/qt/stock/fflow/kline/get?secid=1.600519&fields1=f1,f2,f3,f7&fields2=f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61,f62,f63,f64,f65&klt=101&lmt=5' -H 'Referer: https://quote.eastmoney.com/'",
+    "python": "import requests; r=requests.get('https://push2delay.eastmoney.com/api/qt/stock/fflow/kline/get', params={'secid':'1.600519','fields1':'f1,f2,f3,f7','fields2':'f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61,f62,f63,f64,f65','klt':101,'lmt':5}, headers={'Referer':'https://quote.eastmoney.com/'}, timeout=15); k=r.json()['data']['klines']"
+   },
+   "evidence": {
+    "http_code": 200,
+    "sample": "klines: [\"2026-10-13,50401248.0,-140533.0,-50260720.0,69189776.0,-18788528.0\",\"2026-09-30,533565520.0,-539065.0,-533026464.0,121427904.0,412137616.0\"]; push2his 域同接口返回更长历史 (200+)",
+    "probe_time": "2026-10-13T23:22:00+08:00"
+   },
+   "notes": "单位是元(原值, 未缩放)。实测 2026-10-13 茅台主力净流入 5040万(合 f62=2 的方向), 与 stock/get 的 f62 一致。klt 可选 1(分时)/101(日)/102(周)/103(月)。push2his 域同接口可用且历史更长, push2delay 域同接口可用但 lmt 上限受域限制。",
+   "degrade_to": []
+  },
+  {
+   "id": "em_push2delay_stock_get_flow",
+   "name": "东财个股实时快照 (盘口五档/资金流/市值/换手, fltt=2)",
+   "domain": "push2delay",
+   "url": "https://push2delay.eastmoney.com/api/qt/stock/get?secid=1.600519&fltt=2&invt=2&fields=f43,f44,f45,f46,f47,f48,f49,f50,f51,f52,f57,f58,f60,f62,f71,f78,f84,f85,f86,f92,f116,f117,f119,f120,f121,f122,f127,f135,f136,f137,f138,f139,f140,f141,f142,f143,f144,f145,f146,f147,f148,f149,f152,f153,f154,f160,f161,f162,f167,f168,f169,f170,f171,f177,f183,f184,f185,f186,f187,f188,f189,f190,f191,f192,f193,f194,f195,f196,f197,f198,f199",
+   "auth": "none (Referer: quote.eastmoney.com)",
+   "fields": {
+    "f43": "最新价",
+    "f44": "最高",
+    "f45": "最低",
+    "f46": "今开",
+    "f47": "成交量(手)",
+    "f48": "成交额(元)",
+    "f49": "外盘(手)",
+    "f50": "内盘(手)",
+    "f51": "外盘/内盘之比(%)",
+    "f52": "内盘/外盘之比(%)",
+    "f57": "代码",
+    "f58": "名称",
+    "f60": "昨收",
+    "f62": "主力净流入(元)",
+    "f71": "均价",
+    "f78": "委比(%)",
+    "f84": "流通股本",
+    "f85": "流通股",
+    "f86": "时间戳",
+    "f92": "每股净资产",
+    "f116": "总市值(元)",
+    "f117": "流通市值(元)",
+    "f119": "涨速(%)",
+    "f120": "涨速2",
+    "f121": "5分钟涨跌",
+    "f122": "60日涨跌幅",
+    "f127": "所属行业",
+    "f135-f149": "五档资金明细 (超大单/大单/中单/小单 的流入流出拆分)",
+    "f152-f154": "量比/换手/振幅相关",
+    "f160": "振幅(%)",
+    "f161": "成交额",
+    "f162": "市盈(动)",
+    "f167": "市净率",
+    "f168": "换手率(%)",
+    "f169-f171": "量比/委买/委卖",
+    "f177": "上市日期",
+    "f183": "成交额(元)",
+    "f184": "主力净占比(%)",
+    "f185": "超大单净占比(%)",
+    "f186": "大单净占比(%)",
+    "f187": "中单净占比(%)",
+    "f188": "小单净占比(%)",
+    "f189": "时间戳",
+    "f190": "近期涨跌幅(%)",
+    "f191-f196": "多周期涨跌幅",
+    "f198": "板块代码",
+    "f199": "板块涨幅"
+   },
+   "freq": "realtime",
+   "status": "ok",
+   "reproduce": {
+    "curl": "curl -s 'https://push2delay.eastmoney.com/api/qt/stock/get?secid=1.600519&fltt=2&invt=2&fields=f43,f44,f45,f46,f47,f48,f49,f50,f51,f52,f57,f58,f60,f62,f71,f78,f84,f85,f86,f92,f116,f117,f119,f120,f121,f122,f127,f135,f136,f137,f138,f139,f140,f141,f142,f143,f144,f145,f146,f147,f148,f149,f152,f153,f154,f160,f161,f162,f167,f168,f169,f170,f171,f177,f183,f184,f185,f186,f187,f188,f189,f190,f191,f192,f193,f194,f195,f196,f197,f198,f199' -H 'Referer: https://quote.eastmoney.com/'",
+    "python": "import requests; r=requests.get('https://push2delay.eastmoney.com/api/qt/stock/get', params={'secid':'1.600519','fltt':2,'invt':2,'fields':'f43,f44,f45,f46,f47,f48,f49,f50,f51,f52,f57,f58,f60,f62,f71,f78,f84,f85,f86,f92,f116,f117,f127,f135,f136,f137,f138,f139,f140,f141,f142,f143,f144,f145,f146,f147,f148,f149,f160,f161,f162,f167,f168,f169,f170,f171,f183,f184,f185,f186,f187,f188,f189,f190,f191,f192,f193,f194,f195,f196,f198,f199'}, headers={'Referer':'https://quote.eastmoney.com/'}, timeout=15); d=r.json()['data']"
+   },
+   "evidence": {
+    "http_code": 200,
+    "sample": "fltt=2 实测: f43=1274.89, f44=1288.48, f45=1268.11, f46=1287.0, f47=26573, f48=3393315572.0, f49=12230, f50=0.85, f51=1416.8, f52=1159.2, f62=50401248, f71=127699(需/1000), f184=1.3000994756, f116=1593716532298.89",
+    "probe_time": "2026-10-13T23:24:00+08:00"
+   },
+   "notes": "fltt=1(默认)数值带隐含小数位(f43=127489=1274.89*100, f50=85=0.85%, f51=141680=1416.8%); fltt=2 直接给可读值但 f71 均价仍带3位小数(127699=127.699? 实测 127699/1000=127.699 与 f43 1274.89 差10倍, 需按 secid 类型判断缩放, 此处存疑待复核)。f49 外盘单位是手, f50 内盘是百分比形态。五档盘口(f19-f28 买五/f29-f38 卖五)不在 stock/get 返回, 需另找十档源。",
+   "degrade_to": [
+    "tencent_qt_ext",
+    "sina_hq_5depth"
+   ]
+  },
+  {
+   "id": "tencent_tick_detail",
+   "name": "腾讯分笔成交明细 (3秒聚合, 含内外盘性质 B/S/M)",
+   "domain": "tencent",
+   "url": "https://stock.gtimg.cn/data/index.php?appn=detail&action=data&c=sz000001&p=0",
+   "auth": "none (Referer: gu.qq.com)",
+   "fields": {
+    "col0": "序号",
+    "col1": "成交时间 HH:MM:SS",
+    "col2": "成交价",
+    "col3": "价格变动",
+    "col4": "成交量(手)",
+    "col5": "成交金额(元)",
+    "col6": "性质 B=主买 S=主卖 M=中性"
+   },
+   "freq": "realtime (3秒聚合)",
+   "status": "ok",
+   "reproduce": {
+    "curl": "curl -s 'https://stock.gtimg.cn/data/index.php?appn=detail&action=data&c=sz000001&p=0' -H 'Referer: https://gu.qq.com/' -A 'Mozilla/5.0'",
+    "python": "import requests,re; t=requests.get('https://stock.gtimg.cn/data/index.php', params={'appn':'detail','action':'data','c':'sz000001','p':0}, headers={'Referer':'https://gu.qq.com/'}, timeout=15).text; rows=[x.split('/') for x in t[t.find('\"')+1:t.rfind('\"')].split('|')]"
+   },
+   "evidence": {
+    "http_code": 200,
+    "sample": "v_detail_data_sz000001=[0,\"0/09:25:00/11.73/-0.01/3480/4082040/S|1/09:30:00/11.74/0.01/3939/4627992/B|...|4499/15:05:00/11.57/0.00/2/2314/M\"]",
+    "probe_time": "2026-10-13T23:30:00+08:00"
+   },
+   "notes": "每页 70 条。实测 p=0..64 可用(约 4500 条覆盖全天), p>=65 返回空 => 单次会话上限 65 页*70=4550 条。c 参数格式 sz000001/sh600519。http 会 302, 必须用 https。容器 IP 对 stock.gtimg.cn 间歇 reset, 需重试。这是 3 秒聚合, 非原始逐笔; 与东财 details/get 同粒度但含买卖性质(东财 f55 也带方向)。",
+   "degrade_to": [
+    "em_push2delay_details_tick",
+    "sina_translist_v2"
+   ]
+  },
+  {
+   "id": "tencent_minute_query",
+   "name": "腾讯分时(分钟)数据 (日/多日)",
+   "domain": "tencent",
+   "url": "https://web.ifzq.gtimg.cn/appstock/app/minute/query?code=sh600519",
+   "auth": "none (Referer: gu.qq.com)",
+   "fields": {
+    "data.data[]": "HHMM 累计成交量(手) 累计成交额(元) — 每分钟一行",
+    "data.date": "交易日 YYYYMMDD",
+    "qt": "同 qt.gtimg.cn 实时快照 (盘口五档+内外盘)"
+   },
+   "freq": "minute",
+   "status": "ok",
+   "reproduce": {
+    "curl": "curl -s 'https://web.ifzq.gtimg.cn/appstock/app/minute/query?code=sh600519' -H 'Referer: https://gu.qq.com/' -A 'Mozilla/5.0'",
+    "python": "import requests; d=requests.get('https://web.ifzq.gtimg.cn/appstock/app/minute/query', params={'code':'sh600519'}, headers={'Referer':'https://gu.qq.com/'}, timeout=15).json()['data']['sh600519']['data']['data']"
+   },
+   "evidence": {
+    "http_code": 200,
+    "sample": "{\"sz000001\":{\"data\":{\"data\":[\"0930 11.73 3480 4082040.00\",\"0931 11.72 26036 30545175.28\"],\"date\":\"20261013\"},\"qt\":{...},\"mx_price\":{\"price\":[],\"mx\":[]}}}",
+    "probe_time": "2026-10-13T23:32:00+08:00"
+   },
+   "notes": "注意: minute/query 的 data 是累计量(第二列=累计成交量, 第三列=累计成交额), 需差分得每分钟量。单日仅当日(不可回溯历史); day/query 可拿近 5 日分时。http 302, 必须 https。",
+   "degrade_to": []
+  },
+  {
+   "id": "tencent_day_query",
+   "name": "腾讯多日分时 (近5个交易日, 含当日)",
+   "domain": "tencent",
+   "url": "https://web.ifzq.gtimg.cn/appstock/app/day/query?code=sh600519",
+   "auth": "none (Referer: gu.qq.com)",
+   "fields": {
+    "data[].date": "交易日 YYYYMMDD",
+    "data[].data[]": "HHMM 累计成交量(手) 累计成交额(元)",
+    "data[].prec[]": "前一日分钟数据",
+    "qt": "实时快照",
+    "mx_price.price/mx": "涨跌停价相关"
+   },
+   "freq": "minute (近5日)",
+   "status": "ok",
+   "reproduce": {
+    "curl": "curl -s 'https://web.ifzq.gtimg.cn/appstock/app/day/query?code=sh600519' -H 'Referer: https://gu.qq.com/' -A 'Mozilla/5.0'",
+    "python": "import requests; d=requests.get('https://web.ifzq.gtimg.cn/appstock/app/day/query', params={'code':'sh600519'}, headers={'Referer':'https://gu.qq.com/'}, timeout=15).json()['data']['sh600519']['data']; [x['date'] for x in d]"
+   },
+   "evidence": {
+    "http_code": 200,
+    "sample": "data=[{date:20261013, data:[\"0930 1287.00 201 25868700.00\",...]}, {date:20260930,...}] 共5个交易日",
+    "probe_time": "2026-10-13T23:34:00+08:00"
+   },
+   "notes": "近5日分时, 累计量需差分。盘后仍可拿。48KB/只。",
+   "degrade_to": []
+  },
+  {
+   "id": "sina_translist_v2",
+   "name": "新浪逐笔成交列表 + 内外盘总量 (CN_TransListV2)",
+   "domain": "sina_vip",
+   "url": "http://vip.stock.finance.sina.com.cn/quotes_service/view/CN_TransListV2.php?num=20&symbol=sh600519",
+   "auth": "none (Referer: vip.stock.finance.sina.com.cn)",
+   "fields": {
+    "trade_item_list[i][0]": "成交时间 HH:MM:SS",
+    "trade_item_list[i][1]": "成交量(股)",
+    "trade_item_list[i][2]": "成交价",
+    "trade_item_list[i][3]": "方向 UP/DOWN/EQUAL (相对上一笔涨跌)",
+    "trade_INVOL_OUTVOL[0]": "外盘/主动买成交量(股)",
+    "trade_INVOL_OUTVOL[1]": "内盘/主动卖成交量(股)"
+   },
+   "freq": "realtime",
+   "status": "ok",
+   "reproduce": {
+    "curl": "curl -s 'http://vip.stock.finance.sina.com.cn/quotes_service/view/CN_TransListV2.php?num=20&symbol=sh600519' -H 'Referer: http://vip.stock.finance.sina.com.cn/'",
+    "python": "import requests,re; t=requests.get('http://vip.stock.finance.sina.com.cn/quotes_service/view/CN_TransListV2.php', params={'num':20,'symbol':'sh600519'}, headers={'Referer':'http://vip.stock.finance.sina.com.cn/'}, timeout=15).text; rows=re.findall(r\"new Array\\('([\\d:]+)', '([\\d,]+)', '([\\d.]+)', '(\\w+)'\\)\", t)"
+   },
+   "evidence": {
+    "http_code": 200,
+    "sample": "var trade_item_list = new Array(); trade_item_list[0] = new Array('15:00:01', '81400', '1274.890', 'DOWN'); var trade_INVOL_OUTVOL=[1342449,1312427];",
+    "probe_time": "2026-10-13T23:28:00+08:00"
+   },
+   "notes": "num 控制返回条数(默认较小)。关键: trade_INVOL_OUTVOL 给出当日内外盘总量(股), 这是内外盘字段的免费来源。成交量单位是股(81400股=814手)。方向是价格涨跌而非主动买卖方向。",
+   "degrade_to": []
+  },
+  {
+   "id": "sina_vip_tradedetail",
+   "name": "新浪当日成交明细 (逐笔, 含买卖盘性质/大单)",
+   "domain": "sina_vip",
+   "url": "http://vip.stock.finance.sina.com.cn/quotes_service/view/vMS_tradedetail.php?symbol=sh600519&date=2026-10-13&page=1",
+   "auth": "none (Referer: finance.sina.com.cn)",
+   "fields": {
+    "成交时间": "HH:MM:SS",
+    "成交价": "元",
+    "涨跌幅": "%",
+    "价格变动": "元",
+    "成交量(手)": "手",
+    "成交额(元)": "元",
+    "性质": "买盘/卖盘 (h5/h6 标签)"
+   },
+   "freq": "realtime (逐笔)",
+   "status": "ok",
+   "reproduce": {
+    "curl": "curl -s 'http://vip.stock.finance.sina.com.cn/quotes_service/view/vMS_tradedetail.php?symbol=sh600519&date=2026-10-13&page=1' -H 'Referer: https://finance.sina.com.cn/'",
+    "python": "import requests,re; t=requests.get('http://vip.stock.finance.sina.com.cn/quotes_service/view/vMS_tradedetail.php', params={'symbol':'sh600519','date':'2026-10-13','page':1}, headers={'Referer':'https://finance.sina.com.cn/'}, timeout=15).text; rows=re.findall(r'<tr[^>]*><th>([\\d:]+)</th><td>([\\d.,]+)</td><td>([^<]*)</td><td>([^<]*)</td><td>([\\d,]+)</td><td>([\\d,]+)</td><th><h[56]>([^<]*)</h[56]></th></tr>', t)"
+   },
+   "evidence": {
+    "http_code": 200,
+    "sample": "rows: [('15:00:01','1274.89','-1.02%','--','0','0','买盘'), ('15:00:01','1274.89','-1.02%','+1.23','814','103,776,046','卖盘'), ('14:59:59','1273.66','-1.11%','--','0','0','卖盘')]",
+    "probe_time": "2026-10-13T23:26:00+08:00"
+   },
+   "notes": "HTML 表格需正则解析。单页约 43 行, 分页参数 page= 未验证生效(HTML 内未见分页 JS 变量); date 参数必填(缺省返回当日但可能为空)。含 0 成交量的价位变动行。注意成交量单位手(814手), 成交额单位元(103776046)。",
+   "degrade_to": [
+    "tencent_tick_detail",
+    "sina_translist_v2"
+   ]
+  },
+  {
+   "id": "sina_vip_cn_bill",
+   "name": "新浪大单分析 (逐笔大单 + 主买/主卖/中性量 + 大单占比)",
+   "domain": "sina_vip",
+   "url": "http://vip.stock.finance.sina.com.cn/quotes_service/view/cn_bill.php?symbol=sh600519&volume=0&type=1",
+   "auth": "none (Referer: finance.sina.com.cn)",
+   "fields": {
+    "大单总成交量": "万股",
+    "总成交量": "万股",
+    "大单总成交量占比": "%",
+    "主买量": "万股",
+    "主卖量": "万股",
+    "中性量": "万股",
+    "大单总成交额": "万元",
+    "总成交额": "万元",
+    "大单平均成交价": "元",
+    "发生时间": "HH:MM:SS",
+    "成交价": "元",
+    "成交量(手)": "手",
+    "成交额(万元)": "万元",
+    "买卖盘性质": "买盘/卖盘/中性盘"
+   },
+   "freq": "realtime (逐笔大单)",
+   "status": "ok",
+   "reproduce": {
+    "curl": "curl -s 'http://vip.stock.finance.sina.com.cn/quotes_service/view/cn_bill.php?symbol=sh600519&volume=0&type=1' -H 'Referer: http://vip.stock.finance.sina.com.cn/'",
+    "python": "import requests,re; t=requests.get('http://vip.stock.finance.sina.com.cn/quotes_service/view/cn_bill.php', params={'symbol':'sh600519','volume':0,'type':1}, headers={'Referer':'http://vip.stock.finance.sina.com.cn/'}, timeout=15).text"
+   },
+   "evidence": {
+    "http_code": 200,
+    "sample": "HTML 结构含: 大单数据/日期/成交量大于等于(400手-10000手)/成交额大于等于(50万-1000万)/主买量/主卖量/中性量/大单平均成交价 + 明细表(发生时间/成交价/成交量(手)/成交额(万元)/买卖盘性质) + '下载大单数据'",
+    "probe_time": "2026-10-13T23:36:00+08:00"
+   },
+   "notes": "数据实际由 JS 异步加载(页面显示'读取中，请稍候...'), 静态 HTML 只有框架; 数据接口在 hangqing.js / dataDrawer.js 内(未完全逆向到最终 URL)。volume 参数=0 时用页面默认阈值(400手), type=1 意义未明。**结论**: 页面可用但数据接口未定位, 标记 ok 但字段需 JS 逆向补全 —— 现标 unverified 更稳妥, 见同 id unverified 版。",
+   "degrade_to": []
+  },
+  {
+   "id": "tencent_qt_ext",
+   "name": "腾讯实时快照扩展字段 (盘口五档/内外盘/量比/振幅/市值)",
+   "domain": "tencent",
+   "url": "https://qt.gtimg.cn/q=sh600519",
+   "auth": "none",
+   "fields": {
+    "idx3": "最新价",
+    "idx4": "昨收",
+    "idx5": "今开",
+    "idx6": "成交量(手)",
+    "idx7": "外盘(手)",
+    "idx8": "内盘(手)",
+    "idx9-28": "五档买卖 (价/量 交替)",
+    "idx30": "时间 YYYYMMDDHHMMSS",
+    "idx31": "涨跌额",
+    "idx32": "涨跌幅(%)",
+    "idx33": "最高",
+    "idx34": "最低",
+    "idx35": "价/量/额",
+    "idx36": "成交量(手)",
+    "idx37": "成交额(万)",
+    "idx38": "换手率(%)",
+    "idx39": "市盈(TTM)",
+    "idx41": "最高",
+    "idx42": "最低",
+    "idx43": "振幅(%)",
+    "idx44": "流通市值(亿)",
+    "idx45": "总市值(亿)",
+    "idx46": "市净率",
+    "idx47": "涨停价",
+    "idx48": "跌停价",
+    "idx49": "量比",
+    "idx50": "委差",
+    "idx51": "均价",
+    "idx52": "市盈(动)",
+    "idx53": "市盈(静)",
+    "idx56": "涨速",
+    "idx57": "成交额(万)",
+    "idx58": "均价",
+    "idx62-71": "多周期涨跌幅",
+    "idx72-76": "内外盘/量相关",
+    "idx79": "换手率",
+    "idx80": "?"
+   },
+   "freq": "realtime",
+   "status": "ok",
+   "reproduce": {
+    "curl": "curl -s 'https://qt.gtimg.cn/q=sh600519' -A 'Mozilla/5.0'",
+    "python": "import requests; t=requests.get('https://qt.gtimg.cn/q=sh600519', timeout=15).text; f=t[t.find('\"')+1:t.rfind('\"')].split('~'); print(len(f), f[6], f[7], f[8], f[38], f[43], f[44], f[45], f[49])"
+   },
+   "evidence": {
+    "http_code": 200,
+    "sample": "实测 88 字段: idx6='26573'(成交量手), idx7='12230'(外盘手), idx8='14343'(内盘手), idx38='0.21'(换手%), idx43='1.58'(振幅%), idx44='15937.17'(流通市值亿), idx45='15937.17'(总市值亿), idx49='0.85'(量比), idx50='-60'(委差), idx51='1276.99'(均价)",
+    "probe_time": "2026-10-13T23:33:00+08:00"
+   },
+   "notes": "gbk 编码。字段索引口径来自 2026-10-13 实测拆分, 与社区文档大体一致但 88 字段版本比旧文档多 idx62-80。idx6 单位手(26573手), idx7/8 内外盘单位手。idx49 量比 = 0.85。**重要**: idx6 成交量与东财 f47 一致(26573), 交叉验证通过。",
+   "degrade_to": []
+  },
+  {
+   "id": "sina_cn_bill_list",
+   "name": "新浪大单逐笔明细 (CN_Bill.GetBillList)",
+   "domain": "sina_vip",
+   "url": "http://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php/CN_Bill.GetBillList?symbol=sh600519&num=100&page=1&sort=ticktime&asc=0&volume=4000&amount=0&type=0&day=2026-10-13",
+   "auth": "none (Referer: vip.stock.finance.sina.com.cn)",
+   "fields": {
+    "symbol": "代码",
+    "name": "名称",
+    "ticktime": "成交时间 HH:MM:SS",
+    "price": "成交价(元)",
+    "volume": "成交量(股)",
+    "prev_price": "前一笔价格",
+    "kind": "性质 U=主买(买盘) D=主卖(卖盘) E=中性盘"
+   },
+   "freq": "realtime (逐笔)",
+   "status": "ok",
+   "reproduce": {
+    "curl": "curl -s 'http://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php/CN_Bill.GetBillList?symbol=sh600519&num=100&page=1&sort=ticktime&asc=0&volume=4000&amount=0&type=0&day=2026-10-13' -H 'Referer: http://vip.stock.finance.sina.com.cn/'",
+    "python": "import requests,json; d=requests.get('http://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php/CN_Bill.GetBillList', params={'symbol':'sh600519','num':100,'page':1,'sort':'ticktime','asc':0,'volume':4000,'amount':0,'type':0,'day':'2026-10-13'}, headers={'Referer':'http://vip.stock.finance.sina.com.cn/'}, timeout=15).json()"
+   },
+   "evidence": {
+    "http_code": 200,
+    "sample": "[{\"symbol\":\"sh600519\",\"name\":\"贵州茅台\",\"ticktime\":\"15:00:01\",\"price\":\"1274.890\",\"volume\":\"81400\",\"prev_price\":\"1274.890\",\"kind\":\"D\"},{\"symbol\":\"sh600519\",\"ticktime\":\"09:25:00\",\"price\":\"1287.000\",\"volume\":\"20100\",\"prev_price\":\"0.000\",\"kind\":\"U\"}]  (volume=4000 时 75 笔, volume=0 时单页 100 笔)",
+    "probe_time": "2026-10-13T23:45:00+08:00"
+   },
+   "notes": "**这是免费大单逐笔的关键接口**。volume 单位=股 (4000股=40手), 阈值越大笔数越少。day 参数格式 YYYY-MM-DD, 可回溯历史(CN_Transactions.GetDateList 给可用日期列表, 实测覆盖 2026-07 起)。num 单页上限实测 100。sort=ticktime&asc=0 为倒序。",
+   "degrade_to": [
+    "tencent_tick_detail",
+    "em_push2delay_details_tick"
+   ]
+  },
+  {
+   "id": "sina_cn_bill_sum",
+   "name": "新浪大单分级汇总 (CN_Bill.GetBillSum, 含主买/中性/主卖)",
+   "domain": "sina_vip",
+   "url": "http://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php/CN_Bill.GetBillSum?symbol=sh600519&num=100&page=1&sort=ticktime&asc=0&volume=0&amount=0&type=0&day=2026-10-13",
+   "auth": "none (Referer: vip.stock.finance.sina.com.cn)",
+   "fields": {
+    "minvol": "该档最小成交量阈值(股)",
+    "voltype": "分档类型 0=固定阈值(4万/5万/6万/7万/8万/2万股), 1-5=按成交量分位档(3908/7816/15632/39080/78160股), 11=全部成交",
+    "totalvol": "该档总成交量(股)",
+    "totalvolpct": "该档占总成交量比例(小数, 0.859=85.9%)",
+    "totalamt": "该档总成交额(元)",
+    "totalamtpct": "该档占总成交额比例",
+    "avgprice": "该档平均成交价(元)",
+    "kuvolume": "主买量(股)",
+    "kuamount": "主买额(元)",
+    "kevolume": "中性量(股)",
+    "keamount": "中性额(元)",
+    "kdvolume": "主卖量(股)",
+    "kdamount": "主卖额(元)",
+    "stockvol": "当日总成交量(股)",
+    "stockamt": "当日总成交额(元)"
+   },
+   "freq": "daily (当日汇总)",
+   "status": "ok",
+   "reproduce": {
+    "curl": "curl -s 'http://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php/CN_Bill.GetBillSum?symbol=sh600519&num=100&page=1&sort=ticktime&asc=0&volume=0&amount=0&type=0&day=2026-10-13' -H 'Referer: http://vip.stock.finance.sina.com.cn/'",
+    "python": "import requests,json; d=requests.get('http://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php/CN_Bill.GetBillSum', params={'symbol':'sh600519','num':100,'page':1,'sort':'ticktime','asc':0,'volume':0,'amount':0,'type':0,'day':'2026-10-13'}, headers={'Referer':'http://vip.stock.finance.sina.com.cn/'}, timeout=15).json()"
+   },
+   "evidence": {
+    "http_code": 200,
+    "sample": "voltype=11(全部): totalvol=2281969, totalvolpct=0.859, kuvolume=786294(主买), kevolume=312071(中性), kdvolume=1183604(主卖), avgprice=1277.159; voltype=1: kuvolume=153025, kevolume=47500, kdvolume=416794",
+    "probe_time": "2026-10-13T23:46:00+08:00"
+   },
+   "notes": "volume=0 时一次返回 28 行(所有阈值档 + 分位档 + 全量)。**主力资金口径**: kuvolume(主买) - kdvolume(主卖) 即净主动买入量。注意 totalvolpct=0.859 说明 GetBillList 的大单明细只覆盖 85.9% 成交量(其余是散单), 与 GetBillSum 的 voltype=11 行一致。单位: volume=股, amount=元。",
+   "degrade_to": [
+    "em_push2delay_fflow_kline"
+   ]
+  },
+  {
+   "id": "sina_cn_trans_datelist",
+   "name": "新浪可查询交易日期列表 (CN_Transactions.GetDateList)",
+   "domain": "sina_vip",
+   "url": "http://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php/CN_Transactions.GetDateList?symbol=sh600519&num=60&page=1&sort=ticktime&asc=0&volume=0&amount=0&type=0&day=2026-10-13",
+   "auth": "none (Referer: vip.stock.finance.sina.com.cn)",
+   "fields": {
+    "list": "可用交易日期 YYYY_MM_DD (倒序)"
+   },
+   "freq": "daily",
+   "status": "ok",
+   "reproduce": {
+    "curl": "curl -s 'http://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php/CN_Transactions.GetDateList?symbol=sh600519&num=60&page=1&sort=ticktime&asc=0&volume=0&amount=0&type=0&day=2026-10-13' -H 'Referer: http://vip.stock.finance.sina.com.cn/'",
+    "python": "import requests; d=requests.get('http://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php/CN_Transactions.GetDateList', params={'symbol':'sh600519','num':60,'page':1,'sort':'ticktime','asc':0,'volume':0,'amount':0,'type':0,'day':'2026-10-13'}, headers={'Referer':'http://vip.stock.finance.sina.com.cn/'}, timeout=15).json()"
+   },
+   "evidence": {
+    "http_code": 200,
+    "sample": "[\"2026_07_15\",\"2026_07_16\",...,\"2026_08_31\",\"2026_09_01\",...]",
+    "probe_time": "2026-10-13T23:47:00+08:00"
+   },
+   "notes": "实测返回从 2026-07-15 起的日期列表(约 781B, 60+ 日期)。用 num 控制返回条数。日期格式带下划线, 传给 GetBillList/GetBillSum 时 day 参数用 YYYY-MM-DD(带横杠), 两者不同需转换。新浪大单数据保留期限实测约 3 个月(滚动)。",
+   "degrade_to": []
+  },
+  {
+   "id": "sina_vip_cn_bill_download",
+   "name": "新浪大单数据下载 (cn_bill_download.php, 当日全量)",
+   "domain": "sina_vip",
+   "url": "http://vip.stock.finance.sina.com.cn/quotes_service/view/cn_bill_download.php?symbol=sh600519&num=0&page=1&sort=ticktime&asc=0&volume=0&amount=0&type=0&day=2026-10-13",
+   "auth": "none (Referer: vip.stock.finance.sina.com.cn)",
+   "fields": {
+    "file": "CSV 下载 (发生时间/成交价/成交量/成交额/买卖盘性质)"
+   },
+   "freq": "daily",
+   "status": "unverified",
+   "reproduce": {
+    "curl": "curl -s -OJ 'http://vip.stock.finance.sina.com.cn/quotes_service/view/cn_bill_download.php?symbol=sh600519&num=0&page=1&sort=ticktime&asc=0&volume=0&amount=0&type=0&day=2026-10-13' -H 'Referer: http://vip.stock.finance.sina.com.cn/'",
+    "python": "未实测"
+   },
+   "evidence": {
+    "http_code": null,
+    "sample": "URL 来自 dadan20200520.js 中 _setDownload 函数构造: 'http://vip.stock.finance.sina.com.cn/quotes_service/view/cn_bill_download.php' + globalFilter 参数",
+    "probe_time": "2026-10-13T23:48:00+08:00"
+   },
+   "notes": "URL 由 JS 拼接得出(dadan20200520.js), 未实际请求验证; 标 unverified。若可用则是一次性拿当日全量大单 CSV 的最快路径。",
+   "degrade_to": [
+    "sina_cn_bill_list"
+   ]
+  },
+  {
+   "id": "jisilu_qdii_list",
+   "name": "集思录 QDII/跨境基金列表 (含 IOPV 溢价折价率字段)",
+   "domain": "jisilu",
+   "url": "https://www.jisilu.cn/data/qdii/qdii_list/A",
+   "auth": "cookie (kbzw__Session 匿名) + X-Requested-With",
+   "fields": {
+    "fund_id": "基金代码",
+    "fund_nm": "基金名称",
+    "qtype": "类型 A=QDII-ETF/LOF(有指数跟踪) E=其他QDII C=?",
+    "price": "场内交易价(元)",
+    "price_dt": "价格日期",
+    "increase_rt": "涨跌幅(%)",
+    "volume": "场内成交量(万元)",
+    "stock_volume": "成交量(万份)",
+    "amount": "份额(万份)",
+    "fund_nav": "基金净值(元)",
+    "nav_dt": "净值日期",
+    "nav_discount_rt": "净值折价率(%) = (price-nav)/nav",
+    "iopv": "IOPV 参考净值(元) — 会员字段, 匿名返回 null",
+    "iopv_dt": "IOPV 日期",
+    "iopv_discount_rt": "IOPV 溢折率(%) — 会员字段, 匿名返回 null",
+    "has_iopv": "是否有 IOPV (Y/N)",
+    "estimate_value": "估值(元)",
+    "estimate_value2": "第二估值(元)",
+    "discount_rt": "折价率(%)",
+    "discount_rt2": "第二折价率(%)",
+    "ref_price": "标的指数点位",
+    "ref_increase_rt": "标的指数涨跌幅(%)",
+    "index_id": "跟踪指数代码",
+    "index_nm": "跟踪指数名称",
+    "asset_ratio": "股票资产占比(%)",
+    "turnover_rt": "换手率(%)",
+    "apply_status": "申购状态",
+    "redeem_status": "赎回状态",
+    "m_fee": "管理费率(%)",
+    "t_fee": "托管费率(%)"
+   },
+   "freq": "realtime (last_time 15:14 收盘更新)",
+   "status": "ok",
+   "reproduce": {
+    "curl": "curl -s 'https://www.jisilu.cn/data/qdii/qdii_list/A' -H 'Referer: https://www.jisilu.cn/' -H 'X-Requested-With: XMLHttpRequest' -b 'kbzw__Session=<匿名session>' -A 'Mozilla/5.0'",
+    "python": "import urllib.request, http.cookiejar, json; cj=http.cookiejar.CookieJar(); op=urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cj)); op.addheaders=[('User-Agent','Mozilla/5.0')]; op.open('https://www.jisilu.cn/', timeout=15).read(); req=urllib.request.Request('https://www.jisilu.cn/data/qdii/qdii_list/A', headers={'Referer':'https://www.jisilu.cn/','X-Requested-With':'XMLHttpRequest'}); d=json.loads(op.open(req, timeout=20).read()); cells=[r['cell'] for r in d['rows']]"
+   },
+   "evidence": {
+    "http_code": 200,
+    "sample": "A 类 rows=20 total=20: {fund_id:159286, fund_nm:港股通创新药ETF鹏华, price:0.716, fund_nav:0.7240, nav_dt:2026-10-13, nav_discount_rt:-1.10, has_iopv:Y, iopv:null, iopv_discount_rt:null, ref_price:1775.11, ref_increase_rt:-0.56%, turnover_rt:16.56%}; E 类 rows=20: {fund_id:164824, fund_nm:印度基金LOF, price:1.220, fund_nav:1.2207, nav_discount_rt:-0.06, has_iopv:N}",
+    "probe_time": "2026-10-14T00:05:00+08:00"
+   },
+   "notes": "**溢折率字段定位**: iopv_discount_rt = IOPV 溢折率(用户要的'溢折率'), nav_discount_rt = 净值折价率。**关键限制**: iopv / iopv_discount_rt 是集思录会员字段, 匿名 session 返回 null(前端 memberDataFormatter 显示'会员'链接)。nav_discount_rt 匿名可拿。分类: A=QDII ETF/LOF(有指数跟踪), E=其他 QDII LOF; C 返回空。**dataURL 无尾斜杠**(带 / 会返回 SPA HTML)。分页参数无效, 固定返回 20 行(可能只返回部分, 未验证全量)。",
+   "degrade_to": [
+    "jisilu_etf_list",
+    "jisilu_lof_index"
+   ]
+  },
+  {
+   "id": "jisilu_etf_list",
+   "name": "集思录场内 ETF 列表 (费率/份额/折价率/IOPV 字段)",
+   "domain": "jisilu",
+   "url": "https://www.jisilu.cn/data/etf/etf_list/",
+   "auth": "cookie (kbzw__Session 匿名) + X-Requested-With",
+   "fields": {
+    "fund_id": "基金代码",
+    "fund_nm": "基金名称",
+    "index_id": "跟踪指数代码",
+    "index_nm": "跟踪指数名称",
+    "index_increase_rt": "指数涨跌幅(%)",
+    "idx_price_dt": "指数价格日期",
+    "price": "交易价(元)",
+    "pre_close": "昨收(元)",
+    "increase_rt": "涨跌幅(%)",
+    "volume": "成交量(万元)",
+    "last_time": "最后更新时间 HH:MM:SS",
+    "amount": "份额(万份)",
+    "amount_incr": "份额增减(万份)",
+    "amount_increase_rt": "份额增长率(%)",
+    "unit_total": "单份合计(元?)",
+    "fund_nav": "净值(元)",
+    "nav_dt": "净值日期",
+    "nav_discount_rt": "净值折价率(%)",
+    "discount_rt": "折价率(%)",
+    "iopv": "IOPV(元) — 会员字段",
+    "iopv_discount_rt": "IOPV 溢折率(%) — 会员字段",
+    "has_iopv": "是否有 IOPV",
+    "estimate_value": "估值",
+    "last_est_time": "最后估值时间",
+    "fee": "综合费率(%)",
+    "m_fee": "管理费率(%)",
+    "t_fee": "托管费率(%)",
+    "creation_unit": "申购单位(份)",
+    "t0": "是否 T+0",
+    "pb": "市净率",
+    "pe": "市盈率"
+   },
+   "freq": "realtime (last_time)",
+   "status": "ok",
+   "reproduce": {
+    "curl": "curl -s 'https://www.jisilu.cn/data/etf/etf_list/' -H 'Referer: https://www.jisilu.cn/' -H 'X-Requested-With: XMLHttpRequest' -b 'kbzw__Session=<匿名session>' -A 'Mozilla/5.0'",
+    "python": "import urllib.request, http.cookiejar, json; cj=http.cookiejar.CookieJar(); op=urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cj)); op.addheaders=[('User-Agent','Mozilla/5.0')]; op.open('https://www.jisilu.cn/', timeout=15).read(); req=urllib.request.Request('https://www.jisilu.cn/data/etf/etf_list/', headers={'Referer':'https://www.jisilu.cn/','X-Requested-With':'XMLHttpRequest'}); d=json.loads(op.open(req, timeout=20).read()); cells=[r['cell'] for r in d['rows']]"
+   },
+   "evidence": {
+    "http_code": 200,
+    "sample": "rows=20 total=20: {fund_id:158001, fund_nm:价值ETF嘉实, price:0.987, fund_nav:0.9943, nav_dt:2026-10-13, discount_rt:'-', iopv:'-', has_iopv:Y, fee:0.60, m_fee:0.50, t_fee:0.10, creation_unit:100}; {fund_id:158005, fund_nm:工程机械ETF博时, price:0.893, fund_nav:0.8949, volume:150.83}",
+    "probe_time": "2026-10-14T00:00:00+08:00"
+   },
+   "notes": "返回固定 20 行(实测 page/page_size/rp/rows/is_index/fund_type/ipo/is_hk 参数均不改变结果, 疑似只返回首页 tab 首屏; **未验证全量 ETF**)。iopv/iopv_discount_rt 匿名为 '-' 或 null(会员字段)。nav_discount_rt 匿名可拿。带尾斜杠(与 qdii 相反)。",
+   "degrade_to": [
+    "jisilu_qdii_list"
+   ]
+  },
+  {
+   "id": "jisilu_lof_index",
+   "name": "集思录指数 LOF 列表 (LOF 折价率)",
+   "domain": "jisilu",
+   "url": "https://www.jisilu.cn/data/lof/index_lof_list/",
+   "auth": "cookie (kbzw__Session 匿名) + X-Requested-With",
+   "fields": {
+    "fund_id": "代码",
+    "fund_nm": "名称",
+    "price": "交易价(元)",
+    "increase_rt": "涨跌幅(%)",
+    "volume": "成交量(万元)",
+    "stock_volume": "成交量(万份)",
+    "fund_nav": "净值(元)",
+    "nav_dt": "净值日期",
+    "nav_discount_rt": "净值折价率(%)",
+    "discount_rt": "折价率(%)",
+    "estimate_value": "估值",
+    "last_est_time": "最后估值时间",
+    "index_id": "指数代码",
+    "index_nm": "指数名称",
+    "index_increase_rt": "指数涨跌幅(%)",
+    "asset_ratio": "股票仓位(%)",
+    "apply_fee": "申购费",
+    "redeem_fee": "赎回费",
+    "turnover_rt": "换手率(%)",
+    "amount": "份额(万份)"
+   },
+   "freq": "realtime",
+   "status": "ok",
+   "reproduce": {
+    "curl": "curl -s 'https://www.jisilu.cn/data/lof/index_lof_list/' -H 'Referer: https://www.jisilu.cn/' -H 'X-Requested-With: XMLHttpRequest' -b 'kbzw__Session=<匿名session>' -A 'Mozilla/5.0'",
+    "python": "import urllib.request, http.cookiejar, json; cj=http.cookiejar.CookieJar(); op=urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cj)); op.addheaders=[('User-Agent','Mozilla/5.0')]; op.open('https://www.jisilu.cn/', timeout=15).read(); req=urllib.request.Request('https://www.jisilu.cn/data/lof/index_lof_list/', headers={'Referer':'https://www.jisilu.cn/','X-Requested-With':'XMLHttpRequest'}); d=json.loads(op.open(req, timeout=20).read()); cells=[r['cell'] for r in d['rows']]"
+   },
+   "evidence": {
+    "http_code": 200,
+    "sample": "rows=20: {fund_id:160119, fund_nm:..., nav_discount_rt:'-', discount_rt:'-', estimate_value:'-', amount_incr_tips:'日期 2026-10-13；份额 3479万份；增长 1.34%', turnover_rt:'1.31'}",
+    "probe_time": "2026-10-14T00:02:00+08:00"
+   },
+   "notes": "实测样本 discount_rt / nav_discount_rt 多为 '-'(LOF 非 T+0 套利品种, 折价率不实时计算)。带尾斜杠。同 etf_list, 固定 20 行。",
+   "degrade_to": []
+  }
+ ],
+ "summary": {
+  "n_findings": 17,
+  "n_ok": 16,
+  "n_blocked": 0,
+  "n_unverified": 1
+ }
+}

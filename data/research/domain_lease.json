@@ -1,6 +1,6 @@
 {
   "table_version": 1,
-  "updated_at": "2026-10-13T22:10:14+08:00",
+  "updated_at": "2026-10-14T00:53:56+08:00",
   "leases": {
     "realtime_quote": {
       "agent": "破甲",
@@ -127,6 +127,29 @@
       "output": null,
       "released_at": "2026-10-13T22:08:54+08:00",
       "note": "skill_algos.py 5算法已落地"
+    },
+    "github_research": {
+      "agent": "破甲",
+      "status": "done",
+      "claimed_at": "2026-10-14T00:38:56+08:00",
+      "domain_desc": "GitHub 开源算法/引擎/架构调研",
+      "output": "cloud_arch_20261014.json + cloud_arch_notes_20261014.md",
+      "released_at": "2026-10-14T00:53:56+08:00",
+      "note": "3仓库: Doris(16078星,P2不引入)/Qbot(18633星,P1事件引擎)/sto=Rockyzsu/stock(8849星,P1 BaseService); GitCode Notebook 官方文档证实单次2h+无持久化=不能常驻; 落地P0: DuckDB UNIQUE(ts_code,trade_time)+label幂等; 前置条件: 量化1min采集的腾讯限流配额(未实测)"
+    },
+    "adjusted_full": {
+      "agent": "主会话",
+      "status": "claimed",
+      "claimed_at": "2026-10-13T23:05:19+08:00",
+      "domain_desc": "全市场复权数据 (qfq/hfq 批量)",
+      "output": null
+    },
+    "level2": {
+      "agent": "破甲",
+      "status": "claimed",
+      "claimed_at": "2026-10-13T23:05:19+08:00",
+      "domain_desc": "Level2 逐笔/盘口/主力资金 (每分钟买卖数据)",
+      "output": null
     }
   }
 }

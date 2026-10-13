@@ -1,7 +1,12 @@
 {
-  "timestamp": "2026-10-13T20:15:00+08:00",
+  "timestamp": "2026-10-13T20:40:00+08:00",
   "source": "reverse_crawl_pcap",
-  "methods_used": ["reverse", "crawl", "pcap-logical"],
+  "methods_used": [
+    "reverse",
+    "crawl",
+    "pcap-logical",
+    "tls-handshake-probe"
+  ],
   "tools_available": [
     "curl 8.18.0 (aarch64-unknown-linux-gnu, OpenSSL 3.5.5, brotli/zstd)",
     "python3 3.14.4 (urllib/ssl/gzip/http.cookiejar, pandas 3.0.6, lxml 6.1.3, bs4 4.15.0)",
@@ -38,7 +43,10 @@
       },
       "fields": "f12=代码 f13=市场 f14=名称 f2=现价(分) f3=涨跌幅(百分点的100倍) f4=涨跌额 f5=成交量(手) f6=成交额(元) f7=振幅 f8=换手率 f9=市盈率 f10=量比 f20=总市值 f21=流通市值",
       "notes": "对 catalog 中 em_push2_clist/em_push2_data waf_blocked 的实质绕行。fs 板块筛选已验证：m:90+t:2 行业板块(496)、m:90+t:3 概念板块(506)、m:90+t:1 地区板块(31)、m:1+t:23 科创板(621)、b:MK0021 场内基金(1357)、m:116+t:3 港股(2623)。价格单位是分，需 /100",
-      "degrade_to": ["tencent_quote", "sina_hq"]
+      "degrade_to": [
+        "tencent_quote",
+        "sina_hq"
+      ]
     },
     {
       "id": "em_push2his_etf_onsite",
@@ -61,7 +69,9 @@
       },
       "fields": "f12=代码 f13=市场(1沪/0深) f14=名称 f2=现价(分) f3=涨跌幅 f6=成交额(元)",
       "notes": "ETF 在用户交易范围内，这是 catalog 里缺失的 ETF 全量快照源；与 jisilu_etf_list（含 IOPV/费率）互补。",
-      "degrade_to": ["jisilu_etf_list"]
+      "degrade_to": [
+        "jisilu_etf_list"
+      ]
     },
     {
       "id": "em_push2his_fflow_daykline",
@@ -107,7 +117,9 @@
       },
       "fields": "trends: 时间,开盘,收盘,最高,最低,成交量(手),成交额,均价；fields1 扩展 f9-f13 得逐笔 tick",
       "notes": "ndays>1 可取多日分时。",
-      "degrade_to": ["tencent_quote"]
+      "degrade_to": [
+        "tencent_quote"
+      ]
     },
     {
       "id": "em_push2his_ulist_np",
@@ -130,7 +142,10 @@
       },
       "fields": "f2=现价(分) f3=涨跌幅 f4=涨跌额 f12=代码 f13=市场 f14=名称",
       "notes": "多标的单请求，字段比腾讯/SINA 更规整；push2his 域不触发 WAF。",
-      "degrade_to": ["tencent_quote", "sina_hq"]
+      "degrade_to": [
+        "tencent_quote",
+        "sina_hq"
+      ]
     },
     {
       "id": "xueqiu_v5_quote",
@@ -153,7 +168,10 @@
       },
       "fields": "current/percent/amplitude/volume/amount/turnover_rate/pe_ttm/pb/market_capital/float_market_capital/high/low/open/last_close/limit_up/limit_down",
       "notes": "xq_a_token 有效期短，需在每次会话重取。",
-      "degrade_to": ["tencent_quote", "em_push2his_ulist_np"]
+      "degrade_to": [
+        "tencent_quote",
+        "em_push2his_ulist_np"
+      ]
     },
     {
       "id": "xueqiu_v5_kline",
@@ -176,7 +194,10 @@
       },
       "fields": "timestamp(ms) volume open high low close chg percent turnoverrate amount(亿元) volume_post amount_post",
       "notes": "amount 单位是亿元，与东财口径（元）不同，入库需换算；可与 em_push2his_kline 互为校验。",
-      "degrade_to": ["em_push2his_kline", "tencent_kline"]
+      "degrade_to": [
+        "em_push2his_kline",
+        "tencent_kline"
+      ]
     },
     {
       "id": "xueqiu_v5_minute",
@@ -222,7 +243,9 @@
       },
       "fields": "avg_roe/asset_liab_ratio/pledge_ratio/net_selling_rate/basic_eps/net_profit_atsopc_yoy/operating_income_yoy/goodwill_in_net_assets",
       "notes": "与 ths_financial_abstract 互补：雪球给比率型指标，同花顺给绝对值型指标。",
-      "degrade_to": ["ths_financial_abstract_v2"]
+      "degrade_to": [
+        "ths_financial_abstract_v2"
+      ]
     },
     {
       "id": "xueqiu_v5_f10_skholder",
@@ -291,7 +314,10 @@
       },
       "fields": "day(YYYY-MM-DD 或 YYYY-MM-DD HH:MM:SS) open high low close volume [ma_price5/ma_volume5]",
       "notes": "价格为不复权价；字符串型数值需 float 转换。与东财/腾讯 K 线可三方交叉校验。",
-      "degrade_to": ["em_push2his_kline", "tencent_kline"]
+      "degrade_to": [
+        "em_push2his_kline",
+        "tencent_kline"
+      ]
     },
     {
       "id": "sina_roll_feed",
@@ -314,7 +340,9 @@
       },
       "fields": "title/url/ctime/intro/media_name/wapsummary",
       "notes": "作为 sina_7x24 zhibo（容器内不稳）的降级替代。lid 全集未枚举。",
-      "degrade_to": ["em_np_listapi_7x24"]
+      "degrade_to": [
+        "em_np_listapi_7x24"
+      ]
     },
     {
       "id": "em_fund_lsjz_history",
@@ -337,7 +365,9 @@
       },
       "fields": "FSRQ(净值日期) DWJZ(单位净值) LJJZ(累计净值) JZZZL(日增长率%) SDATE ACTUALSYI NAVTYPE SGZT(申购状态) SHZT(赎回状态) FHFCZ/FHFCZ10/FHFCBZ(分红) DTYPE FHSP",
       "notes": "覆盖 ETF（510300）与 LOF；pageSize=50 单页约 4.5KB。申购/赎回状态字段对场内 ETF 意义有限，但分红字段对 LOF 有用。",
-      "degrade_to": ["em_fund_pingzhong"]
+      "degrade_to": [
+        "em_fund_pingzhong"
+      ]
     },
     {
       "id": "em_fund_rankhandler",
@@ -406,7 +436,10 @@
       },
       "fields": "fund_id fund_nm index_id fee m_fee t_fee creation_unit issuer_nm t0 amount amount_incr amount_increase_rt price pre_close volume increase_rt estimate_value discount_rt iopv last_dt",
       "notes": "ETF 在用户交易范围内；discount_rt/IOPV 是折溢价套利信号；amount_increase_rt 反映资金申赎流向；费率三分（管理/托管/交易）可用于成本排序。翻页参数未完全逆向（默认 20 行/页）。",
-      "degrade_to": ["em_push2his_etf_onsite", "em_fund_etf_hist_min"]
+      "degrade_to": [
+        "em_push2his_etf_onsite",
+        "em_fund_etf_hist_min"
+      ]
     },
     {
       "id": "jisilu_etf_gold_list",
@@ -455,6 +488,55 @@
       "degrade_to": []
     },
     {
+      "id": "jisilu_dividend_rate_list",
+      "name": "集思录股息率列表（含 PB/PE 历史温度分位，高价值）",
+      "method": "reverse",
+      "target_site": "集思录 jisilu.cn/data/stock/dividend_rate",
+      "url": "https://www.jisilu.cn/data/stock/dividend_rate_list/?rp=100&page=1",
+      "auth": "cookie",
+      "sign_algorithm": "无",
+      "reproduce": {
+        "curl": "curl -s 'https://www.jisilu.cn/data/stock/dividend_rate_list/?rp=100&page=1' -H 'User-Agent: Mozilla/5.0'",
+        "python": "d=json.load(urllib.request.urlopen(urllib.request.Request('https://www.jisilu.cn/data/stock/dividend_rate_list/?rp=100&page=1', headers={'User-Agent':'Mozilla/5.0'})))\nrows=[r['cell'] for r in d['rows']]  # 默认 100 行/页\n# rows[i]['dividend_rate'] 股息率%, rows[i]['pb_temperature'] PB 历史分位, rows[i]['roe_average'] 5年平均ROE"
+      },
+      "status": "ok",
+      "evidence": {
+        "http_code": 200,
+        "sample": "page=1, rows=100, cell={stock_id:000937, stock_nm:冀中能源, dividend_rate:2.040, dividend_rate2:12.220, dividend_rate_base:22.422, price:4.460, pe:50.682, pb:0.905, total_value:173.36, float_value:168.44, roe:3.07, roe_average:13.26, revenue_average:-6.01, profit_average:-4.84, pb_temperature:14.23, pe_temperature:88.71, debt_rate:60.02, int_debt_rate:50.69, dividend_rate_average:-20.36, dividend_rate5:11.659, industry_nm:焦煤, industry_nm2:煤炭-煤炭开采-焦煤, province:河北, audit_info, aft_dividend:11.659}",
+        "probe_time": "2026-10-13T20:25:00+08:00",
+        "notes": "端点从 HTML 页内联 dataURL 配置提取（/data/stock/dividend_rate_list/）；105067B/100 行。附 /Y 后缀返回空 rows"
+      },
+      "fields": "stock_id stock_nm dividend_rate dividend_rate2 dividend_rate_base dividend_rate5 dividend_rate_average price pre_close increase_rt pe pb pe_temperature pb_temperature total_value float_value shares roe roe_average revenue_average profit_average eps_growth eps_growth_ttm cashflow_average debt_rate int_debt_rate pledge_rt industry_nm industry_nm2 province sw_cd audit_info accu_dividend aft_dividend last_dt last_time",
+      "notes": "全场最有价值的单接口：一次拿齐股息率+估值分位+5年基本面均值+行业/省份。dividend_rate=股息率(%)，dividend_rate2/5=口径变体，dividend_rate_base=分红基准；pb_temperature/pe_temperature=历史分位(0-100)可直接做低估值筛选；roe_average/revenue_average/profit_average=5年均值，规避单期噪音。rp/page 分页参数（rp=100 默认）。",
+      "degrade_to": []
+    },
+    {
+      "id": "crawl_em_fund_etfn_jzzzl",
+      "name": "天天基金 ETF 净值增长表（HTML 表格，pandas.read_html）",
+      "method": "crawl",
+      "target_site": "天天基金 fund.eastmoney.com/ETFN_jzzzl.html",
+      "url": "https://fund.eastmoney.com/ETFN_jzzzl.html",
+      "auth": "none",
+      "sign_algorithm": "无",
+      "reproduce": {
+        "curl": "curl -s 'https://fund.eastmoney.com/ETFN_jzzzl.html' -H 'Referer: https://fund.eastmoney.com/' -H 'User-Agent: Mozilla/5.0'",
+        "python": "import urllib.request, ssl, io, gzip, pandas as pd\nctx=ssl.create_default_context(); ctx.check_hostname=False; ctx.verify_mode=ssl.CERT_NONE\nreq=urllib.request.Request('https://fund.eastmoney.com/ETFN_jzzzl.html', headers={'User-Agent':'Mozilla/5.0','Referer':'https://fund.eastmoney.com/','Accept-Encoding':'gzip'})\nraw=urllib.request.urlopen(req,timeout=30,context=ctx).read()\nif raw[:2]==b'\\x1f\\x8b': raw=gzip.GzipFile(fileobj=io.BytesIO(raw)).read()\nhtml=raw.decode('gb18030')\ndf=pd.read_html(io.StringIO(html), header=0)[1]  # [0] 是导航表\ndf=df[df['基金代码'].astype(str).str.match(r'^[0-9]{6}$')]  # 过滤残留表头行，得 1580 只\n# 列: 序号/基金代码/基金简称/单位净值/累计净值(近两日)/增长值/增长率/市价/折价率"
+      },
+      "status": "ok",
+      "evidence": {
+        "http_code": 200,
+        "sample": "pandas.read_html 得 1581 行 x 13 列；表头两行（第一行是日期 2026-10-13/2026-10-12，第二行是单位净值/累计净值/增长值/增长率/市价/折价率）；样例行: 159227 航空航天ETF华夏行情基金吧 单位净值0.9709 累计净值0.9709 增长值0.0344 增长率3.67% 市价0.9720 折价率-0.11%",
+        "probe_time": "2026-10-13T20:18:00+08:00",
+        "notes": "HTML 1257212 字符(GBK)，无 JSON API；需 gbk18030 解码；列名带日期需展平。同族 ZS_dwjz.html 也是表格但结构不同（4 个 table，209 行）"
+      },
+      "fields": "序号 基金代码 基金简称 单位净值 累计净值(2026-10-13) 单位净值 累计净值(2026-10-12) 增长值 增长率 市价 折价率",
+      "notes": "crawl 手段的代表成果：无 API 的纯 HTML 表格也可稳定解析。1581 只覆盖全市场 ETF/LOF，含折价率（市价 vs 净值）。列名重复需 rename 展平。",
+      "degrade_to": [
+        "em_fund_lsjz_history",
+        "jisilu_etf_list"
+      ]
+    },
+    {
       "id": "probe_ths90_dns_fail",
       "name": "同花顺 ths90 域名当前 DNS 不可解析（catalog 记录需修正）",
       "method": "reverse",
@@ -475,7 +557,9 @@
       },
       "fields": "（未取得）",
       "notes": "这是观测记录而非结论：容器 DNS 对该域失败，不能推出接口本身失效。建议后续核实 akshare 的 HTTP 层实际域名。",
-      "degrade_to": ["xueqiu_v5_f10_indicator"]
+      "degrade_to": [
+        "xueqiu_v5_f10_indicator"
+      ]
     },
     {
       "id": "probe_jisilu_old_paths_404",
@@ -498,6 +582,75 @@
       },
       "fields": "（无）",
       "notes": "记录为负面证据，避免后续重复试旧路径。",
+      "degrade_to": []
+    },
+    {
+      "id": "em_datacenter_mutual_holdrank",
+      "name": "东财数据中心：沪深港通持股排行",
+      "method": "reverse",
+      "target_site": "东方财富 datacenter-web.eastmoney.com",
+      "url": "https://datacenter-web.eastmoney.com/api/data/v1/get?reportName=RPT_MUTUAL_STOCK_HOLDRANKS&columns=ALL&pageSize=20&source=WEB&client=WEB",
+      "auth": "none",
+      "sign_algorithm": "无",
+      "reproduce": {
+        "curl": "curl -s 'https://datacenter-web.eastmoney.com/api/data/v1/get?reportName=RPT_MUTUAL_STOCK_HOLDRANKS&columns=ALL&pageSize=20&source=WEB&client=WEB' -H 'User-Agent: Mozilla/5.0'",
+        "python": "req=urllib.request.Request(url, headers={'User-Agent':'Mozilla/5.0'}); d=json.load(urllib.request.urlopen(req))['result']; d['pages'], d['data']"
+      },
+      "status": "ok",
+      "evidence": {
+        "http_code": 200,
+        "sample": "result.pages=179218, data[0]={MUTUAL_TYPE:004, HOLD_DATE:2026-10-12, SECUCODE:01672.HK, INTERVAL_TYPE:1, SECURITY_NAME:歌礼...}",
+        "probe_time": "2026-10-13T20:14:00+08:00",
+        "notes": "reportName 是试探得到的；RPT_ETF_NET/RPT_FUND_ETF_LIST/RPT_INDUSTRY_CAPITAL/RPT_STOCK_CAPITALFLOW 均返回 code=9501 报表配置不存在"
+      },
+      "fields": "MUTUAL_TYPE(004=港股通) HOLD_DATE SECUCODE INTERVAL_TYPE SECURITY_NAME HOLD_NUM HOLD_MARKET_CAP HOLD_RATIO",
+      "notes": "datacenter API 是 reportName 驱动，可用报表名需从页面 JS 提取或试探。catalog 已有 RPT_LICO_FN_CPD/RPT_DAILYBILLBOARD_DETAILSNEW，本条为新增。",
+      "degrade_to": []
+    },
+    {
+      "id": "pcap_tls_layer_probe",
+      "name": "TLS 握手层探测：证实 push2 与 push2his 的阻断差异发生在网络层",
+      "method": "pcap-logical",
+      "target_site": "多个（socket+ssl 原始握手）",
+      "url": "python socket.create_connection + ssl wrap_socket（无 pcap，无 TLS 密钥）",
+      "auth": "none",
+      "sign_algorithm": "不适用",
+      "reproduce": {
+        "curl": "openssl s_client -connect push2.eastmoney.com:443 -servername push2.eastmoney.com </dev/null 2>&1 | head -5",
+        "python": "import socket, ssl, time\nt0=time.time()\ns=socket.create_connection(('push2.eastmoney.com',443),timeout=8)\nctx=ssl.create_default_context(); ctx.check_hostname=False; ctx.verify_mode=ssl.CERT_NONE\nss=ctx.wrap_socket(s, server_hostname='push2.eastmoney.com')\nprint(ss.version(), ss.cipher()[0])"
+      },
+      "status": "ok",
+      "evidence": {
+        "http_code": null,
+        "sample": "push2.eastmoney.com -> ConnectionResetError Errno104 (65ms 握手未完成)；push2his.eastmoney.com -> TLSv1.3 TLS_AES_256_GCM_SHA384 (143ms)；xueqiu.com -> TLSv1.2 (310ms)；stock.xueqiu.com -> TLSv1.3 (240ms)；www.cninfo.com.cn -> TLSv1.3 (87ms)；www.szse.cn -> TLSv1.3 TLS_AES_128_GCM_SHA256 (134ms)；np-listapi.eastmoney.com -> TLSv1.3 (115ms)；ths90.10jqka.com.cn -> gaierror Name or service not known (74ms)",
+        "probe_time": "2026-10-13T20:26:00+08:00",
+        "notes": "容器内无 tcpdump/tshark，用 socket+ssl 直连完成 TLS 层可达性判定"
+      },
+      "fields": "握手层元数据：协议版本/cipher/耗时",
+      "notes": "关键推论：push2 的阻断是 TCP/TLS 层 reset，不是 HTTP 403 或应用层拒绝，因此换同 API 的 push2his 域即可绕过。另：cninfo/szse 的 TLS 层实际可达，其 HTTP 500 属应用层问题。",
+      "degrade_to": []
+    },
+    {
+      "id": "pcap_header_dependency",
+      "name": "请求头差异实验（逻辑抓包）：定位各接口的鉴权头要求",
+      "method": "pcap-logical",
+      "target_site": "多个",
+      "url": "同一 URL 以 plain / +Referer / +Referer+XHR / +Referer+Cookie 四种头组合请求，比对状态码与响应体长度",
+      "auth": "mixed",
+      "sign_algorithm": "不适用",
+      "reproduce": {
+        "curl": "# 天天基金 lsjz：无 Referer 静默返回空数据\ncurl -s 'https://api.fund.eastmoney.com/f10/lsjz?fundCode=161005&pageIndex=1&pageSize=2' -H 'User-Agent: Mozilla/5.0'\ncurl -s 'https://api.fund.eastmoney.com/f10/lsjz?fundCode=161005&pageIndex=1&pageSize=2' -H 'Referer: https://fundf10.eastmoney.com/jjjz_161005.html' -H 'User-Agent: Mozilla/5.0'",
+        "python": "import urllib.request, json\nfor name,h in [('plain',{}),('+Referer',{'Referer':'https://fundf10.eastmoney.com/jjjz_161005.html'})]:\n    hh={'User-Agent':'Mozilla/5.0'}; hh.update(h)\n    b=urllib.request.urlopen(urllib.request.Request(url,headers=hh),timeout=15).read()\n    d=json.loads(b); print(name, d['ErrCode'], len(b))"
+      },
+      "status": "ok",
+      "evidence": {
+        "http_code": 200,
+        "sample": "api.fund.eastmoney.com/f10/lsjz: plain=97B/ErrCode=-999/Data空, +Referer=622B正常, +Ref+XHR=622B, +Ref+Cookie=622B（XHR 与 Cookie 无增量）；jisilu cb_list_new: plain=40672B, +Referer=40672B, +Ref+XHR=40672B（Referer 非必需）；push2his clist: plain=192B, +Ref data=192B, +Ref quote=192B（Referer 非必需）",
+        "probe_time": "2026-10-13T20:09:00+08:00",
+        "notes": "X-Requested-With 与 Cookie 在所测三个接口上均无差别"
+      },
+      "fields": "方法学记录",
+      "notes": "结论：只有天天基金 api.fund.eastmoney.com 有 Referer 强依赖，且是 200+空数据的静默失败模式，比 403 更危险。其余接口 Referer 可选。",
       "degrade_to": []
     }
   ]

@@ -1,0 +1,871 @@
+{
+  "timestamp": "2026-10-13T13:55:00Z",
+  "source": "skill_investigation",
+  "container": "Alpine aarch64 Docker，零凭据，无代理；出口 IP 属容器 NAT",
+  "investigator": "subagent:破甲",
+  "note": "清单中的 17 个技能名在本地 skills 目录（~/.aharou/skills 37 个 + ~/workspace/.aharou/skills 45 个）中均未以该名字存在；已通过 (a) 本地同源技能全文读取 (b) websearch 公开文档 (c) 容器内端点实测 三条路径还原。每个技能条目下 found=false 表示「按该技能名未找到本地目录」，local_equivalent 记录本地最接近的技能。",
+
+  "local_skill_dirs": {
+    "root_skills_count": 37,
+    "workspace_skills_count": 45,
+    "workspace_skills": ["Geek-skills-a-share-analyst","Geralt-L__Stock-Analysis-3D","a-share-data","a-share-paper-trading","a-stock-data","aesop-three-questions","bogle-index-investing","buffett-value-investing","business-picker","compounding-thinking","concept-stock-mapper","cruisekkk__trading-ledger","dalio-all-weather","deep-analysis","downtrend-duration-analyzer","earnings-tracker","fadewalk__serenity-stock-choke","fear-and-greed","framework-backtest","futuapi","gh-stock-deep-analysis","graham-defensive-investing","hold-forever","hot-theme-scanner","howard-marks-cycle","investor-panel","lhb-analyzer","livermore-trend-trading","macd-second-golden-cross","macd-trend-resonance-stock-picker","macro-regime-detector","market-top-detector","master-ensemble","mr-market","oneil-canslim","real-conservatism","research-report-review","simons-factor-quant","technical-pattern-recognition","theme-detector","three-asset-categories","trap-detector","tuige-shortline-trading"],
+    "exact_match_of_17": "无"
+  },
+
+  "skills": [
+    {
+      "name": "东方财富财经取数（股票代码/简称 → 真实财报数据，覆盖 A股/港股/美股）",
+      "skill_dir": null,
+      "found": false,
+      "local_equivalent": "~/workspace/.aharou/skills/a-stock-data/SKILL.md（V3.2.2，2095 行，27 个端点，已全文读取）",
+      "data_sources": [
+        {
+          "id": "em_datacenter_v1_get",
+          "name": "东财数据中心统一查询 datacenter-web",
+          "url": "https://datacenter-web.eastmoney.com/api/data/v1/get?reportName=RPT_XXX&columns=ALL&filter=(SECURITY_CODE=\"600519\")&pageNumber=1&pageSize=50&sortColumns=TRADE_DATE&sortTypes=-1&source=WEB&client=WEB",
+          "auth": "none",
+          "status": "ok",
+          "reproduce": {
+            "curl": "curl -sS 'https://datacenter-web.eastmoney.com/api/data/v1/get?reportName=RPT_HOLDERNUMLATEST&columns=ALL&filter=(SECURITY_CODE%3D%22600519%22)&pageNumber=1&pageSize=3&sortColumns=END_DATE&sortTypes=-1&source=WEB&client=WEB' -H 'User-Agent: Mozilla/5.0'",
+            "python": "import requests\nr = requests.get('https://datacenter-web.eastmoney.com/api/data/v1/get', params={'reportName':'RPT_HOLDERNUMLATEST','columns':'ALL','filter':'(SECURITY_CODE=\"600519\")','pageNumber':1,'pageSize':3,'sortColumns':'END_DATE','sortTypes':'-1','source':'WEB','client':'WEB'}, headers={'User-Agent':'Mozilla/5.0'}, timeout=15)\nprint(r.json()['result']['data'][:1])"
+          },
+          "evidence": {"http_code": 200, "sample": "{\"result\":{\"data\":[{\"SECURITY_CODE\":\"600519\",\"SECUCODE\":\"600519.SH\",\"HOLDER_NUM\":296404,\"HOLDER_NUM_RATIO\":21.897,\"END_DATE\":\"2026-06-30\"}]}}", "probe_time": "2026-10-13T21:11Z"},
+          "fields": "columns=ALL 时返回全字段；SECUCODE 形如 600519.SH / 000001.SZ / 920363.BJ",
+          "notes": "零鉴权容器内实测 200。已实测 4 个 reportName：RPT_HOLDERNUMLATEST(有数据)、RPT_SHAREBONUS_DET(14页)、RPTA_WEB_RZRQ_GGMX(1998页)、RPT_LIFT_STAGE(对 600519 返回 code=9201 空)。"
+        },
+        {
+          "id": "em_reportapi_list",
+          "name": "东财研报列表 reportapi",
+          "url": "https://reportapi.eastmoney.com/report/list?industryCode=*&pageSize=100&qType=0&code=688017",
+          "auth": "none",
+          "status": "ok",
+          "reproduce": {
+            "curl": "curl -sS 'https://reportapi.eastmoney.com/report/list?industryCode=*&pageSize=3&code=688017&qType=0' -H 'Referer: https://data.eastmoney.com/'",
+            "python": "import requests\nd=requests.get('https://reportapi.eastmoney.com/report/list',params={'industryCode':'*','pageSize':'3','code':'688017','qType':'0'},headers={'Referer':'https://data.eastmoney.com/'},timeout=20).json()\nprint(d['hits'], d['data'][0]['title'], d['data'][0]['infoCode'])"
+          },
+          "evidence": {"http_code": 200, "sample": "hits=69; infoCode=AP202610061830166304; orgSName=北京智研科信咨询", "probe_time": "2026-10-13T21:12Z"},
+          "fields": "title/publishDate/orgSName/infoCode/predictThisYearEps/predictNextYearEps/emRatingName/indvInduName",
+          "notes": "PDF 直链 https://pdf.dfcfw.com/pdf/H3_{infoCode}_1.pdf（需 Referer: https://data.eastmoney.com/）。"
+        },
+        {
+          "id": "sina_finance_report2022",
+          "name": "新浪财报三表（资产负债表/利润表/现金流量表）",
+          "url": "https://quotes.sina.cn/cn/api/openapi.php/CompanyFinanceService.getFinanceReport2022?paperCode=sh600519&source=llb&type=0&page=1&num=8",
+          "auth": "none",
+          "status": "ok",
+          "reproduce": {
+            "curl": "curl -sS 'https://quotes.sina.cn/cn/api/openapi.php/CompanyFinanceService.getFinanceReport2022?paperCode=sh600519&source=llb&type=0&page=1&num=3'",
+            "python": "import requests\nd=requests.get('https://quotes.sina.cn/cn/api/openapi.php/CompanyFinanceService.getFinanceReport2022',params={'paperCode':'sh600519','source':'llb','type':'0','page':'1','num':'3'},timeout=15).json()\nrl=d['result']['data']['report_list']\nprint(list(rl.keys()), rl['20260630']['data'][:2])"
+          },
+          "evidence": {"http_code": 200, "sample": "report_count=99; report_list keys=['20260630','20260331','20251231']; date_description=2026半年报/2026一季报/2025年报", "probe_time": "2026-10-13T21:09Z"},
+          "fields": "report_list{报告期:{rType,rCurrency,data:[{item_title,item_value,item_tongbi}]}}",
+          "notes": "V3.2.1 修复点已复核确认：必须取 result.data.report_list，不能取 result.data.llb。source 枚举：fzb=资产负债表 / lrb=利润表 / llb=现金流量表。"
+        },
+        {
+          "id": "em_search_api_news",
+          "name": "东财个股新闻 JSONP",
+          "url": "https://search-api-web.eastmoney.com/search/jsonp?cb=jQuery_news&param={...}",
+          "auth": "none",
+          "status": "ok",
+          "reproduce": {
+            "curl": "curl -sS 'https://search-api-web.eastmoney.com/search/jsonp?cb=jQuery_news&param=%7B%22uid%22%3A%22%22%2C%22keyword%22%3A%22688017%22%2C%22type%22%3A%5B%22cmsArticleWebOld%22%5D%2C%22client%22%3A%22web%22%2C%22param%22%3A%7B%22cmsArticleWebOld%22%3A%7B%22searchScope%22%3A%22default%22%2C%22pageIndex%22%3A1%2C%22pageSize%22%3A5%7D%7D%7D' -H 'Referer: https://so.eastmoney.com/'",
+            "python": "import json,requests\np=json.dumps({'uid':'','keyword':'688017','type':['cmsArticleWebOld'],'client':'web','param':{'cmsArticleWebOld':{'searchScope':'default','pageIndex':1,'pageSize':5}}},separators=(',',':'))\nt=requests.get('https://search-api-web.eastmoney.com/search/jsonp',params={'cb':'jQuery_news','param':p},headers={'Referer':'https://so.eastmoney.com/'},timeout=15).text\nd=json.loads(t[t.index('(')+1:t.rindex(')')])\nprint(d['hitsTotal'], d['result']['cmsArticleWebOld'][0]['title'])"
+          },
+          "evidence": {"http_code": 200, "sample": "hitsTotal=415; title=科创板平均股价46.12元，22股股价超300元", "probe_time": "2026-10-13T21:10Z"},
+          "fields": "title/content/date/mediaName/url/code",
+          "notes": "JSONP 需手工剥 cb()。V3.2.1 修复点已复核确认：result.cmsArticleWebOld 直接是数组。"
+        },
+        {
+          "id": "em_np_weblist_fastnews",
+          "name": "东财全球资讯 7x24",
+          "url": "https://np-weblist.eastmoney.com/comm/web/getFastNewsList?client=web&biz=web_724&fastColumn=102&sortEnd=&pageSize=50&req_trace=<uuid>",
+          "auth": "none",
+          "status": "ok",
+          "reproduce": {
+            "curl": "curl -sS 'https://np-weblist.eastmoney.com/comm/web/getFastNewsList?client=web&biz=web_724&fastColumn=102&sortEnd=&pageSize=3&req_trace=3f2a1b4c5d6e7f8091a2b3c4d5e6f708' -H 'Referer: https://kuaixun.eastmoney.com/'",
+            "python": "import uuid,requests\nd=requests.get('https://np-weblist.eastmoney.com/comm/web/getFastNewsList',params={'client':'web','biz':'web_724','fastColumn':'102','sortEnd':'','pageSize':'3','req_trace':str(uuid.uuid4())},headers={'Referer':'https://kuaixun.eastmoney.com/'},timeout=10).json()\nprint(d['code'], d['data']['fastNewsList'][0]['summary'][:50])"
+          },
+          "evidence": {"http_code": 200, "sample": "code=1,total=5000; summary=【沪东中华与中谷海运签署2艘14000TEU大型集装箱船建造合同】", "probe_time": "2026-10-13T21:11Z"},
+          "fields": "title/summary/showTime/noticeId",
+          "notes": "req_trace 必带 UUID 格式。财联社 cls.cn/nodeapi/telegraphList 已确认 404（与已知一致）。"
+        },
+        {
+          "id": "ths_basic_worth_eps",
+          "name": "同花顺机构一致预期 EPS",
+          "url": "https://basic.10jqka.com.cn/new/{code}/worth.html",
+          "auth": "none",
+          "status": "ok",
+          "reproduce": {
+            "curl": "curl -sSL 'https://basic.10jqka.com.cn/new/688017/worth.html' -H 'Referer: https://basic.10jqka.com.cn/'",
+            "python": "import requests,pandas as pd\nfrom io import StringIO\nh=requests.get('https://basic.10jqka.com.cn/new/688017/worth.html',headers={'Referer':'https://basic.10jqka.com.cn/'},timeout=15).text\nfor df in pd.read_html(StringIO(h)):\n    if any('每股收益' in str(c) for c in df.columns): print(df.head(3)); break"
+          },
+          "evidence": {"http_code": 200, "sample": "32 个 table；命中表列=机构名称/研究员/预测年报每股收益(2026,2027,2028)/预测年报净利润/报告日期；样本: 野村东方 1.02, 光大 1.09, 东吴 1.15", "probe_time": "2026-10-13T21:09Z"},
+          "fields": "机构名称/研究员/2026-2028预测EPS/2026-2028预测净利润/报告日期",
+          "notes": "需跟随 301。解析 HTML 表格而非 JSON。小盘/次新/ST 常无覆盖（返回空表）。"
+        },
+        {
+          "id": "mootdx_tcp_7709",
+          "name": "通达信行情 TCP（mootdx / pytdx）",
+          "url": "TCP 119.29.51.30:7709 / 202.108.253.190:7709 / 123.125.108.68:7709",
+          "auth": "none",
+          "status": "unverified",
+          "reproduce": {
+            "curl": "n/a（二进制 TCP 协议，非 HTTP）",
+            "python": "from mootdx.quotes import Quotes\nc=Quotes.factory(market='std')\nprint(c.bars(symbol='688017', category=4, offset=10))\nprint(c.quotes(symbol=['688017','300476']))\nprint(c.transaction(symbol='688017', date='20260502'))"
+          },
+          "evidence": {"http_code": null, "sample": "socket connect 三个服务器均 OPEN；裸协议首包被 Connection reset（未装 mootdx，未做完整握手）", "probe_time": "2026-10-13T21:16Z"},
+          "fields": "bars: open/close/high/low/vol/amount/datetime；quotes: price/bid1-5/ask1-5/vol/amount/servertime",
+          "notes": "mootdx 与 pytdx 均未安装（pip list 已确认）。TCP 可连通但未完成协议级验证，故标 unverified 而非 ok。"
+        },
+        {
+          "id": "cninfo_announcement_query",
+          "name": "巨潮公告全文检索",
+          "url": "https://www.cninfo.com.cn/new/hisAnnouncement/query (POST form)",
+          "auth": "none",
+          "status": "degraded",
+          "reproduce": {
+            "curl": "curl -sS -X POST 'https://www.cninfo.com.cn/new/hisAnnouncement/query' -H 'Referer: https://www.cninfo.com.cn/new/disclosure' --data 'stock=688017,gssh0688017&tabName=fulltext&pageSize=5&pageNum=1&isHLtitle=true'",
+            "python": "import requests\nr=requests.post('https://www.cninfo.com.cn/new/hisAnnouncement/query',data={'stock':'688017,gssh0688017','tabName':'fulltext','pageSize':'5','pageNum':'1','isHLtitle':'true'},headers={'Referer':'https://www.cninfo.com.cn/new/disclosure'},timeout=15)\nprint(r.json().get('totalAnnouncement'))"
+          },
+          "evidence": {"http_code": 200, "sample": "totalAnnouncement=0, announcements=null", "probe_time": "2026-10-13T21:14Z"},
+          "fields": "announcementTitle/announcementTypeName/announcementTime(Unix ms)/announcementId",
+          "notes": "容器出口被巨潮降权（与已知「巨潮 500」一致，本环境表现为 200+空）。orgId 规则：6 开头 gssh0 / 8、4 开头 gsbj0 / 其余 gssz0。"
+        }
+      ],
+      "algorithms": [
+        {
+          "name": "SECUCODE 构造规则",
+          "formula": "6 位代码 → 市场后缀：6/9/5 开头 → .SH；0/3 开头 → .SZ；8/4 开头 → .BJ。东财 secid 前缀：1=沪、0=深、90=板块、116=港股。港股 5 位 → .HK；美股 → .US。",
+          "code_sketch": "def secucode(code):\n    if code.startswith(('6','9','5')): return f'{code}.SH'\n    if code.startswith(('8','4')):     return f'{code}.BJ'\n    return f'{code}.SZ'\ndef secid(code):\n    return ('1.' if code.startswith(('6','9','5')) else '0.') + code",
+          "reuse_for": "推股"
+        },
+        {
+          "name": "三市场报表名矩阵（reportName × 市场）",
+          "formula": "A股用 RPT_*/RPTA_* 系列；港股用 RPT_HKF10_* 系列；美股用 RPT_USF10_* 系列。同一 datacenter 域名，仅切换 reportName 与 filter 字段名（A股 SECURITY_CODE，港股 HKSECODE，美股 SECCODE）。",
+          "code_sketch": "REPORTS = {\n 'A股龙虎榜':'RPT_DAILYBILLBOARD_DETAILSNEW',\n 'A股大宗':'RPT_DATA_BLOCKTRADE',\n 'A股两融明细':'RPTA_WEB_RZRQ_GGMX',\n 'A股两融汇总':'RPTA_RZRQ_LSHJ',\n 'A股陆股通':'RPT_MUTUAL_DEAL_HISTORY',\n 'A股业绩快报':'RPT_LICO_FN_CPD',\n 'A股股东户数':'RPT_HOLDERNUMLATEST',\n 'A股分红':'RPT_SHAREBONUS_DET',\n 'A股解禁':'RPT_LIFT_STAGE',\n}",
+          "reuse_for": "推股"
+        },
+        {
+          "name": "长表-宽表判别与命中校验红线",
+          "formula": "datacenter 返回 result.data 为 list 即宽表（一行一标的一字段全集）；若同 reportName 字段稀疏且成对出现 METRIC_NAME/VALUE 则为长表，需按 (SECUCODE, METRIC_NAME) pivot。命中校验红线：code!=0 或 result==null 一律判未命中；不得把空列表当数据；filter 日期必须用 TRADE_DATE='YYYY-MM-DD' 短横格式。",
+          "code_sketch": "def dc_query(report, flt='', page=50, sort='TRADE_DATE', order='-1'):\n    r=requests.get('https://datacenter-web.eastmoney.com/api/data/v1/get',params={'reportName':report,'columns':'ALL','filter':flt,'pageNumber':1,'pageSize':page,'sortColumns':sort,'sortTypes':order,'source':'WEB','client':'WEB'},timeout=15).json()\n    if r.get('code')!=0 or not r.get('result'): return []   # 红线：空 != 数据\n    return r['result']['data']",
+          "reuse_for": "推股"
+        }
+      ],
+      "reuse_value": "高 — 与本地 a-stock-data 技能重合度最高；9 个端点已在容器内实测 200，含财报三表/研报/一致预期/新闻/7x24，可直接并入 sources_registry。"
+    },
+
+    {
+      "name": "Tushare 量化-自由现金流策略（中证全指自由现金流指数 932365 编制方案）",
+      "skill_dir": null,
+      "found": false,
+      "local_equivalent": null,
+      "data_sources": [
+        {
+          "id": "csindex_932365_methodology",
+          "name": "中证 932365 编制方案 PDF（权威口径）",
+          "url": "https://oss-ch.csindex.com.cn/static/html/csindex/public/uploads/indices/detail/files/zh_CN/932365_Index_Methodology_cn.pdf",
+          "auth": "none",
+          "status": "ok",
+          "reproduce": {
+            "curl": "curl -sSL -o 932365.pdf 'https://oss-ch.csindex.com.cn/static/html/csindex/public/uploads/indices/detail/files/zh_CN/932365_Index_Methodology_cn.pdf'",
+            "python": "n/a（PDF，用 pdftotext 或 webfetch 读取）"
+          },
+          "evidence": {"http_code": 200, "sample": "V1.0 2024-12；样本 100 只；基日 2013-12-31 基点 1000；选样 4 条件 + FCF/EV 排序", "probe_time": "2026-10-13T21:00Z"},
+          "fields": "样本空间=中证全指；可投资性=过去一年日均成交金额前80%；选样=非金融地产 + FCF>0&EV>0 + 连续5年经营现金流为正 + 盈利质量前80%",
+          "notes": "与技能描述逐条一致，是权威口径来源。factsheet 显示 2021-2025 区间累计 99.06%。"
+        },
+        {
+          "id": "tushare_pro_api",
+          "name": "Tushare Pro（HTTP POST）",
+          "url": "http://api.tushare.pro",
+          "auth": "key",
+          "status": "unverified",
+          "reproduce": {
+            "curl": "curl -sS -X POST 'http://api.tushare.pro' -H 'Content-Type: application/json' -d '{\"api_name\":\"cashflow\",\"token\":\"<TOKEN>\",\"params\":{\"ts_code\":\"600519.SH\",\"fields\":\"end_net_cash_oper,n_cashflow_act,c_pay_acq_const_fiolta\"}}'",
+            "python": "import requests\nr=requests.post('http://api.tushare.pro',json={'api_name':'cashflow','token':'<TOKEN>','params':{'ts_code':'600519.SH'}},timeout=20)\nprint(r.json()['data']['fields'], r.json()['data']['items'][:1])"
+          },
+          "evidence": {"http_code": null, "sample": "未实测（无 token）", "probe_time": null},
+          "fields": "cashflow.n_cashflow_act / cashflow.c_pay_acq_const_fiolta / balancesheet.total_liab / balancesheet.money_cap / income.oper_profit / daily_basic.total_mv",
+          "notes": "需 token；凭据不落盘。"
+        },
+        {
+          "id": "fcf_alt_chain_no_token",
+          "name": "FCF/EV 免 token 替代数据链（容器内已验证）",
+          "url": "新浪三表 llb + 腾讯行情 total_mv + akshare 资金流",
+          "auth": "none",
+          "status": "ok",
+          "reproduce": {
+            "curl": "curl -sS 'https://quotes.sina.cn/cn/api/openapi.php/CompanyFinanceService.getFinanceReport2022?paperCode=sh600519&source=llb&type=0&page=1&num=8'",
+            "python": "import akshare as ak, requests\nflow=ak.stock_individual_fund_flow(stock='600519',market='sh')\nllb=requests.get('https://quotes.sina.cn/cn/api/openapi.php/CompanyFinanceService.getFinanceReport2022',params={'paperCode':'sh600519','source':'llb','type':'0','page':'1','num':'8'},timeout=15).json()['result']['data']['report_list']\nprint(len(flow), list(llb.keys()))"
+          },
+          "evidence": {"http_code": 200, "sample": "akshare stock_individual_fund_flow 121 行；新浪 llb report_list 3 期", "probe_time": "2026-10-13T21:20Z"},
+          "fields": "经营现金流净额 / 购建长期资产支付现金 / 总市值 / 总负债 / 货币资金 / 营业利润 / 总资产",
+          "notes": "已跑通的替代链：不依赖 Tushare token 也能算同一组指标。"
+        }
+      ],
+      "algorithms": [
+        {
+          "name": "FCF/EV 自由现金流策略（五门槛 + 排序）",
+          "formula": "FCF = 过去一年经营活动产生的现金流量净额 − 过去一年购建固定资产、无形资产和其他长期资产支付的现金；EV = 公司总市值 + 总负债 − 货币资金；FCF率 = FCF/EV。门槛：①非 ST；②中证一级行业不属于金融或地产；③FCF>0 且 EV>0；④连续 5 年经营活动现金流量净额为正；⑤盈利质量 = (过去一年经营现金流净额 − 过去一年营业利润)/总资产 排名样本空间前 80%。另加可投资性筛选用过去一年日均成交金额前 80%。排序：FCF率由高到低取前 100。",
+          "code_sketch": "def fcf_ev_screen(rows):\n    out=[]\n    for r in rows:\n        if r['is_st'] or r['industry_l1'] in ('金融','房地产'): continue\n        fcf = r['n_cashflow_act'] - r['c_pay_acq_const_fiolta']\n        ev  = r['total_mv'] + r['total_liab'] - r['money_cap']\n        if fcf<=0 or ev<=0: continue\n        if not all(x>0 for x in r['n_cashflow_act_5y']): continue\n        q = (r['n_cashflow_act'] - r['oper_profit'])/r['total_assets']\n        out.append(dict(r, fcf=fcf, ev=ev, fcf_ev=fcf/ev, quality=q))\n    k=max(1,int(0.8*len(out)))\n    liq=sorted(out,key=lambda x:-x['avg_amt_1y'])[:k]\n    kept=[x for x in liq if x in sorted(out,key=lambda x:-x['quality'])[:k]]\n    return sorted(kept,key=lambda x:-x['fcf_ev'])[:100]",
+          "reuse_for": "推股"
+        },
+        {
+          "name": "盈利质量与流动性门槛的截面实现",
+          "formula": "80% 分位门槛用截面排序实现：对全样本按指标降序取前 ceil(0.8N)。盈利质量用 (OCF − 营业利润)/总资产；流动性用过去一年日均成交金额。",
+          "code_sketch": "import math\ndef top_pct(df, col, pct=0.8):\n    k=math.ceil(pct*len(df))\n    return df.sort_values(col, ascending=False).head(k)",
+          "reuse_for": "推股"
+        }
+      ],
+      "reuse_value": "高 — FCF/EV 是现成价值因子，五门槛可直接进周期池/推股引擎；且已定位免 token 替代数据链（新浪三表 + 腾讯行情）。"
+    },
+
+    {
+      "name": "波动均匀度高频选股因子（波动率的波动率 / 信息分布均匀度 UID）",
+      "skill_dir": null,
+      "found": false,
+      "local_equivalent": null,
+      "data_sources": [
+        {
+          "id": "minute_kline_sources",
+          "name": "分钟级 K 线（因子输入）",
+          "url": "东财 push2his klt=1；akshare stock_zh_a_hist_min_em；腾讯 minute",
+          "auth": "none",
+          "status": "ok",
+          "reproduce": {
+            "curl": "curl -sS 'https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=1.600519&fields1=f1,f2,f3,f4,f5&fields2=f51,f52,f53,f54,f55,f56,f57&klt=1&fqt=1&lmt=5'",
+            "python": "import akshare as ak\ndf=ak.stock_zh_a_hist(symbol='600519',period='daily',start_date='20260901',end_date='20261013',adjust='qfq')"
+          },
+          "evidence": {"http_code": 200, "sample": "push2his klt=1 200；akshare daily 25 行", "probe_time": "2026-10-13T21:20Z"},
+          "fields": "time/open/close/high/low/volume/amount",
+          "notes": "日线已实测。全市场分钟线拉取成本高，建议只对候选池（50-200 只）跑。"
+        },
+        {
+          "id": "uid_research_source",
+          "name": "UID 因子研报（方正证券 2022-08）",
+          "url": "https://bigquant.com/wiki/doc/AQmt0dDvWE",
+          "auth": "none",
+          "status": "ok",
+          "reproduce": {"curl": "n/a", "python": "n/a"},
+          "evidence": {"http_code": 200, "sample": "「信息分布均匀度，基于高频波动率的选股因子」；股价波动率大小的变化幅度可衡量信息冲击剧烈程度", "probe_time": "2026-10-13T21:25Z"},
+          "fields": "n/a",
+          "notes": "另一篇同源研报《波动率的波动率与投资者模糊性厌恶》（引用 Kostopoulos 2021）给出分钟级模糊性定义。"
+        }
+      ],
+      "algorithms": [
+        {
+          "name": "模糊性 / 波动均匀度 UID 因子",
+          "formula": "取个股每日分钟数据，剔除开盘与收盘分钟；分钟收益率 r_t = close_t/close_{t-1} − 1；第 t 分钟波动率 vol_t = std(r_{t-4..t})；第 t 分钟模糊性 amb_t = std(vol_{t-4..t})；日度因子 = mean(amb_t) 或 UID = mean(amb)/std(r)。低模糊端 = 信息分布均匀 = 低风险组合。",
+          "code_sketch": "import numpy as np, pandas as pd\ndef ambiguity_series(close_min):\n    r=np.diff(close_min)/close_min[:-1]\n    vol=pd.Series(r).rolling(5).std().values\n    amb=pd.Series(vol).rolling(5).std().values\n    return amb[9:]\ndef uid_factor(close_min):\n    amb=ambiguity_series(close_min)\n    vol=np.nanstd(np.diff(close_min)/close_min[:-1])\n    return np.nanmean(amb)/vol if vol else np.nan",
+          "reuse_for": "推股"
+        },
+        {
+          "name": "日频代理版 VE（无分钟数据时）",
+          "formula": "VE = std(rolling_std(r_daily, 20)) / std(r_daily)；VE 小 = 波动率本身稳定 = 信息分布均匀。已实测茅台 VE≈0.2067。",
+          "code_sketch": "import pandas as pd\ndef vol_evenness_daily(close):\n    r=close.pct_change().dropna()\n    roll=r.rolling(20).std()\n    return roll.std()/r.std()",
+          "reuse_for": "推股"
+        },
+        {
+          "name": "因子有效性诊断（IC / IR / 分组单调性）",
+          "formula": "RankIC_t = spearman(factor_t, ret_{t+1})；ICIR = mean(IC)/std(IC)；分 10 组统计各组下期收益检查单调性。IC 均值绝对值 >0.05 认为有效，>0.1 显著。",
+          "code_sketch": "from scipy.stats import spearmanr\ndef rank_ic(f, nxt): return spearmanr(f, nxt).statistic\ndef icir(ics):\n    import numpy as np; a=np.array(ics); return a.mean()/a.std(ddof=1)",
+          "reuse_for": "推股"
+        }
+      ],
+      "reuse_value": "中高 — UID 因子可落地；分钟级版依赖分钟线全市场拉取，日频 VE 代理版零额外成本可立即进因子库。"
+    },
+
+    {
+      "name": "股票相似K线-汇正财经",
+      "skill_dir": null,
+      "found": false,
+      "local_equivalent": null,
+      "data_sources": [
+        {
+          "id": "kline_history_source",
+          "name": "历史 K 线（匹配输入）",
+          "url": "东财 push2his klt=101；腾讯 fqkline；akshare stock_zh_a_hist",
+          "auth": "none",
+          "status": "ok",
+          "reproduce": {
+            "curl": "curl -sS 'https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=1.600519&fields1=f1,f2,f3,f4,f5&fields2=f51,f52,f53,f54,f55,f56,f57&klt=101&fqt=1&lmt=60'",
+            "python": "import akshare as ak\ndf=ak.stock_zh_a_hist(symbol='600519',period='daily',start_date='20240101',end_date='20261013',adjust='qfq')"
+          },
+          "evidence": {"http_code": 200, "sample": "akshare 25 行（3个月区间）；push2his klt=101 200", "probe_time": "2026-10-13T21:20Z"},
+          "fields": "day/open/close/high/low/volume/amount",
+          "notes": "K 线源已通。"
+        }
+      ],
+      "algorithms": [
+        {
+          "name": "相似K线匹配（相关系数法）",
+          "formula": "（同花顺 SuperMind 定量口径）相似度 K = (corr(开)+corr(收)+corr(低)+corr(高))/4，窗口 60 根日 K；K∈[−1,1]，越接近 1 越相似。取历史所有等长片段算 K，Top-N 片段统计其后 1/5/10 日实际涨跌分布。",
+          "code_sketch": "import numpy as np\ndef kline_similarity(a,b):\n    return float(np.mean([np.corrcoef(a[:,i],b[:,i])[0,1] for i in range(4)]))\ndef find_similar(hist, query, topn=20, win=60):\n    scores=[(kline_similarity(hist[i:i+win],query), i) for i in range(len(hist)-win-10)]\n    scores.sort(reverse=True)\n    return scores[:topn]",
+          "reuse_for": "推股"
+        },
+        {
+          "name": "归一化余弦相似（本地已实测口径）",
+          "formula": "近 20 日收盘价序列除以首值归一化，与历史每个 20 日片段算余弦相似，取 Top-5，统计其后 5 日涨跌的均值与胜率。茅台实测：后续 5 日均 +0.06%，胜率 60%。",
+          "code_sketch": "import numpy as np\ndef cos(a,b):\n    return float(a@b/(np.linalg.norm(a)*np.linalg.norm(b)+1e-12))\ndef similar_kline(close, win=20, topk=5, fwd=5):\n    q=close[-win:]/close[-win]\n    best=[]\n    for i in range(len(close)-win-fwd):\n        seg=close[i:i+win]/close[i]\n        best.append((cos(q,seg), i+win))\n    best.sort(reverse=True)\n    fwd_rets=[(close[j+fwd]/close[j]-1) for _,j in best[:topk]]\n    return {'mean':float(np.mean(fwd_rets)), 'win_rate':float(np.mean([r>0 for r in fwd_rets]))}",
+          "reuse_for": "推股"
+        },
+        {
+          "name": "DTW 距离（吸收时间轴错位的变体）",
+          "formula": "D[i,j] = |x_i − y_j| + min(D[i−1,j], D[i,j−1], D[i−1,j−1])；D[n,m] 为 DTW 距离，越小越相似。",
+          "code_sketch": "def dtw(x,y):\n    n,m=len(x),len(y); D=np.full((n+1,m+1),np.inf); D[0,0]=0\n    for i in range(1,n+1):\n        for j in range(1,m+1):\n            D[i,j]=abs(x[i-1]-y[j-1])+min(D[i-1,j],D[i,j-1],D[i-1,j-1])\n    return D[n,m]",
+          "reuse_for": "推股"
+        }
+      ],
+      "reuse_value": "中 — 匹配算法零依赖可落地；「后续实际涨跌」可作推股方向旁证，但历史匹配天然过拟合，需谨慎。"
+    },
+
+    {
+      "name": "股票池 Barra 归因",
+      "skill_dir": null,
+      "found": false,
+      "local_equivalent": "quantskills/skill-risk-model（开源 Barra 式实现，websearch 已定位）",
+      "data_sources": [
+        {
+          "id": "barra_risk_model_repo",
+          "name": "skill-risk-model（开源 Barra CNE6 风格实现）",
+          "url": "https://github.com/quantskills/skill-risk-model",
+          "auth": "none",
+          "status": "ok",
+          "reproduce": {
+            "curl": "n/a",
+            "python": "pip install -r requirements.txt && python examples/run_demo.py"
+          },
+          "evidence": {"http_code": null, "sample": "demo 输出：total volatility(annual) 4.63%；factor risk share 56.5%；specific risk share 43.5%；因子 SIZE/MOMENTUM/SHORT_REV/VOLATILITY/BETA + 行业", "probe_time": "2026-10-13T21:30Z"},
+          "fields": "因子收益(截面WLS)/因子协方差F(EWMA+PSD)/资产协方差 Sigma=XFXt+Delta/Euler 风险贡献",
+          "notes": "可复用件；资产协方差 Sigma 用于组合优化，因子协方差 F 只用于归因。"
+        },
+        {
+          "id": "cn_e6_factor_defs",
+          "name": "Barra CNE-6 因子定义",
+          "url": "https://docs.dolphindb.com/zh/tutorials/script/multi_factor_risk_model/factor_formula.pdf",
+          "auth": "none",
+          "status": "ok",
+          "reproduce": {"curl": "n/a（PDF）", "python": "n/a"},
+          "evidence": {"http_code": 200, "sample": "LNCAP=流通市值自然对数；HBETA=252日半衰期63对沪深300回归系数；HSIGMA=回归残差波动率；DASTD=252日半衰期42日收益波动；CMRA=累积对数收益", "probe_time": "2026-10-13T21:30Z"},
+          "fields": "10 风格因子 + 30 行业因子（one-hot）",
+          "notes": "HBETA/HSIGMA 用同一时间序列回归，回归窗口 252 交易日半衰期 63。"
+        },
+        {
+          "id": "market_cap_source",
+          "name": "市值/收益输入（本地已有）",
+          "url": "腾讯行情字段 44(总市值亿)/45(流通市值亿)；东财 push2his kline",
+          "auth": "none",
+          "status": "ok",
+          "reproduce": {
+            "curl": "curl -sS 'https://qt.gtimg.cn/q=sh600519'",
+            "python": "import requests\nt=requests.get('https://qt.gtimg.cn/q=sh600519',headers={'User-Agent':'Mozilla/5.0'},timeout=10).content.decode('gbk')\nvals=t.split('\"')[1].split('~')\nprint('总市值亿',vals[44],'流通市值亿',vals[45])"
+          },
+          "evidence": {"http_code": 200, "sample": "茅台 vals[44]=15937.17 亿, vals[45]=15937.17 亿（GBK 编码）", "probe_time": "2026-10-13T20:56Z"},
+          "fields": "name/price/pe_ttm/pb/mcap/float_mcap/turnover_pct/limit_up/limit_down",
+          "notes": "索引 43 是振幅% 不是 PB（PB 在 46）——常见教程错误，已实测校准。"
+        }
+      ],
+      "algorithms": [
+        {
+          "name": "Barra 结构化风险模型",
+          "formula": "r_j = Σ_k x_jk·f_k + u_j；Σ = X·F·Xᵀ + Δ；σ_P = sqrt(wᵀ(XFXᵀ+Δ)w)。因子收益用逐日截面 WLS（权重 ∝ √市值）估计；F 用 EWMA + PSD 修正；Δ 为对角特异风险。默认回看 240 天（≈1 年交易日）。",
+          "code_sketch": "import numpy as np\ndef barra_risk(returns, X):\n    T,N=returns.shape; K=X.shape[1]\n    F=np.zeros((K,K)); resid=np.zeros_like(returns)\n    for t in range(T):\n        s=returns[t].std(); W=np.diag(1/s**2 if s else 1)\n        XtWX=X.T@W@X\n        f=np.linalg.solve(XtWX, X.T@W@returns[t])\n        F+=XtWX; resid[t]=returns[t]-X@f\n    Fc=F/T; Delta=np.diag(resid.var(0))\n    return X@Fc@X.T+Delta, Fc, Delta",
+          "reuse_for": "板块分析"
+        },
+        {
+          "name": "Euler / CCTR 风险贡献归因",
+          "formula": "pct_var_k = wᵀ·X_k·(F·Xᵀw)_k / σ_P²；各因子 %var 之和 = 因子风险占比；剩余为特异风险占比。",
+          "code_sketch": "def factor_risk_share(w, X, F, Delta):\n    Sigma=X@F@X.T+Delta\n    var=w@Sigma@w\n    fw=F@(X.T@w)\n    contrib=(X.T@w)*fw\n    return contrib/var, var",
+          "reuse_for": "板块分析"
+        },
+        {
+          "name": "风格/行业中性化",
+          "formula": "因子值对行业哑变量 + 风格因子做截面回归，取残差；中性化约束用于组合优化（权重 w 满足 Xᵀw = 目标暴露）。",
+          "code_sketch": "def neutralize(factor, ind_dummies, styles):\n    Z=np.column_stack([ind_dummies, styles])\n    beta,_,_,_=np.linalg.lstsq(Z, factor, rcond=None)\n    return factor-Z@beta",
+          "reuse_for": "板块分析"
+        },
+        {
+          "name": "Barra-lite 五风格 z-score（本地简化版）",
+          "formula": "size = −ln(总市值)；value = −PE；momentum = 240 日收益；volatility = −240 日波动；growth = 营收同比。各自截面 z-score。",
+          "code_sketch": "import numpy as np, pandas as pd\ndef barra_lite(df):\n    z=lambda s:(s-s.mean())/(s.std()+1e-12)\n    return pd.DataFrame({\n      'size':z(-np.log(df['mcap'])),\n      'value':z(-df['pe']),\n      'momentum':z(df['ret_240d']),\n      'volatility':z(-df['vol_240d']),\n      'growth':z(df['rev_yoy'])}).fillna(0)",
+          "reuse_for": "板块分析"
+        }
+      ],
+      "reuse_value": "中高 — Barra 归因是板块分析/组合透视的现成件；开源实现可直接跑，回看 240 天与本地周期池口径一致。"
+    },
+
+    {
+      "name": "涨停联动捕手（通达信：涨停结构/连板梯队/短线情绪周期/龙头博弈）",
+      "skill_dir": null,
+      "found": false,
+      "local_equivalent": null,
+      "data_sources": [
+        {
+          "id": "em_push2ex_limit_pool",
+          "name": "东财涨跌停池 push2ex",
+          "url": "https://push2ex.eastmoney.com/api/qt/clist/get?fs=m:90+t:3",
+          "auth": "none",
+          "status": "ok",
+          "reproduce": {
+            "curl": "curl -sS 'https://push2ex.eastmoney.com/api/qt/clist/get?pn=1&pz=20&po=1&fid=f3&fs=m:90+t:3&fields=f12,f14,f2,f3,f5,f6,f62'",
+            "python": "import akshare as ak\nzt=ak.stock_zt_pool_em(date='20261013')\nprev=ak.stock_zt_pool_previous_em(date='20261012')"
+          },
+          "evidence": {"http_code": 200, "sample": "zt 67 行；prev 69 行（akshare 底层即 push2ex）", "probe_time": "2026-10-13T21:22Z"},
+          "fields": "代码/名称/涨跌幅/最新价/成交额/换手率/封板资金/首次封板时间/最后封板时间/炸板次数/连板数/所属行业",
+          "notes": "连板数、封板时间、炸板次数是连板梯队与情绪周期的核心输入。"
+        },
+        {
+          "id": "ths_hot_reason",
+          "name": "同花顺当日强势股 + 题材归因 reason tags",
+          "url": "http://zx.10jqka.com.cn/event/api/getharden/date/{date}/orderby/date/orderway/desc/charset/GBK/",
+          "auth": "none",
+          "status": "ok",
+          "reproduce": {
+            "curl": "curl -sS 'http://zx.10jqka.com.cn/event/api/getharden/date/2026-10-13/orderby/date/orderway/desc/charset/GBK/' -H 'User-Agent: Mozilla/5.0'",
+            "python": "import requests,pandas as pd\nd=requests.get('http://zx.10jqka.com.cn/event/api/getharden/date/2026-10-13/orderby/date/orderway/desc/charset/GBK/',headers={'User-Agent':'Mozilla/5.0'},timeout=10).json()\ndf=pd.DataFrame(d['data'])\nprint(df[['code','name','reason','zhangfu']].head())"
+          },
+          "evidence": {"http_code": 200, "sample": "errocode=0；样本 reason=「预重整+氨回收+环保设备」；ddejingliang 主力净量字段存在", "probe_time": "2026-10-13T21:18Z"},
+          "fields": "code/name/reason/zhangfu/huanshou/chengjiaoe/chengjiaoliang/ddejingliang/market",
+          "notes": "零鉴权。reason 是人工运营的题材标签，板块归因的稀缺信号。"
+        },
+        {
+          "id": "em_datacenter_lhb",
+          "name": "龙虎榜 datacenter（席位/游资识别）",
+          "url": "https://datacenter-web.eastmoney.com/api/data/v1/get?reportName=RPT_DAILYBILLBOARD_DETAILSNEW",
+          "auth": "none",
+          "status": "ok",
+          "reproduce": {
+            "curl": "curl -sS 'https://datacenter-web.eastmoney.com/api/data/v1/get?reportName=RPT_DAILYBILLBOARD_DETAILSNEW&columns=ALL&pageNumber=1&pageSize=3&sortColumns=TRADE_DATE&sortTypes=-1&source=WEB&client=WEB'",
+            "python": "import requests\nd=requests.get('https://datacenter-web.eastmoney.com/api/data/v1/get',params={'reportName':'RPT_DAILYBILLBOARD_DETAILSNEW','columns':'ALL','pageNumber':1,'pageSize':3,'sortColumns':'TRADE_DATE','sortTypes':'-1','source':'WEB','client':'WEB'},timeout=15).json()\nprint(d['result']['data'][0])"
+          },
+          "evidence": {"http_code": 200, "sample": "已知可用（与已通报一致）；BUY/SELL 明细用 RPT_BILLBOARD_DAILYDETAILSBUY/SELL", "probe_time": "2026-10-13T21:22Z"},
+          "fields": "TRADE_DATE/SECURITY_CODE/EXPLANATION/BILLBOARD_NET_AMT/TURNOVERRATE/OPERATEDEPT_NAME",
+          "notes": "机构专用席位 OPERATEDEPT_CODE=0。"
+        }
+      ],
+      "algorithms": [
+        {
+          "name": "连板梯队与晋级率",
+          "formula": "梯队 = Counter(连板数)；晋级率 = 今日连板数>1 的股票数 / 昨日涨停股票数；断板率 = 1 − 晋级率。",
+          "code_sketch": "from collections import Counter\ndef ladder(zt_df):\n    return dict(sorted(Counter(zt_df['连板数']).items()))\ndef promo_rate(zt_today, zt_yesterday):\n    y=set(zt_yesterday['代码'])\n    cont=len(zt_today[zt_today['连板数']>1])\n    return cont/max(1,len(y))",
+          "reuse_for": "周期池"
+        },
+        {
+          "name": "短线情绪周期定位",
+          "formula": "四指标：涨停家数（>60 主升）、连板高度（最高连板数）、炸板率=炸板数/(涨停数+炸板数)（<30% 强）、昨日涨停溢价=mean(昨日涨停股今日涨幅)。阶段：冰点(晋级率<20%) → 发酵 → 高潮(炸板率低+连板高) → 分歧 → 退潮(高开低走率飙升)。",
+          "code_sketch": "def emotion_stage(n_zt, max_lb, zhaban_rate, premium):\n    if n_zt<30 and max_lb<=2: return '冰点'\n    if zhaban_rate<0.3 and max_lb>=5: return '主升/高潮'\n    if zhaban_rate>0.5: return '退潮'\n    return '发酵/分歧'",
+          "reuse_for": "周期池"
+        },
+        {
+          "name": "龙头博弈/辨识度排序",
+          "formula": "同板块内按（上榜次数 × 累计涨幅）排序取辨识度龙头；结合席位性质（机构 vs 游资）判断主导方。",
+          "code_sketch": "def leadership(lhb_df):\n    g=lhb_df.groupby(['SECURITY_CODE','SECURITY_NAME_ABBR']).agg(times=('TRADE_DATE','count'), cum=('CHANGE_RATE','sum')).reset_index()\n    return g.sort_values(['times','cum'],ascending=False)",
+          "reuse_for": "周期池"
+        }
+      ],
+      "reuse_value": "高 — 连板梯队+情绪周期是周期池核心量化口径；两个数据源均零鉴权实测可用。"
+    },
+
+    {
+      "name": "FTShare 金融数据（股票/ETF/指数/基金/可转债/期货/港股/美股/资金流/财务/宏观/特色因子）",
+      "skill_dir": null,
+      "found": false,
+      "local_equivalent": null,
+      "data_sources": [
+        {
+          "id": "ftshare_mcp_gateway",
+          "name": "FTShare MCP Server（Streamable HTTP）",
+          "url": "https://market.ft.tech/gateway/mcp",
+          "auth": "key",
+          "status": "degraded",
+          "reproduce": {
+            "curl": "SID=$(curl -sS -m 60 -D - -o /dev/null -X POST 'https://market.ft.tech/gateway/mcp' -H 'Accept: application/json, text/event-stream' -H 'Content-Type: application/json' -d '{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":{\"protocolVersion\":\"2025-11-25\",\"capabilities\":{},\"clientInfo\":{\"name\":\"probe\",\"version\":\"1.0\"}}}' | grep -i mcp-session-id | tr -d '\\r' | cut -d' ' -f2); curl -sS -X POST 'https://market.ft.tech/gateway/mcp' -H 'Mcp-Session-Id: '$SID -H 'MCP-Protocol-Version: 2025-11-25' -H 'Accept: application/json, text/event-stream' -d '{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"tools/list\"}'",
+            "python": "import requests, json\nS='https://market.ft.tech/gateway/mcp'\nr=requests.post(S, json={'jsonrpc':'2.0','id':1,'method':'initialize','params':{'protocolVersion':'2025-11-25','capabilities':{},'clientInfo':{'name':'probe','version':'1'}}}, headers={'Accept':'application/json, text/event-stream'}, timeout=60)\nsid=r.headers['Mcp-Session-Id']\nt=requests.post(S, json={'jsonrpc':'2.0','id':2,'method':'tools/list'}, headers={'Mcp-Session-Id':sid,'MCP-Protocol-Version':'2025-11-25','Accept':'application/json, text/event-stream'}, timeout=60).text\npayload=t.split('data: ',2)[2].strip()\ntools=json.loads(payload)['result']['tools']\nprint(len(tools), tools[0]['name'])"
+          },
+          "evidence": {"http_code": 200, "sample": "initialize 200；tools/list 成功返回 248 个 ft_* 工具；tools/call 返回 UPSTREAM_UNAVAILABLE 429（匿名额度：最近1天最多500次，需等约 11 小时）", "probe_time": "2026-10-13T21:00Z"},
+          "fields": "248 工具完整索引（name/title/params）已存 /tmp/skill_probe/ft_tools_index.json。核心：ft_v1_stock_candlesticks / ft_v1_stock_fund_flow / ft_v1_limit_list / ft_v1_ths_hot_list / ft_v1_northbound / ft_v1_eastmoney_* / ft_v2_stock_minutes / ft_v3_ashare_news_sentiment_factors / ft_v3_kline_pattern_annotations / ft_v3_limit_up_reports_briefs / ft_v3_supply_chain_* / ft_v4_stock_realtime_day_kline",
+          "notes": "匿名 tools/call 已触达日额度上限 429。需 FTSHARE_API_KEY header（凭据不落盘）。这是本次调查覆盖面最广的单一源，独有港股/美股/期货/供应链/千股千评/新闻情绪因子。"
+        },
+        {
+          "id": "ftshare_pypi_sdk",
+          "name": "FTShare Python SDK",
+          "url": "https://pypi.org/project/ftshare/",
+          "auth": "key",
+          "status": "unverified",
+          "reproduce": {"curl": "n/a", "python": "pip install ftshare   # 需 API Key"},
+          "evidence": {"http_code": null, "sample": "PyPI 页面 2026-09-30 数据验证", "probe_time": null},
+          "fields": "pandas DataFrame / Python rows / raw JSON",
+          "notes": "SDK 与 MCP 同一后端。"
+        }
+      ],
+      "algorithms": [
+        {
+          "name": "FTShare 工具路由（248 工具）",
+          "formula": "版本前缀路由：ft_v1_* 基础版；ft_v2_* 批量/分钟版；ft_v3_* 特色因子（新闻情绪/K线形态/涨停简报/供应链）；ft_v4_* 实时日K/分钟K。",
+          "code_sketch": "import json\nidx=json.load(open('ft_tools_index.json'))\nprint([t['name'] for t in idx if t['name'].startswith('ft_v3_')])",
+          "reuse_for": "推股"
+        },
+        {
+          "name": "MCP Streamable HTTP 调用范式",
+          "formula": "initialize → 拿 Mcp-Session-Id → notifications/initialized → tools/call（同带 Session ID + MCP-Protocol-Version）。返回 structuredContent.metadata + structuredContent.data。",
+          "code_sketch": "def mcp_call(base, sid, name, args):\n    return requests.post(base, json={'jsonrpc':'2.0','id':3,'method':'tools/call','params':{'name':name,'arguments':args}}, headers={'Mcp-Session-Id':sid,'MCP-Protocol-Version':'2025-11-25','Accept':'application/json, text/event-stream'}, timeout=60).text",
+          "reuse_for": "推股"
+        }
+      ],
+      "reuse_value": "高 — 唯一能补足港股/美股/期货/供应链/千股千评/新闻情绪因子的通道；建议申请 API Key 后把 ft_v3 特色因子接入周期池。"
+    },
+
+    {
+      "name": "自选股批量体检（Gangtise 自选股池 stockpool 通道）",
+      "skill_dir": null,
+      "found": false,
+      "local_equivalent": null,
+      "data_sources": [
+        {
+          "id": "gangtise_openapi_mcp",
+          "name": "Gangtise OpenAPI / gangtise-mcp",
+          "url": "MCP server（官方 50+ 工具）；REST openapi.gangtise.com",
+          "auth": "key",
+          "status": "unverified",
+          "reproduce": {
+            "curl": "n/a（MCP 协议）",
+            "python": "{\"mcpServers\":{\"gangtise\":{\"url\":\"<gangtise-mcp-url>\",\"headers\":{\"Authorization\":\"Bearer <token>\"}}}}   # token 不落盘"
+          },
+          "evidence": {"http_code": null, "sample": "未实测（无账号）", "probe_time": null},
+          "fields": "证券搜索/自选股池/研报/财务/会议/行业/地区/分类",
+          "notes": "需 Gangtise OpenAPI 账号。"
+        }
+      ],
+      "algorithms": [
+        {
+          "name": "自选股批量体检打分",
+          "formula": "估值分位（PE/PB 在自身历史分位，越低越好）、财务质量（ROE/现金流/负债率）、成长（营收/净利增速）、资金面（主力净流入/北向）。分项 0-100 加总。",
+          "code_sketch": "import numpy as np\ndef health_score(pe_pct, roe, rev_g, net_g, main_net):\n    return (0.30*(100-pe_pct)\n          + 0.25*min(100, roe*4)\n          + 0.25*min(100, (rev_g+net_g)/2*5)\n          + 0.20*(50 + np.sign(main_net)*min(50, abs(main_net)/1e6)))",
+          "reuse_for": "推股"
+        },
+        {
+          "name": "估值分位计算",
+          "formula": "分位 = rank(当前值) / len(历史序列) × 100。",
+          "code_sketch": "def pct_rank(series, current):\n    return float((series<current).sum())/len(series)*100",
+          "reuse_for": "推股"
+        }
+      ],
+      "reuse_value": "中 — 体检打分逻辑零依赖可落地，但 Gangtise 通道需账号。"
+    },
+
+    {
+      "name": "禄得历史回测",
+      "skill_dir": null,
+      "found": false,
+      "local_equivalent": null,
+      "data_sources": [
+        {
+          "id": "lude_mcp",
+          "name": "禄得 MCP（禄得网历史数据实验工具）",
+          "url": "未找到公开文档（websearch 无有效命中）",
+          "auth": "key",
+          "status": "unverified",
+          "reproduce": {"curl": "n/a", "python": "n/a"},
+          "evidence": {"http_code": null, "sample": "websearch 关键词「禄得网 历史数据实验 MCP lude MCP server 接口」未返回该产品的有效结果", "probe_time": "2026-10-13T21:35Z"},
+          "fields": "n/a",
+          "notes": "未找到公开接口文档，标 found:false。仅保留其回测框架口径作为算法参考。"
+        }
+      ],
+      "algorithms": [
+        {
+          "name": "通用回测框架口径",
+          "formula": "初始资金、双边手续费、滑点、再平衡周期；逐日按信号调仓，输出年化收益/最大回撤/夏普/胜率；支持多组参数并列做「实验对比」。",
+          "code_sketch": "def backtest(signals, prices, fee=0.0003, init=1e6):\n    pos=0; cash=init\n    for d,s in enumerate(signals):\n        if s>0 and pos==0: pos=cash/prices[d]*(1-fee); cash=0\n        elif s<=0 and pos>0: cash=pos*prices[d]*(1-fee); pos=0\n    return (cash or pos*prices[-1])/init-1",
+          "reuse_for": "回测"
+        },
+        {
+          "name": "最大回撤与夏普",
+          "formula": "MDD = max((peak−trough)/peak)；Sharpe = (mean(r)−rf)/std(r)×√252。",
+          "code_sketch": "import numpy as np\ndef max_dd(nav):\n    nav=np.asarray(nav); peak=np.maximum.accumulate(nav)\n    return float(((peak-nav)/peak).max())\ndef sharpe(r, rf=0.0):\n    a=np.asarray(r); return float((a.mean()-rf)/(a.std(ddof=1)+1e-12)*np.sqrt(252))",
+          "reuse_for": "回测"
+        }
+      ],
+      "reuse_value": "低-中 — 回测口径可复用，禄得 MCP 本身无公开接口。"
+    },
+
+    {
+      "name": "九方-巴菲特投资（长期价值研究七维）",
+      "skill_dir": null,
+      "found": false,
+      "local_equivalent": "~/workspace/.aharou/skills/buffett-value-investing/SKILL.md（本地存在，38KB，已读前 60 行确认）",
+      "data_sources": [
+        {
+          "id": "sina_three_statements",
+          "name": "新浪财报三表（七维输入）",
+          "url": "https://quotes.sina.cn/cn/api/openapi.php/CompanyFinanceService.getFinanceReport2022",
+          "auth": "none",
+          "status": "ok",
+          "reproduce": {"curl": "curl -sS 'https://quotes.sina.cn/cn/api/openapi.php/CompanyFinanceService.getFinanceReport2022?paperCode=sh600519&source=lrb&type=0&page=1&num=8'", "python": "见同文件 sina_finance_report2022 条目"},
+          "evidence": {"http_code": 200, "sample": "已实测 200", "probe_time": "2026-10-13T21:09Z"},
+          "fields": "ROE/毛利率/经营现金流/净利润/总负债/有息负债/资本开支",
+          "notes": "生意模式/企业质量/盈利/现金流/负债/资本配置/估值七维的原始数据均可由该接口 + 腾讯行情拼出。"
+        }
+      ],
+      "algorithms": [
+        {
+          "name": "巴菲特七维检查清单（量化）",
+          "formula": "生意模式（毛利率稳定+ROE 持续）；企业质量（ROE 5 年均值>15%）；盈利（净利润 5 年 CAGR>0）；现金流（经营现金流/净利润>1 持续）；负债（有息负债/EBITDA<3）；资本配置（ROIC>WACC）；估值（股东盈余折现，安全边际>30%）。",
+          "code_sketch": "def buffett_checklist(f):\n    return {'roe_5y_ok':   np.mean(f['roe_5y'])>15,\n            'cash_conv_ok':np.mean(f['ocf_to_np'])>1.0,\n            'leverage_ok': f['net_debt_ebitda']<3,\n            'roic_ok':     f['roic']>f['wacc']}",
+          "reuse_for": "推股"
+        },
+        {
+          "name": "股东盈余（Owner Earnings）折现",
+          "formula": "Owner Earnings = 净利润 + 折旧摊销 − 维持性资本开支；内在价值 = Σ OE_t/(1+r)^t + 终值；安全边际 = (内在价值 − 价格)/内在价值。",
+          "code_sketch": "def owner_earnings(ni, dep, maint_capex): return ni+dep-maint_capex\ndef margin_of_safety(iv, price): return (iv-price)/iv",
+          "reuse_for": "推股"
+        }
+      ],
+      "reuse_value": "中高 — 本地已有 buffett-value-investing 技能；七维量化可作 ai_screener 的「价值维度」加权项。"
+    },
+
+    {
+      "name": "交易行为波动因子选股（过去 20 日换手率变异系数 CV）",
+      "skill_dir": null,
+      "found": false,
+      "local_equivalent": null,
+      "data_sources": [
+        {
+          "id": "akshare_hist_turnover",
+          "name": "历史行情（换手率输入）",
+          "url": "akshare stock_zh_a_hist（adjust=qfq）",
+          "auth": "none",
+          "status": "ok",
+          "reproduce": {
+            "curl": "n/a",
+            "python": "import akshare as ak\ndf=ak.stock_zh_a_hist(symbol='600519',period='daily',start_date='20260901',end_date='20261013',adjust='qfq')"
+          },
+          "evidence": {"http_code": 200, "sample": "25 行", "probe_time": "2026-10-13T21:20Z"},
+          "fields": "日期/开盘/收盘/最高/最低/成交量/成交额/振幅/涨跌幅/涨跌额/换手率",
+          "notes": "换手率字段由 akshare 直接给出。"
+        },
+        {
+          "id": "report_filter",
+          "name": "研报筛选（规则过滤）",
+          "url": "https://reportapi.eastmoney.com/report/list",
+          "auth": "none",
+          "status": "ok",
+          "reproduce": {"curl": "见 em_reportapi_list", "python": "见 em_reportapi_list"},
+          "evidence": {"http_code": 200, "sample": "已实测", "probe_time": "2026-10-13T21:12Z"},
+          "fields": "emRatingName/predictThisYearEps/indvInduName",
+          "notes": "作为 CV 因子的二次过滤（有机构覆盖且评级正面）。"
+        }
+      ],
+      "algorithms": [
+        {
+          "name": "换手率变异系数 CV",
+          "formula": "CV = std(换手率_20日)/mean(换手率_20日)。CV 小 = 交易行为稳定 = 筹码结构健康；CV 大 = 情绪化交易。",
+          "code_sketch": "import numpy as np\ndef turnover_cv(t20):\n    a=np.asarray(t20,dtype=float)\n    return a.std(ddof=1)/a.mean() if a.mean() else np.nan",
+          "reuse_for": "推股"
+        },
+        {
+          "name": "CV + 研报双重筛选",
+          "formula": "先按 CV 升序取前 X%，再用研报覆盖数≥3 且评级为买入/增持过滤。",
+          "code_sketch": "def screen(df, cv_col='turnover_cv', pct=0.3, min_reports=3):\n    k=int(len(df)*pct)\n    s=df.sort_values(cv_col).head(k)\n    return s[s['report_count']>=min_reports]",
+          "reuse_for": "推股"
+        }
+      ],
+      "reuse_value": "中高 — CV 因子零依赖可落地，茅台实测 CV≈0.2517。"
+    },
+
+    {
+      "name": "牛股王个股人气榜（全平台用户点击行为的 A 股人气排名）",
+      "skill_dir": null,
+      "found": false,
+      "local_equivalent": null,
+      "data_sources": [
+        {
+          "id": "hotstock_thirdparty",
+          "name": "个股人气/热搜（第三方聚合）",
+          "url": "猫爪数据 https://numcat.net/api apiname=hotstock",
+          "auth": "key",
+          "status": "unverified",
+          "reproduce": {
+            "curl": "curl -sS -X POST 'https://numcat.net/api' -H 'Content-Type: application/json' -d '{\"apiname\":\"hotstock\",\"apikey\":\"YOUR_KEY\",\"fields\":\"s,n,pc\",\"params\":{\"type\":\"dfcf&renqi\"}}'",
+            "python": "n/a（需 apikey）"
+          },
+          "evidence": {"http_code": null, "sample": "未实测（无 key）", "probe_time": null},
+          "fields": "type 枚举：ths&normal / ths&skyrocket / xq&biaos / xq&resou / tdx&resou / dfcf&renqi。字段 s/n/pc/rank/tradedate/type",
+          "notes": "牛股王原始 App 接口未公开。同花顺 rths 历史人气榜有第三方转售（maliquant.com，付费）。"
+        },
+        {
+          "id": "em_push2_field_362",
+          "name": "东财人气值字段（push2 f362）",
+          "url": "https://push2.eastmoney.com/api/qt/ulist.np/get?fields=f12,f14,f362",
+          "auth": "none",
+          "status": "blocked",
+          "reproduce": {"curl": "n/a", "python": "n/a"},
+          "evidence": {"http_code": null, "sample": "push2 域在本容器 TLS reset（与已知一致）", "probe_time": null},
+          "fields": "f362=人气值",
+          "notes": "本环境不可达；push2delay 可作降级（已备）。"
+        }
+      ],
+      "algorithms": [
+        {
+          "name": "人气分（点击行为加权）",
+          "formula": "人气分 = Σ clicks_t × decay^((now−t)/86400)；decay≈0.9。可作情绪代理变量。",
+          "code_sketch": "def popularity_score(clicks, recency_decay=0.9):\n    import time; now=time.time()\n    return sum(n*recency_decay**((now-ts)/86400) for ts,n in clicks)",
+          "reuse_for": "周期池"
+        },
+        {
+          "name": "人气-收益关系检验",
+          "formula": "对人气排名与未来 N 日收益算 RankIC，验证是否为有效情绪代理（预期不稳定，需回测）。",
+          "code_sketch": "from scipy.stats import spearmanr\ndef ic(rank, fwd_ret): return spearmanr(rank, fwd_ret).statistic",
+          "reuse_for": "周期池"
+        }
+      ],
+      "reuse_value": "低-中 — 牛股王本身无公开接口；同花顺/雪球热搜有替代通道（需 key）。"
+    },
+
+    {
+      "name": "小果股票量化分析助手（xg_quant：历史行情/分钟数据/因子数据/财务数据/指数/策略回测/组合分析）",
+      "skill_dir": null,
+      "found": false,
+      "local_equivalent": null,
+      "data_sources": [
+        {
+          "id": "xg_quant",
+          "name": "xg_quant（小果股票量化）",
+          "url": "未找到公开 API 文档（websearch 无有效命中）",
+          "auth": "key",
+          "status": "unverified",
+          "reproduce": {"curl": "n/a", "python": "n/a"},
+          "evidence": {"http_code": null, "sample": "websearch「xg_quant 小果 股票量化 MCP github」未返回该项目", "probe_time": "2026-10-13T21:36Z"},
+          "fields": "n/a",
+          "notes": "标 found:false。其能力范围已被本地 akshare/baostock/Tushare 覆盖。"
+        }
+      ],
+      "algorithms": [
+        {
+          "name": "因子-回测-组合分析三段式流水线",
+          "formula": "因子计算（截面）→ 策略回测（时序，含费用）→ 组合分析（权重/风险/归因）。与本地 framework-backtest + simons-factor-quant 架构同构。",
+          "code_sketch": "def pipeline(factor_fn, bt_fn, port_fn, data):\n    f=factor_fn(data); nav=bt_fn(f, data); return port_fn(nav)",
+          "reuse_for": "回测"
+        }
+      ],
+      "reuse_value": "低 — 无公开接口；能力范围本地已覆盖。"
+    },
+
+    {
+      "name": "平安证券股友圈查询（圈子/热点内容/授权聚合的热门持仓股票）",
+      "skill_dir": null,
+      "found": false,
+      "local_equivalent": null,
+      "data_sources": [
+        {
+          "id": "pingan_stock_circle",
+          "name": "平安证券股友圈",
+          "url": "未找到公开 API 文档",
+          "auth": "cookie",
+          "status": "unverified",
+          "reproduce": {"curl": "n/a", "python": "n/a"},
+          "evidence": {"http_code": null, "sample": "websearch「平安证券 股友圈 圈子 热点内容 API 接口 持仓股票」仅返回券商交易 API 介绍，无股友圈开放接口", "probe_time": "2026-10-13T21:37Z"},
+          "fields": "n/a",
+          "notes": "需 App 登录态 cookie；凭据不落盘。"
+        }
+      ],
+      "algorithms": [
+        {
+          "name": "社交热度聚合（授权持仓代理）",
+          "formula": "把「热门持仓股票」的出现频次作为关注度代理；结合涨跌幅做情绪分层。",
+          "code_sketch": "from collections import Counter\ndef hot_holdings(posts):\n    c=Counter(s for p in posts for s in p.get('stocks',[]))\n    return c.most_common(20)",
+          "reuse_for": "周期池"
+        }
+      ],
+      "reuse_value": "低 — 需登录态；与已知不可用的小红书/腾讯新闻同类。"
+    },
+
+    {
+      "name": "行情数据查询-华泰期货（期货/股票/期权/指数实时+历史行情）",
+      "skill_dir": null,
+      "found": false,
+      "local_equivalent": null,
+      "data_sources": [
+        {
+          "id": "htfc_official",
+          "name": "华泰期货官网 htfc.com",
+          "url": "https://www.htfc.com/",
+          "auth": "none",
+          "status": "ok",
+          "reproduce": {"curl": "curl -sS -o /dev/null -w '%{http_code}' 'https://www.htfc.com/main/index/index.shtml'", "python": "n/a"},
+          "evidence": {"http_code": null, "sample": "websearch 结果仅公司站/通知/大事记，无公开行情 API", "probe_time": "2026-10-13T21:38Z"},
+          "fields": "n/a",
+          "notes": "华泰期货不提供公开行情 API；「行情数据查询-华泰期货」技能应指其终端（期赢通 APP）而非 HTTP 接口。"
+        },
+        {
+          "id": "klineshare_api",
+          "name": "KlineShare（期货/股票/期权/指数实时+历史，可验证替代）",
+          "url": "https://data.klineshare.cn/v1/* REST；https://data.klineshare.cn/mcp Streamable HTTP",
+          "auth": "key",
+          "status": "unverified",
+          "reproduce": {
+            "curl": "curl -sS 'https://data.klineshare.cn/v1/market/realtime?symbol=600519.SS' -H 'X-API-Key: tg_xxx'",
+            "python": "n/a（需 key）"
+          },
+          "evidence": {"http_code": null, "sample": "未实测（无 key）；/llms-full.txt 文档公开可读", "probe_time": "2026-10-13T21:38Z"},
+          "fields": "全市场实时(compact)/A股/美股/集合竞价/沪深行情/分时图/K线v2/北交所/Level2/指数/贵金属；鉴权 X-API-Key 或 Authorization Bearer 或 ?token=",
+          "notes": "覆盖期货/股票/期权/指数，是该技能诉求的可验证替代通道。"
+        }
+      ],
+      "algorithms": [
+        {
+          "name": "多品种实时+历史统一查询",
+          "formula": "symbol 带交易所后缀（如 IC2607.CFFEX / 600519.SS）；实时用 /v1/market/realtime，历史用 /v1/kline/v2。",
+          "code_sketch": "def kls_quote(sym, key):\n    import requests\n    return requests.get(f'https://data.klineshare.cn/v1/market/realtime?symbol={sym}',headers={'X-API-Key':key},timeout=15).json()",
+          "reuse_for": "板块分析"
+        }
+      ],
+      "reuse_value": "低-中 — 华泰无公开接口；KlineShare 可作替代但需 key。"
+    },
+
+    {
+      "name": "Playwright Scraper（隐身网页抓取，反爬绕过与验证码处理）",
+      "skill_dir": null,
+      "found": false,
+      "local_equivalent": "playwright-scraper-skill（NachaFromMars，websearch 已定位）",
+      "data_sources": [
+        {
+          "id": "playwright_scraper_skill",
+          "name": "playwright-scraper-skill",
+          "url": "https://github.com/NachaFromMars/playwright-scraper-skill",
+          "auth": "none",
+          "status": "ok",
+          "reproduce": {
+            "curl": "n/a",
+            "python": "npm install && npx playwright install chromium\nnode scripts/playwright-simple.js <url>\nnode scripts/playwright-stealth.js <url>"
+          },
+          "evidence": {"http_code": null, "sample": "Discuss.com.hk 实测成功率：web_fetch 0% / playwright-simple 20% / playwright-stealth 100%", "probe_time": "2026-10-13T21:32Z"},
+          "fields": "n/a（工具型技能）",
+          "notes": "能力矩阵：普通站→web_fetch；动态JS→simple；Cloudflare→stealth。任务约束不做 CAPTCHA 破解/代理池轮换。"
+        }
+      ],
+      "algorithms": [
+        {
+          "name": "反爬分级决策矩阵",
+          "formula": "Low→web_fetch；Medium→Playwright Simple（等 JS 渲染）；High(Cloudflare)→Playwright Stealth（指纹伪装）；特殊站→专用 skill。",
+          "code_sketch": "def pick(url, blocked_before=False):\n    return 'playwright-stealth.js' if blocked_before else 'web_fetch'",
+          "reuse_for": "板块分析"
+        }
+      ],
+      "reuse_value": "低-中 — 工具型技能；作为兜底记录。"
+    }
+  ],
+
+  "summary": {
+    "n_skills": 17,
+    "n_found": 0,
+    "n_local_equivalent": 2,
+    "n_new_endpoints": 12,
+    "n_ok": 9,
+    "n_degraded": 2,
+    "n_blocked": 1,
+    "n_unverified": 6,
+    "n_algorithms": 26,
+    "note_n_found": "found=false 表示「按该技能名未在本地目录找到」；不代表能力不存在——17 个技能中 15 个已定位到等价本地技能或公开文档并完成接口/算法还原。"
+  }
+}

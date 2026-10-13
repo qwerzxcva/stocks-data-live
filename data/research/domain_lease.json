@@ -1,0 +1,132 @@
+{
+  "table_version": 1,
+  "updated_at": "2026-10-13T22:10:14+08:00",
+  "leases": {
+    "realtime_quote": {
+      "agent": "破甲",
+      "status": "done",
+      "claimed_at": "2026-10-13T21:50:31+08:00",
+      "released_at": "2026-10-13T21:50:31+08:00",
+      "domain_desc": "实时行情 (腾讯/新浪/东财/TradingView)",
+      "output": "data_source_catalog_20261013.json",
+      "note": "6源: 腾讯/新浪/东财push2(WAF)/东财push2his(绕行)/抖音/TradingView; 已并 registry"
+    },
+    "kline": {
+      "agent": "破甲",
+      "status": "done",
+      "claimed_at": "2026-10-13T22:06:06+08:00",
+      "domain_desc": "K 线 (日/周/分钟/复权)",
+      "output": "reverse_crawl_pcap_20261013.json",
+      "released_at": "2026-10-13T22:10:14+08:00",
+      "note": "腾讯fqkline主源+新浪vip多周期(直返MA); push2his kline 晚间隔测 rc=102 已废弃"
+    },
+    "capital_flow": {
+      "agent": "破甲",
+      "status": "done",
+      "claimed_at": "2026-10-13T21:50:32+08:00",
+      "released_at": "2026-10-13T21:50:32+08:00",
+      "domain_desc": "资金流/龙虎榜/两融/陆股通/大宗",
+      "output": "lhb_20261013.json",
+      "note": "东财datacenter 6报表: LHB/DETAILSNEW/BLOCKTRADE/RZRQ_LSHJ/RZRQ_GGMX/MUTUAL_DEAL_HISTORY"
+    },
+    "financial": {
+      "agent": "破甲",
+      "status": "done",
+      "claimed_at": "2026-10-13T21:50:32+08:00",
+      "released_at": "2026-10-13T21:50:32+08:00",
+      "domain_desc": "财务/财报/业绩快报",
+      "output": "data/research/skill_algorithms_20261013.md",
+      "note": "同花顺ths90摘要v2 + 东财RPT_LICO_FN_CPD业绩快报(字段名已实测) + FCF算法"
+    },
+    "fund_etf": {
+      "agent": "破甲",
+      "status": "done",
+      "claimed_at": "2026-10-13T21:50:32+08:00",
+      "released_at": "2026-10-13T21:50:32+08:00",
+      "domain_desc": "基金/ETF 净值/持仓/费率",
+      "output": "jisilu_20261013.json",
+      "note": "集思录10接口(1690行)+东财pingzhongdata+f10/lsjz(Referer静默鉴权)+push2his ETF 1357只"
+    },
+    "news": {
+      "agent": "破甲",
+      "status": "done",
+      "claimed_at": "2026-10-13T21:51:01+08:00",
+      "released_at": "2026-10-13T21:51:01+08:00",
+      "domain_desc": "新闻/快讯/舆情",
+      "output": null,
+      "note": "新浪zhibo 7x24 容器内空(zhibo_id missing)+东财np-listapi 空+远端news仓兜底; 已加 fallback 链"
+    },
+    "social": {
+      "agent": "破甲",
+      "status": "done",
+      "claimed_at": "2026-10-13T21:51:01+08:00",
+      "released_at": "2026-10-13T21:51:01+08:00",
+      "domain_desc": "社交热度 (抖音/头条/雪球/股吧)",
+      "output": null,
+      "note": "抖音热榜(移动UA)+头条热榜+雪球匿名token可用(stock.xueqiu.com v5); 小红书/腾讯新闻作者页 SPA不可用"
+    },
+    "events": {
+      "agent": "破甲",
+      "status": "done",
+      "claimed_at": "2026-10-13T21:51:01+08:00",
+      "released_at": "2026-10-13T21:51:01+08:00",
+      "domain_desc": "公告/停复牌/新股/可转债",
+      "output": "jisilu_20261013.json",
+      "note": "集思录新股/新债/港股IPO 4接口; 巨潮500/深交所500/东财np-ann需XHR头"
+    },
+    "index": {
+      "agent": "破甲",
+      "status": "done",
+      "claimed_at": "2026-10-13T21:51:01+08:00",
+      "released_at": "2026-10-13T21:51:01+08:00",
+      "domain_desc": "指数 (全史/周期/成分股)",
+      "output": "data/cycle_pool_v2.json",
+      "note": "腾讯指数全史8567根(1990起)+5指数; 周期池v2四维度"
+    },
+    "sector": {
+      "agent": "破甲",
+      "status": "done",
+      "claimed_at": "2026-10-13T21:51:01+08:00",
+      "released_at": "2026-10-13T21:51:01+08:00",
+      "domain_desc": "板块/行业/概念",
+      "output": "data/sector_pool.json",
+      "note": "push2his clist行业496/概念506(绕WAF); TV screener行业映射5309只; 已修tier3计数bug"
+    },
+    "exchange_official": {
+      "agent": "破甲",
+      "status": "done",
+      "claimed_at": "2026-10-13T21:51:46+08:00",
+      "released_at": "2026-10-13T21:51:46+08:00",
+      "domain_desc": "交易所官方 API",
+      "output": null,
+      "note": "上交所data=null(sqlId失效)/深交所CATALOGID全500/巨潮500; 三者TLS可达但应用层失败, 国内服务器可再验"
+    },
+    "macro": {
+      "agent": "破甲",
+      "status": "done",
+      "claimed_at": "2026-10-13T21:51:46+08:00",
+      "released_at": "2026-10-13T21:51:46+08:00",
+      "domain_desc": "宏观 (CPI/GDP/PMI)",
+      "output": null,
+      "note": "akshare macro_china_cpi/gdp 统计局数据 CPI224行/GDP82行; 未接 PMI/货币供应"
+    },
+    "paid_api": {
+      "agent": "破甲",
+      "status": "done",
+      "claimed_at": "2026-10-13T21:51:46+08:00",
+      "released_at": "2026-10-13T21:51:46+08:00",
+      "domain_desc": "付费 API 调研 (Tushare/问财/iTick 等)",
+      "output": null,
+      "note": "调研: Tushare(积分制)/问财OpenAPI(需key)/iTick/AllTick/TickDB/KLineAPI(¥0-199); finnhub/fmp/marketstack/alpha_vantage 免费额度有限"
+    },
+    "algo": {
+      "agent": "捕风",
+      "status": "done",
+      "claimed_at": "2026-10-13T22:08:54+08:00",
+      "domain_desc": "算法/因子/回测 (无外部接口)",
+      "output": null,
+      "released_at": "2026-10-13T22:08:54+08:00",
+      "note": "skill_algos.py 5算法已落地"
+    }
+  }
+}

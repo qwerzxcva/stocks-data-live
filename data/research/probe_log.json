@@ -1,0 +1,481 @@
+{
+  "probes": {
+    "tencent_quote": {
+      "last_probe": "2026-10-13T22:02:36+08:00",
+      "http_code": 200,
+      "ok": true,
+      "agent": "registry-seed",
+      "note": "status=ok; 腾讯实时行情"
+    },
+    "tencent_kline": {
+      "last_probe": "2026-10-13T22:02:36+08:00",
+      "http_code": 200,
+      "ok": true,
+      "agent": "registry-seed",
+      "note": "status=ok; 腾讯日K (前复权)"
+    },
+    "tencent_index_history": {
+      "last_probe": "2026-10-13T22:02:36+08:00",
+      "http_code": 200,
+      "ok": true,
+      "agent": "registry-seed",
+      "note": "status=ok; 腾讯指数全史"
+    },
+    "sina_hq": {
+      "last_probe": "2026-10-13T22:02:36+08:00",
+      "http_code": 200,
+      "ok": true,
+      "agent": "registry-seed",
+      "note": "status=ok; 新浪实时行情"
+    },
+    "sina_kline_ma": {
+      "last_probe": "2026-10-13T22:02:36+08:00",
+      "http_code": 200,
+      "ok": true,
+      "agent": "registry-seed",
+      "note": "status=ok; 新浪日K + MA (money.finance.sina.com.cn)"
+    },
+    "sina_news": {
+      "last_probe": "2026-10-13T22:02:36+08:00",
+      "http_code": 200,
+      "ok": false,
+      "agent": "registry-seed",
+      "note": "status=degraded; 新浪 7x24 快讯"
+    },
+    "sina_kline_daily": {
+      "last_probe": "2026-10-13T22:02:36+08:00",
+      "http_code": 200,
+      "ok": true,
+      "agent": "registry-seed",
+      "note": "status=ok; 新浪个股日K (akshare stock_zh_a_daily_sina)"
+    },
+    "sina_etf_hist": {
+      "last_probe": "2026-10-13T22:02:36+08:00",
+      "http_code": 200,
+      "ok": true,
+      "agent": "registry-seed",
+      "note": "status=ok; 新浪 ETF 日K (akshare fund_etf_hist_sina)"
+    },
+    "eastmoney_zt_pool": {
+      "last_probe": "2026-10-13T22:02:36+08:00",
+      "http_code": 200,
+      "ok": true,
+      "agent": "registry-seed",
+      "note": "status=ok; 东财涨跌停池"
+    },
+    "eastmoney_zdfenbu": {
+      "last_probe": "2026-10-13T22:02:36+08:00",
+      "http_code": 200,
+      "ok": true,
+      "agent": "registry-seed",
+      "note": "status=ok; 东财涨跌分布"
+    },
+    "eastmoney_datacenter": {
+      "last_probe": "2026-10-13T22:02:36+08:00",
+      "http_code": 200,
+      "ok": true,
+      "agent": "registry-seed",
+      "note": "status=ok; 东财 datacenter (龙虎榜/大宗交易/两融/陆股通)"
+    },
+    "em_push2_clist": {
+      "last_probe": "2026-10-13T22:02:36+08:00",
+      "http_code": null,
+      "ok": false,
+      "agent": "registry-seed",
+      "note": "status=blocked; 东财板块列表/资金流 (push2 clist)"
+    },
+    "em_push2delay_clist": {
+      "last_probe": "2026-10-13T22:02:36+08:00",
+      "http_code": 200,
+      "ok": true,
+      "agent": "registry-seed",
+      "note": "status=ok; 东财实时行情延迟版 (push2delay, clist 降级第三顺位)"
+    },
+    "em_push2his_clist": {
+      "last_probe": "2026-10-13T22:02:36+08:00",
+      "http_code": 200,
+      "ok": true,
+      "agent": "registry-seed",
+      "note": "status=ok; 东财全市场快照 (push2his 域, 绕开 push2 WAF)"
+    },
+    "em_push2his_etf_onsite": {
+      "last_probe": "2026-10-13T22:02:36+08:00",
+      "http_code": 200,
+      "ok": true,
+      "agent": "registry-seed",
+      "note": "status=ok; 东财场内基金/ETF 全量快照 (push2his)"
+    },
+    "em_fund_lsjz": {
+      "last_probe": "2026-10-13T22:02:36+08:00",
+      "http_code": 200,
+      "ok": true,
+      "agent": "registry-seed",
+      "note": "status=ok; 天天基金历史净值 (api.fund.eastmoney.com/f10/lsjz)"
+    },
+    "jisilu_dividend_rate": {
+      "last_probe": "2026-10-13T22:02:36+08:00",
+      "http_code": 200,
+      "ok": true,
+      "agent": "registry-seed",
+      "note": "status=ok; 集思录股息率列表 (含估值温度/5年均值)"
+    },
+    "sina_vip_kline": {
+      "last_probe": "2026-10-13T22:02:36+08:00",
+      "http_code": 200,
+      "ok": true,
+      "agent": "registry-seed",
+      "note": "status=ok; 新浪多周期 K线 (vip.stock.finance.sina.com.cn)"
+    },
+    "em_push2his_kline_DEPRECATED": {
+      "last_probe": "2026-10-13T22:02:36+08:00",
+      "http_code": null,
+      "ok": false,
+      "agent": "registry-seed",
+      "note": "status=blocked; 东财历史K线 (push2his kline) — 已失效"
+    },
+    "eastmoney_stock_get": {
+      "last_probe": "2026-10-13T22:02:36+08:00",
+      "http_code": null,
+      "ok": false,
+      "agent": "registry-seed",
+      "note": "status=blocked; 东财个股信息 (含 f127 行业)"
+    },
+    "eastmoney_kline": {
+      "last_probe": "2026-10-13T22:02:36+08:00",
+      "http_code": 200,
+      "ok": true,
+      "agent": "registry-seed",
+      "note": "status=ok; 东财历史K线"
+    },
+    "em_a_hist": {
+      "last_probe": "2026-10-13T22:02:36+08:00",
+      "http_code": 200,
+      "ok": true,
+      "agent": "registry-seed",
+      "note": "status=ok; 东财A股历史K线 (akshare stock_zh_a_hist)"
+    },
+    "eastmoney_fund_rank": {
+      "last_probe": "2026-10-13T22:02:36+08:00",
+      "http_code": 200,
+      "ok": true,
+      "agent": "registry-seed",
+      "note": "status=ok; 东财混合基金排行"
+    },
+    "em_fund_etf_hist_min": {
+      "last_probe": "2026-10-13T22:02:36+08:00",
+      "http_code": 200,
+      "ok": true,
+      "agent": "registry-seed",
+      "note": "status=ok; 东财 ETF 历史净值 (akshare fund_etf_fund_info_em)"
+    },
+    "em_ann_np": {
+      "last_probe": "2026-10-13T22:02:36+08:00",
+      "http_code": 200,
+      "ok": false,
+      "agent": "registry-seed",
+      "note": "status=degraded; 东财公告 API (np-ann)"
+    },
+    "eastmoney_news": {
+      "last_probe": "2026-10-13T22:02:36+08:00",
+      "http_code": 200,
+      "ok": false,
+      "agent": "registry-seed",
+      "note": "status=degraded; 东财 7x24 / 收评"
+    },
+    "ths_strong_stocks": {
+      "last_probe": "2026-10-13T22:02:36+08:00",
+      "http_code": 200,
+      "ok": true,
+      "agent": "registry-seed",
+      "note": "status=ok; 同花顺强势股 + 题材归因"
+    },
+    "ths_industry": {
+      "last_probe": "2026-10-13T22:02:36+08:00",
+      "http_code": 200,
+      "ok": false,
+      "agent": "registry-seed",
+      "note": "status=degraded; 同花顺行业板块"
+    },
+    "ths_industry_list": {
+      "last_probe": "2026-10-13T22:02:36+08:00",
+      "http_code": 200,
+      "ok": true,
+      "agent": "registry-seed",
+      "note": "status=ok; 同花顺行业板块列表 (akshare stock_board_industry_name_ths)"
+    },
+    "ths_concept_list": {
+      "last_probe": "2026-10-13T22:02:36+08:00",
+      "http_code": 200,
+      "ok": true,
+      "agent": "registry-seed",
+      "note": "status=ok; 同花顺概念板块列表 (akshare stock_board_concept_name_ths)"
+    },
+    "ths_financial_abstract": {
+      "last_probe": "2026-10-13T22:02:36+08:00",
+      "http_code": 200,
+      "ok": true,
+      "agent": "registry-seed",
+      "note": "status=ok; 同花顺财务摘要 (akshare stock_financial_abstract_ths)"
+    },
+    "ths_financial_abstract_v2": {
+      "last_probe": "2026-10-13T22:02:36+08:00",
+      "http_code": 200,
+      "ok": true,
+      "agent": "registry-seed",
+      "note": "status=ok; 同花顺财务摘要 v2 (akshare stock_financial_abstract_new_ths)"
+    },
+    "tv_screener": {
+      "last_probe": "2026-10-13T22:02:36+08:00",
+      "http_code": 200,
+      "ok": true,
+      "agent": "registry-seed",
+      "note": "status=ok; TradingView 选股器"
+    },
+    "coingecko": {
+      "last_probe": "2026-10-13T22:02:36+08:00",
+      "http_code": 200,
+      "ok": true,
+      "agent": "registry-seed",
+      "note": "status=ok; CoinGecko 加密货币"
+    },
+    "douyin_hot_search": {
+      "last_probe": "2026-10-13T22:02:36+08:00",
+      "http_code": 200,
+      "ok": true,
+      "agent": "registry-seed",
+      "note": "status=ok; 抖音热搜榜"
+    },
+    "eastmoney_fund_pingzhong": {
+      "last_probe": "2026-10-13T22:02:36+08:00",
+      "http_code": 200,
+      "ok": true,
+      "agent": "registry-seed",
+      "note": "status=ok; 东财基金重仓股持仓 (pingzhongdata JS)"
+    },
+    "sec_edgar": {
+      "last_probe": "2026-10-13T22:02:36+08:00",
+      "http_code": 200,
+      "ok": true,
+      "agent": "registry-seed",
+      "note": "status=ok; SEC EDGAR 财报 XBRL"
+    },
+    "alpha_vantage": {
+      "last_probe": "2026-10-13T22:02:36+08:00",
+      "http_code": 200,
+      "ok": false,
+      "agent": "registry-seed",
+      "note": "status=degraded; Alpha Vantage 美股行情"
+    },
+    "akshare": {
+      "last_probe": "2026-10-13T22:02:36+08:00",
+      "http_code": 200,
+      "ok": true,
+      "agent": "registry-seed",
+      "note": "status=ok; AKShare"
+    },
+    "yahoo_finance": {
+      "last_probe": "2026-10-13T22:02:36+08:00",
+      "http_code": 200,
+      "ok": false,
+      "agent": "registry-seed",
+      "note": "status=degraded; Yahoo Finance"
+    },
+    "stooq": {
+      "last_probe": "2026-10-13T22:02:36+08:00",
+      "http_code": null,
+      "ok": false,
+      "agent": "registry-seed",
+      "note": "status=blocked; Stooq"
+    },
+    "kaipanla": {
+      "last_probe": "2026-10-13T22:02:36+08:00",
+      "http_code": null,
+      "ok": false,
+      "agent": "registry-seed",
+      "note": "status=blocked; 开盘啦 kaipanla.com"
+    },
+    "cls_cn": {
+      "last_probe": "2026-10-13T22:02:36+08:00",
+      "http_code": null,
+      "ok": false,
+      "agent": "registry-seed",
+      "note": "status=blocked; 财联社 cls.cn"
+    },
+    "gitcode_api": {
+      "last_probe": "2026-10-13T22:02:36+08:00",
+      "http_code": null,
+      "ok": false,
+      "agent": "registry-seed",
+      "note": "status=blocked; gitcode / AtomGit API"
+    },
+    "mootdx": {
+      "last_probe": "2026-10-13T22:02:36+08:00",
+      "http_code": null,
+      "ok": false,
+      "agent": "registry-seed",
+      "note": "status=blocked; mootdx (TCP 7709)"
+    },
+    "xiaohongshu_hot": {
+      "last_probe": "2026-10-13T22:02:36+08:00",
+      "http_code": null,
+      "ok": false,
+      "agent": "registry-seed",
+      "note": "status=blocked; 小红书热门话题"
+    },
+    "xueqiu_hot": {
+      "last_probe": "2026-10-13T22:02:36+08:00",
+      "http_code": null,
+      "ok": false,
+      "agent": "registry-seed",
+      "note": "status=blocked; 雪球热门股"
+    },
+    "cninfo_announce": {
+      "last_probe": "2026-10-13T22:02:36+08:00",
+      "http_code": null,
+      "ok": false,
+      "agent": "registry-seed",
+      "note": "status=blocked; 巨潮资讯公告 (cninfo.com.cn)"
+    },
+    "szse_api": {
+      "last_probe": "2026-10-13T22:02:36+08:00",
+      "http_code": null,
+      "ok": false,
+      "agent": "registry-seed",
+      "note": "status=blocked; 深交所官方数据 API"
+    },
+    "macro_china_cpi_gdp": {
+      "last_probe": "2026-10-13T22:02:36+08:00",
+      "http_code": 200,
+      "ok": true,
+      "agent": "registry-seed",
+      "note": "status=ok; 宏观数据 CPI/GDP (akshare)"
+    },
+    "em_lcpd_report": {
+      "last_probe": "2026-10-13T22:02:36+08:00",
+      "http_code": 200,
+      "ok": true,
+      "agent": "registry-seed",
+      "note": "status=ok; 东财业绩快报/财务报告 (datacenter RPT_LICO_FN_CPD)"
+    },
+    "baostock": {
+      "last_probe": "2026-10-13T22:02:36+08:00",
+      "http_code": 200,
+      "ok": true,
+      "agent": "registry-seed",
+      "note": "status=ok; Baostock 免费A股数据 (query_history_k_data_plus)"
+    },
+    "jisilu_lof_index": {
+      "last_probe": "2026-10-13T22:02:36+08:00",
+      "http_code": 200,
+      "ok": true,
+      "agent": "registry-seed",
+      "note": "status=ok; 集思录 指数 LOF 列表"
+    },
+    "jisilu_lof_stock": {
+      "last_probe": "2026-10-13T22:02:36+08:00",
+      "http_code": 200,
+      "ok": true,
+      "agent": "registry-seed",
+      "note": "status=ok; 集思录 股票 LOF 列表"
+    },
+    "jisilu_etf_list": {
+      "last_probe": "2026-10-13T22:02:36+08:00",
+      "http_code": 200,
+      "ok": true,
+      "agent": "registry-seed",
+      "note": "status=ok; 集思录 ETF 列表 (费率/管理人/申赎单位)"
+    },
+    "jisilu_cb_list_new": {
+      "last_probe": "2026-10-13T22:02:36+08:00",
+      "http_code": 200,
+      "ok": true,
+      "agent": "registry-seed",
+      "note": "status=ok; 集思录可转债新券列表"
+    },
+    "jisilu_cb_adjust": {
+      "last_probe": "2026-10-13T22:02:36+08:00",
+      "http_code": 200,
+      "ok": true,
+      "agent": "registry-seed",
+      "note": "status=ok; 集思录可转债下修/强赎列表"
+    },
+    "jisilu_cb_delisted": {
+      "last_probe": "2026-10-13T22:02:36+08:00",
+      "http_code": 200,
+      "ok": true,
+      "agent": "registry-seed",
+      "note": "status=ok; 集思录可转债退市列表"
+    },
+    "jisilu_new_stock_apply": {
+      "last_probe": "2026-10-13T22:02:36+08:00",
+      "http_code": 200,
+      "ok": true,
+      "agent": "registry-seed",
+      "note": "status=ok; 集思录新股申购日历"
+    },
+    "jisilu_new_stock_hkipo": {
+      "last_probe": "2026-10-13T22:02:36+08:00",
+      "http_code": 200,
+      "ok": true,
+      "agent": "registry-seed",
+      "note": "status=ok; 集思录港股 IPO 日历"
+    },
+    "jisilu_new_stock_sub": {
+      "last_probe": "2026-10-13T22:02:36+08:00",
+      "http_code": 200,
+      "ok": true,
+      "agent": "registry-seed",
+      "note": "status=ok; 集思录新债申购列表"
+    },
+    "jisilu_new_stock_super": {
+      "last_probe": "2026-10-13T22:02:36+08:00",
+      "http_code": 200,
+      "ok": true,
+      "agent": "registry-seed",
+      "note": "status=ok; 集思录超级申 (顶格申购) 列表"
+    },
+    "xueqiu_anon_token": {
+      "last_probe": "2026-10-13T22:02:36+08:00",
+      "http_code": 200,
+      "ok": true,
+      "agent": "registry-seed",
+      "note": "status=ok; 雪球匿名 token (访问主页自动下发)"
+    },
+    "toutiao_hot": {
+      "last_probe": "2026-10-13T22:02:36+08:00",
+      "http_code": 200,
+      "ok": true,
+      "agent": "registry-seed",
+      "note": "status=ok; 今日头条热榜/财经榜"
+    },
+    "local_kline_bulk": {
+      "last_probe": "2026-10-13T22:02:36+08:00",
+      "http_code": 200,
+      "ok": true,
+      "agent": "registry-seed",
+      "note": "status=ok; 本地 K线 bulk"
+    },
+    "local_snapshot": {
+      "last_probe": "2026-10-13T22:02:36+08:00",
+      "http_code": 200,
+      "ok": true,
+      "agent": "registry-seed",
+      "note": "status=ok; 本地全市场快照"
+    },
+    "remote_news": {
+      "last_probe": "2026-10-13T22:02:36+08:00",
+      "http_code": 200,
+      "ok": true,
+      "agent": "registry-seed",
+      "note": "status=ok; 远端 news 仓"
+    },
+    "industry_map_tv": {
+      "last_probe": "2026-10-13T22:02:36+08:00",
+      "http_code": 200,
+      "ok": true,
+      "agent": "registry-seed",
+      "note": "status=ok; TV 行业映射 (本地)"
+    }
+  },
+  "updated_at": "2026-10-13T22:02:36+08:00"
+}

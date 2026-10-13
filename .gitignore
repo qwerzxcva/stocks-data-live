@@ -1,0 +1,14 @@
+# 数据库 (二进制, 不入库; 由 db_layer.py 现场生成)
+*.duckdb
+*.db
+*.sqlite
+*.sqlite3
+
+# 采集进度/缓存
+_longrun_progress.json
+__pycache__/
+*.pyc
+
+# 大文件
+*.csv.gz
+.DS_Store

@@ -1,0 +1,329 @@
+{
+  "timestamp": "2026-10-14T00:50:03+08:00",
+  "source": "cloud_arch_research",
+  "agent": "破甲",
+  "domain": "github_research (force re-claim; 原 done 于 2026-10-13)",
+  "domain_note": "cloud_deploy 未在 domain_lease.py 的 DOMAINS 中注册，认领失败；本次调研归属 github_research",
+  "repos": [
+    {
+      "name": "apache/doris",
+      "gitcode_url": "https://gitcode.com/GitHub_Trending/doris/doris",
+      "github_url": "https://github.com/apache/doris",
+      "stars": 16078,
+      "forks": 3978,
+      "language": "Java/C++",
+      "verified_at": "2026-10-14T00:50:03+08:00",
+      "star_source": "GitHub REST API GET /repos/apache/doris",
+      "category": "database",
+      "what": "MPP 架构实时 OLAP 数据库，列存 + 向量化执行，MySQL 协议兼容，仅 FE/BE 两个进程",
+      "key_features": [
+        "MySQL 协议兼容：FE query_port 9030，mysql -uroot -P9030 直连，任意 MySQL 客户端可用",
+        "Stream Load：HTTP PUT 同步导入，支持 CSV/JSON/Parquet/ORC，单批建议 <10GB，label 去重 + 单事务原子提交",
+        "三种数据模型：Duplicate（保留全部明细）/ Unique Key（主键 UPSERT，merge-on-write 默认）/ Aggregate Key（SUM/MAX/REPLACE 预聚合）",
+        "单机可跑：1 FE + 1 BE 同机，Docker 一键 start-doris.sh",
+        "异步物化视图弥补 Duplicate 模型无预聚合的短板",
+        "前缀索引：KEY 列前 36 字节稀疏索引，范围/等值谓词快"
+      ],
+      "architecture": {
+        "layers": [
+          "FE (Frontend)：元数据(bdbje 类 Paxos)、SQL 解析与规划、查询调度、MySQL 协议入口(9030)、HTTP 入口(8030)",
+          "BE (Backend)：列存(LZ4 默认，压缩比 0.3-0.5)、向量化执行、Tablet 分片、Compaction",
+          "Broker：访问外部存储(HDFS/S3)的进程，单机部署可不装"
+        ],
+        "patterns": [
+          "FE 元数据 bdbje，Follower 数量必须为奇数",
+          "写路径：Client HTTP PUT -> FE 307 轮询重定向到 Coordinator BE -> BE 向 FE 开事务 -> 分发到 Tablet owner -> 同一连接返回 JSON(TxnId/Label/NumberLoadedRows/LoadTimeMs)",
+          "Unique 模型 merge-on-write：每批 Load 生成 delete bitmap 标记被覆盖行",
+          "BE 内存经验：>= CPU 核数 x4（16 核至少 64GB）"
+        ]
+      },
+      "single_node_deploy": {
+        "fe_min": {
+          "cpu": "8 核",
+          "memory": "8GB+",
+          "disk": "10GB+ SSD"
+        },
+        "be_min": {
+          "cpu": "8 核",
+          "memory": "16GB+",
+          "disk": "50GB+"
+        },
+        "mixed_rule": "单节点内存 >=128G 才建议 FE+BE 混部；<128G 建议 FE/BE 数据分盘",
+        "deps": "JDK 8/17，无其他三方组件",
+        "kernel_reqs": [
+          "vm.max_map_count >= 2000000",
+          "ulimit -n >= 1000000",
+          "关闭 swap",
+          "多节点时钟偏差 < 5s"
+        ],
+        "docker_cmd": "curl -fsSL https://doris.apache.org/files/start-doris.sh | bash -s -- -v 3.0.8"
+      },
+      "resource_req": {
+        "cpu": "8 核起（FE 8C/8G + BE 8C/16G）",
+        "memory": "24GB 起；官方生产规格 FE 16C/64G、BE 16C/64G",
+        "disk": "60GB 起 SSD（FE meta 10G + BE storage 50G）",
+        "note": "官方明确：开发测试环境 1FE+1BE 可单服务器；生产建议 FE 独立部署"
+      },
+      "doris_vs_duckdb": {
+        "concurrency": "Doris 服务端常驻，多客户端并发查询；DuckDB 嵌入式单文件，多进程写会锁库",
+        "write_path": "Doris HTTP Stream Load 持续增量写；DuckDB 适合批量计算后一次性落盘",
+        "protocol": "Doris 有 MySQL 9030 + HTTP 8030 双入口；DuckDB 仅进程内 API，无服务端",
+        "verdict": "盘中每 5 分钟全市场写入 + 高频聚合查询 + 前端查：Doris 契合；纯本地/离线分析 DuckDB 更轻"
+      },
+      "borrow_for_ours": [
+        "P0：Unique Key 模型 UPSERT 去重——KEY=(ts_code, trade_time)，根治 GitHub Actions 重复跑导致的数据重复",
+        "P0：Stream Load label 幂等设计——每次采集带 label，重试不重复入库（当前 JSON append 无幂等）",
+        "P1：Aggregate Key 预聚合表——板块/个股 5 分钟粒度，聚合查询毫秒级",
+        "P1：MySQL 协议 + HTTP 双入口——前端 JS 不直连，由云服务器 REST 网关转 SQL",
+        "P2：异步物化视图替代手写「预计算指标 JSON」，把截面分位固化为定时刷新 MV"
+      ],
+      "priority": "P2",
+      "priority_reason": "单机最小 8C/24G/60G SSD，远重于当前 GitHub Pages + 静态 JSON 方案。除非云服务器常驻并承担存储，否则现阶段不引入。真正可复用的是『label 幂等导入』与『主键 UPSERT 去重』两个设计，用 SQLite/DuckDB 同样能实现。"
+    },
+    {
+      "name": "UFund-Me/Qbot",
+      "gitcode_url": "https://gitcode.com/GitHub_Trending/qbot/Qbot",
+      "github_url": "https://github.com/UFund-Me/Qbot",
+      "stars": 18633,
+      "forks": 2613,
+      "language": "Python",
+      "verified_at": "2026-10-14T00:50:03+08:00",
+      "star_source": "GitHub REST API GET /repos/UFund-Me/Qbot",
+      "category": "framework",
+      "what": "AI 量化投研平台：事件驱动引擎 + 策略/回测/实盘三层分离，数据获取到自动交易全闭环",
+      "key_features": [
+        "EventEngine：Queue + 单消费线程 + 每事件起子线程分发，register/unregister 订阅制",
+        "ClockEngine：时刻事件(开盘/休市/收盘) + 间隔事件(0.5/1/5/15/30/60 分钟) + DailyHandler，trading_state 标记盘中",
+        "QuotationEngine：按 bar_type 定时 push bar 事件，watch/un_watch 订阅标的",
+        "MainEngine：策略目录扫描 + mtime 热加载 + 三段式信号优雅退出",
+        "Context：统一行情/交易接口 + is_trade_date 交易日判定 + fetch_minute_bars",
+        "策略基类三钩子 run(bar)/clock(context)/shutdown，与引擎彻底解耦"
+      ],
+      "architecture": {
+        "layers": [
+          "引擎层 easyquant：event_engine / clock_engine / quotation_engine / main_engine / context",
+          "策略层 strategies/*.py：各自实现 Strategy 类，只依赖事件接口，不 import 引擎",
+          "数据层 easyquotation：sina/tencent/boc/hkquote/jsl/daykline/minutekline 统一 get_bars",
+          "回测层 engine/backtest：backtest_base / backtest_main，与实盘共用策略代码",
+          "交易层 pytrader/easytrader + pyfutures + pyfunds"
+        ],
+        "patterns": [
+          "事件总线解耦：引擎只认 event_type，策略自行 register，互不 import",
+          "时钟即调度器：所有定时逻辑收敛到 ClockEngine 的 moment/interval handler，避免散落 sleep",
+          "策略热加载：轮询 mtime -> importlib.reload -> 先 unlisten 旧策略再 listen 新策略（含 2s 等待）",
+          "数据源抽象：Quotation 基类 + use_quotation(name) 工厂，换源不改策略",
+          "信号三段关停：SIGINT/SIGTERM -> before_shutdown -> main_shutdown -> after_shutdown -> sys.exit"
+        ]
+      },
+      "borrow_for_ours": [
+        "P0：ClockEngine moment+interval 双轨时钟——从 GitHub Actions cron(10 分钟) 迁到云服务器后做 1 分钟 tick + 开收盘 moment",
+        "P0：EventEngine 订阅解耦——采集/算法/推送三方经事件总线通信，替代脚本线性调用",
+        "P1：策略基类三钩子——stocks-ai-view 多策略选股统一为可插拔 Strategy 基类",
+        "P1：mtime 热加载 + 信号优雅退出——算法迭代无需重启整个服务",
+        "P2：Quotation 数据源抽象——把 68 个已测源收敛到 get_bars(code, count, unit, end_dt) 单接口"
+      ],
+      "priority": "P1",
+      "priority_reason": "引擎设计纯 Python 标准库(Queue/Thread)实现，无重依赖，可直接搬到我们的采集服务。『事件总线 + 时钟调度 + 策略热加载』正是从『Actions 一次性脚本』演进到『云服务器常驻服务』缺的骨架。",
+      "key_files": [
+        "/tmp/gh2/qbot/pytrader/easyquant/event_engine.py:14 EventEngine",
+        "/tmp/gh2/qbot/pytrader/easyquant/push_engine/clock_engine.py:141 ClockEngine",
+        "/tmp/gh2/qbot/pytrader/easyquant/push_engine/quotation_engine.py:9 QuotationEngine",
+        "/tmp/gh2/qbot/pytrader/easyquant/main_engine.py:39 MainEngine"
+      ],
+      "resource_req": {
+        "cpu": "1-2 核",
+        "memory": "2-4GB",
+        "disk": "5GB",
+        "note": "纯 Python，轻量"
+      }
+    },
+    {
+      "name": "Rockyzsu/stock",
+      "gitcode_url": "https://gitcode.com/GitHub_Trending/sto/stock",
+      "github_url": "https://github.com/Rockyzsu/stock",
+      "gitcode_alias": "sto/stock",
+      "stars": 8849,
+      "forks": 1627,
+      "language": "Python",
+      "license": "BSD-3-Clause",
+      "verified_at": "2026-10-14T00:50:03+08:00",
+      "star_source": "GitHub REST API GET /repos/Rockyzsu/stock",
+      "category": "engine",
+      "what": "「30天掌握量化交易」：数据采集(datahub) + K线形态识别(k-line) + 实时监控(monitor) 的实战代码合集",
+      "key_features": [
+        "datahub：20+ 采集模块，一数据源一文件（jisilu/xueqiu/ttjj/dfcf_hot_block/zdt/yanbao...）",
+        "BaseService 基类：get/post 带 retry、jsonp2json、trading_time 交易时段判定、动态代理池、企业微信 notify",
+        "k-line：TA-Lib CDL 形态识别(CDL2CROWS 等) + matplotlib 蜡烛图标注",
+        "monitor/realtime_monitor_ts.py：60s 轮询 + 涨跌幅阈值过滤 + has_sent 冷却(30 分钟) 的告警闭环",
+        "存储：MySQL(pymysql/sqlalchemy) + MongoDB，每日一表 + to_excel 双写"
+      ],
+      "architecture": {
+        "layers": [
+          "common/BaseService.py：所有采集器基类（HTTP/重试/日志/通知/代理）",
+          "datahub/*.py：一数据源一模块，继承 BaseService，run() 主流程",
+          "monitor/*.py：常驻循环监控 + 阈值告警",
+          "analysis/*.ipynb：Jupyter 探索性分析",
+          "configure/settings.py：DBSelector 多库选择 + get_config_data 配置分层"
+        ],
+        "patterns": [
+          "基类统一横切：重试/日志/通知/代理全在 BaseService，子类只管 fetch+parse+store",
+          "告警冷却字典：has_sent[code] = now + timedelta(minutes=DELTA_TIME) 防轰炸",
+          "交易时段硬编码：9:23-11:31 / 12:58-15:02:05",
+          "每日一表（today 作表名）——简单但表数量爆炸，属反面教材"
+        ]
+      },
+      "borrow_for_ours": [
+        "P0：BaseService 的 get/post retry + trading_time 判定——68 个源的采集器统一基类，免去每脚本重复 try/except",
+        "P1：告警冷却 has_sent + DELTA_TIME——stocks-ai-view 实时提醒防同一标的重推",
+        "P1：jsonp2json 工具函数——东财/新浪部分接口返回 JSONP，当前处理散落各处",
+        "P2：TA-Lib CDL K线形态识别作为新增因子维度",
+        "反面教材：不要学每日一表，改用时间分区表"
+      ],
+      "priority": "P1",
+      "priority_reason": "BaseService 模式与告警冷却是可直接复用的工程实践。缺点：代码风格老旧、每日一表、依赖 tushare 旧版 API（ts.get_today_all 已废弃）。",
+      "key_files": [
+        "/tmp/gh2/stock/common/BaseService.py:17 BaseService",
+        "/tmp/gh2/stock/monitor/realtime_monitor_ts.py:150 monitor 主循环",
+        "/tmp/gh2/stock/k-line/recognize_form.py:16 two_crow"
+      ],
+      "resource_req": {
+        "cpu": "1 核",
+        "memory": "1-2GB",
+        "disk": "10GB+",
+        "note": "采集轻量；notebook 分析吃内存"
+      }
+    }
+  ],
+  "gitcode_notebook": {
+    "what": "GitCode(AtomGit / CSDN 生态) 平台提供的在线交互式计算环境（Jupyter Notebook 类）。入口：头像 -> 我的Notebook，或在模型项目内启动",
+    "capabilities": {
+      "cpu": "多规格可选，官方文档仅给截图未列具体核数（未核实）",
+      "memory": "多规格可选，具体 GB 数未在文档中给出（未核实）",
+      "storage": "实例内存储；官方明确「创建的资源不会进行持久化保存」，曾预告 50G 免费持久化（未确认上线）",
+      "gpu": "官方文字说明为 CPU/NPU 两种环境；getting-started 文档的 notebook-config.yaml 示例含 gpu: T4（未核实实际可选项）",
+      "persistent": false
+    },
+    "network_egress": "GitCode 服务器在国内（CSDN 生态），理论上国内 IP 直连东财/新浪无跨境 WAF 问题。本次未实测（任务约束不测数据接口），标未核实",
+    "access": "Web IDE（浏览器 Jupyter/Lab），文档另提及 Web IDE 与 VS Code 两种入口；未见 SSH 登录或对外端口映射说明（未核实）",
+    "can_host_service": false,
+    "can_host_service_reason": "决定性限制：官方文档明确「目前一次启动 Notebook 后的使用时长为两小时」，且资源不持久化，运行中不可直接重启。2 小时上限 + 无持久化使其无法承担常驻 HTTP API 与定时任务。",
+    "session_limits": [
+      "单次启动最长 2 小时，超时需保存文件并关闭重开",
+      "启动中不可重复启动；运行中切勿直接重启（防文件丢失）",
+      "资源不持久化，需自行保存文件",
+      "启动约需 1-2 分钟"
+    ],
+    "free_quota": "限时免费（官方原文「目前限时免费」）。容器使用量按 容器运行时间 x CPU 核数 计核时，自然月重置，80%/95% 阈值提醒",
+    "docs_url": [
+      "https://docs.gitcode.com/docs/help/home/ai-community/ai-notebook",
+      "https://docs.gitcode.com/en/docs/help/home/ai-community/notebooks/getting-started/",
+      "https://docs.gitcode.com/docs/help/user_center/data_management/usage_and_storage"
+    ],
+    "verified": true,
+    "verification_note": "已抓取上述 3 个官方文档页面正文。未核实项：具体 CPU/内存/GPU 规格数值、是否支持 SSH、出口 IP、50G 持久化是否上线。"
+  },
+  "architecture_proposal": {
+    "goal": "分钟级数据 + 云服务器做算法引擎。GitHub Actions 保留为兜底，云服务器承担实时采集与算法，GitHub Pages 保留为展示层（或迁到云服务器域名）。",
+    "current_baseline": {
+      "采集": "GitHub Actions cron '0 1,2,3,4,5,6,7 * * 1-5' = UTC 1-7 点 = CST 9-16 点，每小时 1 轮（.github/workflows/auto-intraday.yml:14）",
+      "分钟级能力已具备": "scripts/longrun_collect.py run_realtime(interval=60) 已实现 60s 间隔腾讯 qt.gtimg.cn 采集，60 只/批 + 0.2s 批间 sleep（scripts/longrun_collect.py:190-253）",
+      "卡点": "Actions cron 最快 5 分钟粒度 + 免费额度 2000 分钟/月；长跑需 Codespace（已有 longrun_collect.py 的断点续传/退避设计）",
+      "存储": "stocks.duckdb (DuckDB) + data/ 下 JSON 快照（snapshot_YYYY-MM-DD.json）",
+      "展示": "stocks-ai-view GitHub Pages（index.html + realtime.js + stock-detail.js）"
+    },
+    "layers": [
+      {
+        "name": "采集层",
+        "where": "云服务器（主）+ GitHub Actions（兜底）",
+        "why": "Actions cron 最细 5 分钟且每月 2000 分钟额度；云服务器常驻可做到 1 分钟。国内 IP 直连东财/腾讯 qt.gtimg.cn 无跨境 WAF。GitCode Notebook 因 2 小时单次上限无法承担，需换真正的常驻云服务器（或 Codespace）。",
+        "impl": "搬 Qbot 的 ClockEngine(moment+interval) + EventEngine 替代裸 while+sleep；采集器继承 sto/stock 的 BaseService 统一 retry/trading_time/notify",
+        "priority": "P0"
+      },
+      {
+        "name": "存储层",
+        "where": "DuckDB（保持）→ 可选升级 Doris",
+        "why": "当前 stocks.duckdb 单文件 + 分钟追加写入，分钟级数据量（5000 只 × 240 分钟 × 30 天 ≈ 3600 万行）DuckDB 仍可扛。Doris 单机最小 8C/24G/60G SSD，除非云服务器规格足够且要多客户端并发查询，否则暂不引入。",
+        "impl": "立刻可做的等价改造：给分钟表加 UNIQUE(ts_code, trade_time) 约束 + 导入 label 幂等（借 Doris 的 Stream Load 设计），解决 Actions 重复跑导致的数据重复",
+        "priority": "P1"
+      },
+      {
+        "name": "算法层",
+        "where": "云服务器",
+        "why": "stocks-ai-view 的多策略选股(multi_screener) + 截面分位计算需要 CPU 与常驻内存缓存，GitHub Pages 纯前端算不动全市场。",
+        "impl": "策略统一为 Qbot 式 Strategy 基类(run/clock/shutdown)，MainEngine mtime 热加载；输出结果 JSON 推到 GitHub 仓库或由展示层直连 API",
+        "priority": "P1"
+      },
+      {
+        "name": "展示层",
+        "where": "GitHub Pages（保持）优先；云服务器对外端口为备选",
+        "why": "Pages 免费 + 全球 CDN + 无需备案域名。云服务器对外提供服务需域名+备案+HTTPS 证书，国内合规成本高。",
+        "impl": "保持 index.html/realtime.js 读仓库 JSON 的模式；算法层产出「预计算指标 JSON」推送回仓库，Pages 自动生效。这是当前已验证可行的数据流。",
+        "priority": "P0"
+      }
+    ],
+    "data_flow": "东财/腾讯/新浪 --(云服务器 1min tick, ClockEngine)--> 内存队列(EventEngine) --> 去重/校验(label 幂等) --> DuckDB 分钟表(UNIQUE ts_code+trade_time) --> 算法层(Strategy.run 每 5min 触发截面分位/多策略选股) --> 预计算指标 JSON --> git push 到 stocks-ai-view --> GitHub Pages 前端 fetch 展示",
+    "latency_target": {
+      "采集": "1 分钟（云服务器常驻 + qt.gtimg.cn 60只/批，一轮全市场约 5343/60*0.3s ≈ 27s，远小于 60s 预算）",
+      "入库": "秒级（DuckDB 单文件追加 + WAL）",
+      "算法": "每 5 分钟一次截面计算（盘中），或事件触发（涨跌幅阈值）",
+      "展示": "Pages 依赖 git push + CDN 缓存，分钟级到 5 分钟级；若需秒级需展示层也迁到云服务器并放弃 Pages",
+      "bottleneck": "展示层的 git push -> CDN 链路是分钟级的真正瓶颈，不是采集"
+    },
+    "gitcode_notebook_verdict": {
+      "can_host_service": false,
+      "reason": "官方文档明确单次启动最长 2 小时 + 资源不持久化 + 运行中不可重启。不能跑常驻 HTTP API 或定时任务。",
+      "what_it_is_good_for": [
+        "一次性批量补数据（如 K 线覆盖率补全，跑 2 小时即够）",
+        "算法实验/回测/notebook 探索（替代本地跑重活）",
+        "临时数据处理任务"
+      ],
+      "alternative_for_persistent": [
+        "GitHub Codespace（项目已有先例：longrun_collect.py 就是为 Codespace 设计，突破 Actions 6h 限制）",
+        "国内轻量云服务器（需域名备案才能对外提供 HTTP）",
+        "GitCode 若后续上线长驻实例/50G 持久化，需重新评估"
+      ]
+    },
+    "risks": [
+      "GitCode Notebook 2 小时上限 + 无持久化：把它当常驻服务会丢数据，这是本方案最大的认知风险（用户可能已基于此建了预期）",
+      "云服务器对外提供 HTTP 需域名备案 + HTTPS，国内合规成本高；因此展示层建议继续用 GitHub Pages",
+      "Doris 单机最小 8C/24G/60G SSD，规格不足时引入反而拖慢；当前 DuckDB 已够用",
+      "分钟级写入 DuckDB 单文件，若同时被算法层读 + 采集层写，可能锁竞争；需验证 DuckDB 多进程读写行为（未实测）",
+      "Actions 与云服务器双路采集同一数据源会产生重复写入，必须有 label 幂等或唯一约束兜底",
+      "腾讯 qt.gtimg.cn 单 IP 约 1750 次后 501 限流（已在 longrun_collect.py 注释中记录），1 分钟频率下需计算配额：5343 只 / 60 只每批 ≈ 89 次/轮，若单 IP 限额 1750 次则约 19 轮后触发限流——需多 IP 或降频（未实测当前限额）",
+      "本项目实际采集卡点可能是数据源限流而非基础设施，迁云服务器前应先量化 1 分钟频率的真实配额消耗"
+    ],
+    "next_actions": [
+      {
+        "action": "给 stocks.duckdb 分钟表加 UNIQUE(ts_code, trade_time) + 导入 label 幂等",
+        "borrow_from": "Doris Unique Key / Stream Load label",
+        "cost": "低，纯本地改造",
+        "priority": "P0"
+      },
+      {
+        "action": "抽取 BaseService 基类统一 68 个采集器的 retry/trading_time/jsonp2json/notify",
+        "borrow_from": "sto/stock common/BaseService.py",
+        "cost": "中，需回归测试各源",
+        "priority": "P1"
+      },
+      {
+        "action": "用 ClockEngine+EventEngine 重构 realtime 采集循环",
+        "borrow_from": "Qbot pytrader/easyquant",
+        "cost": "中",
+        "priority": "P1"
+      },
+      {
+        "action": "确认 Codespace 长跑方案（已有 longrun_collect.py）是否够用，再决定是否买常驻云服务器",
+        "borrow_from": "本项目既有设计",
+        "cost": "低（决策项）",
+        "priority": "P0"
+      },
+      {
+        "action": "量化 1 分钟采集频率下腾讯接口的限流配额消耗",
+        "borrow_from": "-",
+        "cost": "低（需实测，本次未做）",
+        "priority": "P0",
+        "note": "这是分钟级方案成立与否的前置条件"
+      }
+    ]
+  }
+}

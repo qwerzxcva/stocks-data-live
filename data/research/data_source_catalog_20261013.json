@@ -1,0 +1,1656 @@
+{
+  "timestamp": "2026-10-13T19:26:29+08:00",
+  "source": "data_source_catalog",
+  "probed_at": "2026-10-13",
+  "container": "alpine-aarch64 docker",
+  "note": "A股生态数据源普查。探测条件：Alpine aarch64 容器，无代理，零凭据。\n合并: sources_registry 追加 0 条 (2026-10-13)",
+  "domains": {
+    "realtime_quote": [
+      {
+        "id": "tencent_quote",
+        "name": "腾讯实时行情",
+        "domain": "qt.gtimg.cn",
+        "url": "https://qt.gtimg.cn/q={codes}",
+        "auth": "none",
+        "fields": "price/prev_close/open/high/low/chg_pct/turnover/pe/pb/mktcap/floatcap/time",
+        "integration": "direct_json",
+        "status": "available",
+        "evidence": {
+          "http_code": 200,
+          "sample": "HTTP 200, gbk encoding, ~200 bytes/codes batch of 60",
+          "probe_time": "2026-10-13T19:04:56+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "50 req/s 安全；60代码/批；连续 ~1750 次后 501",
+        "waf_blocked": false,
+        "notes": "生产在用（RPS 计算）；量比无独立字段一律 1.0；p44/p45 单位亿元；CORS=* 可浏览器直连",
+        "degrade_to": [],
+        "headers": {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120"
+        }
+      },
+      {
+        "id": "sina_hq",
+        "name": "新浪实时行情",
+        "domain": "hq.sinajs.cn",
+        "url": "https://hq.sinajs.cn/list={codes}",
+        "auth": "none",
+        "fields": "指数/个股实时 (name/price/open/high/low/prev_close/vol/amount/turnover)",
+        "integration": "direct_json",
+        "status": "available",
+        "evidence": {
+          "http_code": 200,
+          "sample": "HTTP 200, gbk, 必须 Referer: finance.sina.com.cn",
+          "probe_time": "2026-10-13T19:04:56+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "同腾讯",
+        "waf_blocked": false,
+        "notes": "必须带 Referer，否则 403；主要作为腾讯降级源",
+        "degrade_to": [],
+        "headers": {
+          "User-Agent": "Mozilla/5.0",
+          "Referer": "https://finance.sina.com.cn/"
+        }
+      },
+      {
+        "id": "em_push2_data",
+        "name": "东财个股实时行情",
+        "domain": "push2.eastmoney.com",
+        "url": "https://push2.eastmoney.com/api/qt/stock/get?secid={secid}&fields=f43,f44,...",
+        "auth": "none",
+        "fields": "f43=现价, f44=最高, f45=最低, f46=开盘, f57=代码, f58=名称, f60=昨收, f127=行业名",
+        "integration": "direct_json",
+        "status": "waf_blocked",
+        "evidence": {
+          "http_code": 0,
+          "sample": "ERR: ConnectionResetError (TLS 握手被 reset，容器 WAF 拦截)",
+          "probe_time": "2026-10-13T19:04:56+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "不适用",
+        "waf_blocked": true,
+        "notes": "2026-10-13 再次确认 WAF 拦截；容器内 push2.eastmoney.com 全域 TLS reset；GitHub Actions 出口全通；行业映射已改用 tv_screener（5309只全覆盖）",
+        "degrade_to": [
+          "tv_screener",
+          "tencent_quote"
+        ],
+        "headers": {}
+      },
+      {
+        "id": "em_push2_clist",
+        "name": "东财板块列表/资金流 (clist)",
+        "domain": "push2.eastmoney.com",
+        "url": "https://push2.eastmoney.com/api/qt/clist/get?fs=m:90+t:2&fields=f2,f3,f12,f14",
+        "auth": "none",
+        "fields": "行业/概念板块涨跌/资金流/成分股",
+        "integration": "direct_json",
+        "status": "waf_blocked",
+        "evidence": {
+          "http_code": 0,
+          "sample": "ERR: ConnectionResetError (WAF, 约 20 次请求后必然被封)",
+          "probe_time": "2026-10-13T19:04:56+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "不适用",
+        "waf_blocked": true,
+        "notes": "生产降级链已建立：push2 clist → 本地 TLS reset → mainline_rank 涨停池主题聚类占比替代",
+        "degrade_to": [
+          "tencent_mktHs",
+          "tv_screener"
+        ],
+        "headers": {}
+      },
+      {
+        "id": "douyin_hot",
+        "name": "抖音热搜榜",
+        "domain": "aweme.snssdk.com",
+        "url": "https://aweme.snssdk.com/aweme/v1/hot/search/list/",
+        "auth": "none (mobile UA only)",
+        "fields": "word/sentence_id/video_count/discuss_video_count/hot_value/active_time",
+        "integration": "direct_json",
+        "status": "available",
+        "evidence": {
+          "http_code": 200,
+          "sample": "HTTP 200, JSON trending_list[] 30+ 条；hot_value 有时=0，排序改用 video_count",
+          "probe_time": "2026-10-13T19:04:56+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "30s/次；移动端 UA 必带；桌面 UA 偶尔返回空",
+        "waf_blocked": false,
+        "notes": "移动端 UA 必带；2026-10-13 补测可用；候选 404 路径见 sources_registry",
+        "degrade_to": [],
+        "headers": {
+          "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148 Safari/604.1"
+        }
+      },
+      {
+        "id": "tv_screener",
+        "name": "TradingView 选股器 (行业映射 + A股筛选)",
+        "domain": "scanner.tradingview.com",
+        "url": "https://scanner.tradingview.com/china/scan",
+        "auth": "none",
+        "fields": "name/close/change/volume/market_cap/PB/sector/industry/type/Recommend.All",
+        "integration": "direct_json (POST)",
+        "status": "available",
+        "evidence": {
+          "http_code": 200,
+          "sample": "HTTP 200 POST, 7476只 A 股全量；15分钟延迟；对A股不提供 PE/RSI",
+          "probe_time": "2026-10-13T19:04:56+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "10 req/min 安全",
+        "waf_blocked": false,
+        "notes": "行业映射已全量缓存到 industry_map_tv.json；name 返回代码，description 返回英文名",
+        "degrade_to": [],
+        "headers": {
+          "User-Agent": "Mozilla/5.0"
+        }
+      },
+      {
+        "id": "eastmoney_zdfenbu",
+        "name": "东财涨跌分布",
+        "domain": "realtime_quote",
+        "url": "https://push2ex.eastmoney.com/getTopicZDFenBu",
+        "auth": "none",
+        "fields": "各涨幅档位家数 ({'-11':19},{'11':46},...)",
+        "integration": "direct_json",
+        "status": "available",
+        "evidence": {
+          "http_code": null,
+          "sample": "",
+          "probe_time": "2026-10-13T19:23:25+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "10 req/min (registry 默认)",
+        "waf_blocked": false,
+        "notes": "fenbu 的 11/-11 档 ≈ 涨停/跌停口径",
+        "degrade_to": [],
+        "headers": {},
+        "_source": "sources_registry"
+      },
+      {
+        "id": "toutiao_hot",
+        "name": "今日头条热榜/财经榜",
+        "domain": "realtime_quote",
+        "url": "https://www.toutiao.com/api/hotboard/pc/hot-news/feed/?ut=...&max_behave_time=0&_signature=...",
+        "auth": "none",
+        "fields": "热榜 title/hot_value/url/img; 财经榜在 category=finance 下",
+        "integration": "direct_json",
+        "status": "available",
+        "evidence": {
+          "http_code": null,
+          "sample": "",
+          "probe_time": "2026-10-13T19:23:25+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "10 req/min (registry 默认)",
+        "waf_blocked": false,
+        "notes": "2026-10-13 实测: ut/max_behave_time 可伪造, 热榜 30 条+; _signature 有时校验, 财经榜 412 时跳过不阻断",
+        "degrade_to": [],
+        "headers": {},
+        "_source": "sources_registry"
+      },
+      {
+        "id": "eastmoney_zt_pool",
+        "name": "东财涨跌停池",
+        "domain": "realtime_quote",
+        "url": "https://push2ex.eastmoney.com/getTopic{kind}Pool",
+        "auth": "none",
+        "fields": "涨停/跌停/炸板明细 (code/name/price/涨跌幅/连板/封板时间/行业)",
+        "integration": "direct_json",
+        "status": "available",
+        "evidence": {
+          "http_code": null,
+          "sample": "",
+          "probe_time": "2026-10-13T19:25:11+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "10 req/min (registry 默认)",
+        "waf_blocked": false,
+        "notes": "关键: data.pool 可能为空但 data.tc 是权威计数 (2026-10-12 DT: pool=[] 而 tc=19) → 家数必须读 tc",
+        "degrade_to": [],
+        "headers": {},
+        "_source": "sources_registry"
+      },
+      {
+        "id": "local_snapshot",
+        "name": "本地全市场快照",
+        "domain": "realtime_quote",
+        "url": "file://stocks-data-live/data/market/snapshot_YYYY-MM-DD.json",
+        "auth": "none",
+        "fields": "5278只 name/price/chg_pct/turnover/mktcap/pe",
+        "integration": "direct_json",
+        "status": "available",
+        "evidence": {
+          "http_code": null,
+          "sample": "",
+          "probe_time": "2026-10-13T19:25:11+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "10 req/min (registry 默认)",
+        "waf_blocked": false,
+        "notes": "",
+        "degrade_to": [],
+        "headers": {},
+        "_source": "sources_registry"
+      }
+    ],
+    "kline": [
+      {
+        "id": "tencent_kline",
+        "name": "腾讯日K (前复权)",
+        "domain": "web.ifzq.gtimg.cn",
+        "url": "https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param={code},day,,,{n},qfq",
+        "auth": "none",
+        "fields": "date/open/close/high/low/volume (qfq 前复权)",
+        "integration": "direct_json",
+        "status": "available",
+        "evidence": {
+          "http_code": 200,
+          "sample": "HTTP 200, JSON qfqday[] 全史；sh000001 实测 8566 根 (1990~2026-10-12)",
+          "probe_time": "2026-10-13T19:04:56+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "并发 10，每批 0.15s；~1750 次后 501",
+        "waf_blocked": false,
+        "notes": "生产在用；频率限制见 notes；K线覆盖率：51% (2737/5343 全量, 10-13)",
+        "degrade_to": [],
+        "headers": {}
+      },
+      {
+        "id": "em_push2his_kline",
+        "name": "东财历史K线 (push2his)",
+        "domain": "push2his.eastmoney.com",
+        "url": "https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=1.600519&klt=101&fqt=1&lmt=5&end=20500101",
+        "auth": "none",
+        "fields": "date/open/close/high/low/volume/amount/振幅/涨跌幅/涨跌额/换手率",
+        "integration": "direct_json",
+        "status": "available",
+        "evidence": {
+          "http_code": 200,
+          "sample": "HTTP 200, 381B JSON, klines[] 3条, dktotal=6019 (茅台全史)",
+          "probe_time": "2026-10-13T19:04:56+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "10 req/s 安全",
+        "waf_blocked": false,
+        "notes": "push2his 域不在 push2 WAF 封锁范围内；是 tencent_kline 的降级候选；fqt=1 为前复权",
+        "degrade_to": [],
+        "headers": {
+          "User-Agent": "Mozilla/5.0 Chrome/120",
+          "Referer": "https://quote.eastmoney.com/"
+        }
+      },
+      {
+        "id": "sina_kline_daily",
+        "name": "新浪个股日K (akshare stock_zh_a_daily_sina)",
+        "domain": "hq.sinajs.cn / akshare",
+        "url": "via akshare.stock_zh_a_daily(symbol='sh600519', adjust='qfq')",
+        "auth": "none",
+        "fields": "date/open/high/low/close/volume/amount/outstanding_share/turnover",
+        "integration": "library_call (akshare)",
+        "status": "available",
+        "evidence": {
+          "http_code": 200,
+          "sample": "OK rows=6019 cols=9, dt=0.79s (茅台日K全史)",
+          "probe_time": "2026-10-13T19:04:56+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "同新浪接口",
+        "waf_blocked": false,
+        "notes": "akshare 1.19.1 安装验证；底层的新浪接口稳定可用",
+        "degrade_to": [],
+        "headers": {}
+      },
+      {
+        "id": "em_a_hist",
+        "name": "东财A股历史K线 (akshare stock_zh_a_hist)",
+        "domain": "push2his.eastmoney.com",
+        "url": "via akshare.stock_zh_a_hist(symbol='600519', period='daily', adjust='qfq')",
+        "auth": "none",
+        "fields": "日期/股票代码/开盘/收盘/最高/最低/成交量/成交额/振幅/涨跌幅/涨跌额/换手率",
+        "integration": "library_call (akshare)",
+        "status": "available",
+        "evidence": {
+          "http_code": 200,
+          "sample": "OK rows=489 cols=12, dt=0.25s (2024-10-01起)",
+          "probe_time": "2026-10-13T19:04:56+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "底层为 push2his，同 em_push2his_kline",
+        "waf_blocked": false,
+        "notes": "通过 akshare 封装调用，push2his 域未被 WAF 封锁",
+        "degrade_to": [],
+        "headers": {}
+      },
+      {
+        "id": "tencent_index_history",
+        "name": "腾讯指数全史",
+        "domain": "web.ifzq.gtimg.cn",
+        "url": "https://web.ifzq.gtimg.cn/appstock/app/kline/kline?param={code},day,,{end},{n}",
+        "auth": "none",
+        "fields": "指数日K全史 (上证 1990 起/深成 1993/沪深300 2005/创业板 2010/科创 2019)",
+        "integration": "direct_json",
+        "status": "available",
+        "evidence": {
+          "http_code": 200,
+          "sample": "OK rows=8740 (akshare stock_zh_index_daily_tx 实测, dt=14.24s 含分页)",
+          "probe_time": "2026-10-13T19:04:56+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "分页拉取，每页 800 根",
+        "waf_blocked": false,
+        "notes": "生产 cycle_deep.json 使用",
+        "degrade_to": [],
+        "headers": {}
+      },
+      {
+        "id": "sina_etf_hist",
+        "name": "新浪 ETF 日K (akshare fund_etf_hist_sina)",
+        "domain": "akshare",
+        "url": "via akshare.fund_etf_hist_sina(symbol='sh510500')",
+        "auth": "none",
+        "fields": "date/open/high/low/close/volume/amount/postVol/postAmt",
+        "integration": "library_call (akshare)",
+        "status": "available",
+        "evidence": {
+          "http_code": 200,
+          "sample": "OK rows=3294 cols=9, dt=0.27s (510500)",
+          "probe_time": "2026-10-13T19:04:56+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "",
+        "waf_blocked": false,
+        "notes": "新浪 ETF 接口稳定可用",
+        "degrade_to": [],
+        "headers": {}
+      },
+      {
+        "id": "eastmoney_kline",
+        "name": "东财历史K线",
+        "domain": "kline",
+        "url": "https://push2his.eastmoney.com/api/qt/stock/kline/get",
+        "auth": "none",
+        "fields": "",
+        "integration": "direct_json",
+        "status": "available",
+        "evidence": {
+          "http_code": null,
+          "sample": "",
+          "probe_time": "2026-10-13T19:23:25+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "10 req/min (registry 默认)",
+        "waf_blocked": false,
+        "notes": "2026-10-13 实测: push2his 域不在 push2 的 WAF 封锁范围; 茅台全史 6019 根, 381B 样本; fqt=1 前复权; 需带 Referer: quote.eastmoney.com; 并发 10 安全",
+        "degrade_to": [],
+        "headers": {},
+        "_source": "sources_registry"
+      },
+      {
+        "id": "baostock",
+        "name": "Baostock 免费A股数据 (query_history_k_data_plus)",
+        "domain": "kline",
+        "url": "python 库 (baostock, 需先 login())",
+        "auth": "none",
+        "fields": "日K/周K/月K (qfq)/估值/财务指标; 全市场 5000+ 只 2000~2026 全通",
+        "integration": "library_call",
+        "status": "available",
+        "evidence": {
+          "http_code": null,
+          "sample": "",
+          "probe_time": "2026-10-13T19:23:25+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "10 req/min (registry 默认)",
+        "waf_blocked": false,
+        "notes": "2026-10-13 实测: baostock 0.9.3 装容器可跑, 茅台 16326 行历史; 无注册无积分; K线补录与 tencent_kline 501 限流互补",
+        "degrade_to": [],
+        "headers": {},
+        "_source": "sources_registry"
+      },
+      {
+        "id": "local_kline_bulk",
+        "name": "本地 K线 bulk",
+        "domain": "kline",
+        "url": "file://stocks-data-kline/data/bulk/day_qfq_*.csv",
+        "auth": "none",
+        "fields": "全市场日K (qfq), 两种格式: code|date|o|c|h|l|v 与 code|date,o,c,h,l,v",
+        "integration": "direct_json",
+        "status": "available",
+        "evidence": {
+          "http_code": null,
+          "sample": "",
+          "probe_time": "2026-10-13T19:23:25+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "10 req/min (registry 默认)",
+        "waf_blocked": false,
+        "notes": "当前覆盖 2577/5343 (48.2%); 腾讯频率限制导致无法一次拉全; nightly-kline 工作流负责增量补录",
+        "degrade_to": [],
+        "headers": {},
+        "_source": "sources_registry"
+      }
+    ],
+    "capital_flow_lhb": [
+      {
+        "id": "em_datacenter_lhb",
+        "name": "东财龙虎榜明细 (datacenter)",
+        "domain": "datacenter-web.eastmoney.com",
+        "url": "https://datacenter-web.eastmoney.com/api/data/v1/get?reportName=RPT_DAILYBILLBOARD_DETAILS&columns=ALL&pageSize=50&pageNumber=1&sortColumns=TRADE_DATE&sortTypes=-1&source=WEB&client=WEB",
+        "auth": "none",
+        "fields": "TRADE_DATE/SECUCODE/SECURITY_CODE/SECURITY_NAME_ABBR/CLOSE_PRICE/CHANGE_RATE/BILLBOARD_DEAL_AMT/BILLBOARD_BUY_AMT/BILLBOARD_SELL_AMT/ACCUM_AMOUNT/D1/D5/D10/D20/D30_CLOSE_ADJCHRATE/EXPLAIN/EXPLANATION/TRADE_MARKET/TURNOVERRATE",
+        "integration": "direct_json",
+        "status": "available",
+        "evidence": {
+          "http_code": 200,
+          "sample": "HTTP 200, 50行, TRADE_DATE=2026-10-13; 关键字段: code/name/close/chg/deal_amt/expl/success_rate",
+          "probe_time": "2026-10-13T19:04:56+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "10 req/min；当日数据收盘后 ~18:00 出，凌晨调用需回退 5 天",
+        "waf_blocked": false,
+        "notes": "2026-10-13 首次确认可用（不带 filter，直接按 TRADE_DATE desc 排序）；带 filter=(TRADE_DATE='2026-10-10') 时返回空（横杠格式要求）；同一股票可能多行（不同上榜原因），需按股票合并",
+        "degrade_to": [],
+        "headers": {}
+      },
+      {
+        "id": "em_datacenter_blocktrade",
+        "name": "东财大宗交易 (datacenter)",
+        "domain": "datacenter-web.eastmoney.com",
+        "url": "https://datacenter-web.eastmoney.com/api/data/v1/get?reportName=RPT_DATA_BLOCKTRADE&columns=ALL&pageSize=50&pageNumber=1&sortColumns=TRADE_DATE&sortTypes=-1&source=WEB&client=WEB",
+        "auth": "none",
+        "fields": "SECUCODE/SECURITY_CODE/SECURITY_NAME_ABBR/TRADE_DATE/DEAL_PRICE/PREMIUM_RATIO/DEAL_VOLUME/DEAL_AMT/BUYER_NAME/SELLER_NAME/CLOSE_PRICE/CHANGE_RATE_1DAYS/5DAYS/10DAYS/20DAYS",
+        "integration": "direct_json",
+        "status": "available",
+        "evidence": {
+          "http_code": 200,
+          "sample": "HTTP 200, 50行, TRADE_DATE=2026-10-13; 雷神科技 16.27 元 93000股 1513110元",
+          "probe_time": "2026-10-13T19:04:56+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "同 LHB",
+        "waf_blocked": false,
+        "notes": "2026-10-13 首次确认全市场无 filter 可查；含北交所 (CNSEBJ) 数据",
+        "degrade_to": [],
+        "headers": {}
+      },
+      {
+        "id": "em_datacenter_margin",
+        "name": "东财两融余额 (datacenter)",
+        "domain": "datacenter-web.eastmoney.com",
+        "url": "https://datacenter-web.eastmoney.com/api/data/v1/get?reportName=RPTA_RZRQ_LSHJ&columns=ALL&pageSize=30&sortColumns=dim_date&sortTypes=-1",
+        "auth": "none",
+        "fields": "DIM_DATE/RZYE(融资余额)/RQYE(融券余额)/RZRQYE/rzmre/rzche",
+        "integration": "direct_json",
+        "status": "degraded",
+        "evidence": {
+          "http_code": 200,
+          "sample": "HTTP 200 但 result=null message='TRADE_DATE列不存在' (filter 用 dim_date 非 TRADE_DATE)",
+          "probe_time": "2026-10-13T19:04:56+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "10 req/min",
+        "waf_blocked": false,
+        "notes": "collect_market_extras.py 中已有实现（dim_date 排序无 filter）；正确用法：不带 filter 参数，sortColumns=dim_date；当日数据 T+1 出",
+        "degrade_to": [],
+        "headers": {}
+      },
+      {
+        "id": "em_zt_pool",
+        "name": "东财涨跌停池",
+        "domain": "push2ex.eastmoney.com",
+        "url": "https://push2ex.eastmoney.com/getTopic{ZT|DT|ZB}Pool?ut=7eea3edcaed734bea9cbfc24409ed989&dpt=wz.ztzt&date={date}&Pageindex=0&pagesize=300&sort=fbt%3Aasc",
+        "auth": "none",
+        "fields": "code/name/price/chg_pct/连板/封板时间/行业 (pool 列表 + tc 权威计数)",
+        "integration": "direct_json",
+        "status": "available",
+        "evidence": {
+          "http_code": 200,
+          "sample": "生产在用；pool 可能为空但 tc 仍有效（2026-10-12 实测 pool=[] tc=19）",
+          "probe_time": "2026-10-13T19:04:56+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "10 req/min",
+        "waf_blocked": false,
+        "notes": "关键：家数读 tc 不读 pool 长度；日期参数 YYYYMMDD 无横杠",
+        "degrade_to": [],
+        "headers": {}
+      },
+      {
+        "id": "eastmoney_datacenter",
+        "name": "东财 datacenter (龙虎榜/大宗交易/两融)",
+        "domain": "capital_flow_lhb",
+        "url": "https://datacenter-web.eastmoney.com/api/data/v1/get?reportName={report}",
+        "auth": "none",
+        "fields": "",
+        "integration": "direct_json",
+        "status": "available",
+        "evidence": {
+          "http_code": null,
+          "sample": "",
+          "probe_time": "2026-10-13T19:26:12+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "10 req/min (registry 默认)",
+        "waf_blocked": false,
+        "notes": "filter 日期必须 YYYY-MM-DD (横杠), 传 YYYYMMDD 会返回0条; 当日数据收盘后才出 → 必须做日期回退 (最多5天); 龙虎榜同一股票多行 (不同上榜原因), 需按股票合并",
+        "degrade_to": [],
+        "headers": {},
+        "_source": "sources_registry"
+      },
+      {
+        "id": "eastmoney_clist",
+        "name": "东财板块列表/资金流 (push2 clist)",
+        "domain": "capital_flow_lhb",
+        "url": "https://push2.eastmoney.com/api/qt/clist/get",
+        "auth": "none",
+        "fields": "行业/概念板块涨跌/资金流/成分股",
+        "integration": "direct_json",
+        "status": "blocked",
+        "evidence": {
+          "http_code": null,
+          "sample": "",
+          "probe_time": "2026-10-13T19:26:12+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "10 req/min (registry 默认)",
+        "waf_blocked": true,
+        "notes": "容器内间歇 reset (RemoteDisconnected), 约 20 次请求后必然被封; 曾导致 sector_pool 只剩2个板块、multi_v5 因缺行业映射出0候选。已用 tencent_mktHs + tv_screener 替代",
+        "degrade_to": [
+          "tencent_mktHs",
+          "tv_screener"
+        ],
+        "headers": {},
+        "_source": "sources_registry"
+      },
+      {
+        "id": "eastmoney_stock_get",
+        "name": "东财个股信息 (含 f127 行业)",
+        "domain": "capital_flow_lhb",
+        "url": "https://push2.eastmoney.com/api/qt/stock/get",
+        "auth": "none",
+        "fields": "f127=行业名, f57=代码, f58=名称",
+        "integration": "direct_json",
+        "status": "blocked",
+        "evidence": {
+          "http_code": null,
+          "sample": "",
+          "probe_time": "2026-10-13T19:26:12+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "10 req/min (registry 默认)",
+        "waf_blocked": true,
+        "notes": "首次探测成功返回过 industry, 之后同 push2 域一起被 WAF 封; 行业映射已改用 tv_screener (5309只全覆盖)",
+        "degrade_to": [
+          "tv_screener"
+        ],
+        "headers": {},
+        "_source": "sources_registry"
+      }
+    ],
+    "financial": [
+      {
+        "id": "ths_financial_abstract",
+        "name": "同花顺财务摘要 (akshare stock_financial_abstract_ths)",
+        "domain": "ths90.10jqka.com.cn",
+        "url": "via akshare.stock_financial_abstract_ths(symbol='600519')",
+        "auth": "none",
+        "fields": "报告期/净利润/扣非净利润/营业总收入/基本每股收益/销售毛利率/净资产收益率/资产负债率",
+        "integration": "library_call (akshare)",
+        "status": "available",
+        "evidence": {
+          "http_code": 200,
+          "sample": "OK rows=103 cols=25, dt=0.90s (茅台 1998~2026); 每报告期一行",
+          "probe_time": "2026-10-13T19:04:56+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "10 req/min（同花顺）",
+        "waf_blocked": false,
+        "notes": "akshare 封装稳定；字段值含'亿'字，需 parse 转换；False 值表示无数据",
+        "degrade_to": [],
+        "headers": {}
+      },
+      {
+        "id": "ths_financial_abstract_v2",
+        "name": "同花顺财务摘要 v2 (akshare stock_financial_abstract_new_ths)",
+        "domain": "ths90.10jqka.com.cn",
+        "url": "via akshare.stock_financial_abstract_new_ths(symbol='600519')",
+        "auth": "none",
+        "fields": "report_date/report_name/report_period/metric_name/value/yoy/mom/single/single_yoy",
+        "integration": "library_call (akshare)",
+        "status": "available",
+        "evidence": {
+          "http_code": 200,
+          "sample": "OK rows=1200 cols=10, dt=0.26s; 宽表→长表格式，metric_name 每行一个指标",
+          "probe_time": "2026-10-13T19:04:56+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "同同花顺",
+        "waf_blocked": false,
+        "notes": "v2 格式更适合入库（metric_name/value 直接存储，无需 parse）；2014 年以前的 yoy/mom 多为空；同花顺域名 ths90.10jqka.com.cn，零 WAF",
+        "degrade_to": [],
+        "headers": {}
+      },
+      {
+        "id": "ths_industry_list",
+        "name": "同花顺行业板块列表 (akshare stock_board_industry_name_ths)",
+        "domain": "d.10jqka.com.cn",
+        "url": "via akshare.stock_board_industry_name_ths()",
+        "auth": "none",
+        "fields": "name/code (90 个行业板块)",
+        "integration": "library_call (akshare)",
+        "status": "available",
+        "evidence": {
+          "http_code": 200,
+          "sample": "OK rows=90 cols=2, dt=0.22s; 直接可用",
+          "probe_time": "2026-10-13T19:04:56+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "10 req/min",
+        "waf_blocked": false,
+        "notes": "底层走 d.10jqka.com.cn 板块列表 API；同花顺域名整体零 WAF",
+        "degrade_to": [],
+        "headers": {}
+      },
+      {
+        "id": "ths_concept_list",
+        "name": "同花顺概念板块列表 (akshare stock_board_concept_name_ths)",
+        "domain": "d.10jqka.com.cn",
+        "url": "via akshare.stock_board_concept_name_ths()",
+        "auth": "none",
+        "fields": "name/code (375 个概念板块)",
+        "integration": "library_call (akshare)",
+        "status": "available",
+        "evidence": {
+          "http_code": 200,
+          "sample": "OK rows=375 cols=2, dt=8.27s (含分页 39 个子板块); 全市场 375 概念",
+          "probe_time": "2026-10-13T19:04:56+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "8 req/min（分页慢）",
+        "waf_blocked": false,
+        "notes": "39 页全拉取需 ~11s；概念代码可作为事件驱动标签",
+        "degrade_to": [],
+        "headers": {}
+      },
+      {
+        "id": "macro_china_cpi_gdp",
+        "name": "宏观数据 CPI/GDP (akshare)",
+        "domain": "stats.gov.cn",
+        "url": "via akshare.macro_china_cpi() / akshare.macro_china_gdp()",
+        "auth": "none",
+        "fields": "CPI: 月份/全国当月/同比/环比; GDP: 季度/绝对值/同比",
+        "integration": "library_call (akshare)",
+        "status": "available",
+        "evidence": {
+          "http_code": 200,
+          "sample": "OK CPI rows=224, GDP rows=82; 国家统计局数据",
+          "probe_time": "2026-10-13T19:04:56+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "不限",
+        "waf_blocked": false,
+        "notes": "宏观背景数据；CPI 最新 2026 年；可用于市场环境判定",
+        "degrade_to": [],
+        "headers": {}
+      },
+      {
+        "id": "em_lcpd_report",
+        "name": "东财业绩快报/财务报告 (datacenter RPT_LICO_FN_CPD)",
+        "domain": "financial",
+        "url": "https://datacenter-web.eastmoney.com/api/data/v1/get?reportName=RPT_LICO_FN_CPD&columns=ALL&pageSize=50&pageNumber={n}&sortColumns=UPDATE_DATE,SECURITY_CODE&sortTypes=-1,-1&filter=(REPORTDATE%3D%27{report_date}%27)",
+        "auth": "none",
+        "fields": "每股收益/营业总收入/净利润/ROE/营收同比/净利润同比/每股净资产/销售毛利率/行业 (5700+家全市场)",
+        "integration": "direct_json",
+        "status": "available",
+        "evidence": {
+          "http_code": null,
+          "sample": "",
+          "probe_time": "2026-10-13T19:23:25+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "10 req/min (registry 默认)",
+        "waf_blocked": false,
+        "notes": "同 datacenter-web 域 (LHB 已验证); 2026-10-13 搜索确认 RPT_LICO_FN_CPD 可用; filter 日期格式 YYYY-MM-DD; 分页 50 条/页 约 116 页; 建议 sleep 0.5s/页",
+        "degrade_to": [],
+        "headers": {},
+        "_source": "sources_registry"
+      },
+      {
+        "id": "ths_strong_stocks",
+        "name": "同花顺强势股 + 题材归因",
+        "domain": "financial",
+        "url": "http://zx.10jqka.com.cn/event/api/getharden/date/{date}/orderby/date/orderway/desc/charset/GBK/",
+        "auth": "none",
+        "fields": "code/name/reason(题材归因)",
+        "integration": "direct_json",
+        "status": "available",
+        "evidence": {
+          "http_code": null,
+          "sample": "",
+          "probe_time": "2026-10-13T19:25:11+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "10 req/min (registry 默认)",
+        "waf_blocked": false,
+        "notes": "只返回 code/name/reason 三个字段, 价格必须从腾讯补; 实测 48 只/次, 容器内稳定",
+        "degrade_to": [],
+        "headers": {},
+        "_source": "sources_registry"
+      },
+      {
+        "id": "ths_industry",
+        "name": "同花顺行业板块",
+        "domain": "financial",
+        "url": "http://q.10jqka.com.cn/interface/stock/thshy/zdf/desc/1/quote/1.js",
+        "auth": "none",
+        "fields": "",
+        "integration": "direct_json",
+        "status": "degraded",
+        "evidence": {
+          "http_code": null,
+          "sample": "",
+          "probe_time": "2026-10-13T19:25:11+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "10 req/min (registry 默认)",
+        "waf_blocked": false,
+        "notes": "实测返回 HTML (SPA fallback) 而非 JSON; 需登录态",
+        "degrade_to": [],
+        "headers": {},
+        "_source": "sources_registry"
+      }
+    ],
+    "news_sentiment": [
+      {
+        "id": "sina_7x24",
+        "name": "新浪 7x24 快讯",
+        "domain": "zhibo.sina.com.cn",
+        "url": "https://zhibo.sina.com.cn/api/zhibo/feed?page=1",
+        "auth": "none",
+        "fields": "title/time/content",
+        "integration": "direct_json",
+        "status": "degraded",
+        "evidence": {
+          "http_code": 200,
+          "sample": "HTTP 200 但 data=[] zhibo_id missing, 113B；容器内偶发返回有效数据",
+          "probe_time": "2026-10-13T19:04:56+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "30s/次",
+        "waf_blocked": false,
+        "notes": "2026-10-12/13 实测容器内 567/400 居多；降级链：新浪主源 → 远端 data-news 兜底 → 跳过",
+        "degrade_to": [],
+        "headers": {}
+      },
+      {
+        "id": "em_np_listapi_7x24",
+        "name": "东财 7x24 / 收评 (np-listapi)",
+        "domain": "np-listapi.eastmoney.com",
+        "url": "https://np-listapi.eastmoney.com/comm/web/getNewsByColumns?client=web&biz=web7_24&fastColumn=100&column=100&req_trace={uuid}",
+        "auth": "none (需 req_trace 参数)",
+        "fields": "财经/政策/产经新闻列表",
+        "integration": "direct_json",
+        "status": "degraded",
+        "evidence": {
+          "http_code": 200,
+          "sample": "HTTP 200 但 'Required String parameter req_trace is not present'，无 req_trace 返回 87B 错误；带 req_trace=UUID 后正常返回新闻 JSON",
+          "probe_time": "2026-10-13T19:04:56+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "30s/次",
+        "waf_blocked": false,
+        "notes": "req_trace 为随机 UUID（32位hex）；2026-10-12 容器内 567 居多；降级链：新浪主源 → 远端 data-news → 跳过",
+        "degrade_to": [],
+        "headers": {}
+      },
+      {
+        "id": "remote_news",
+        "name": "远端 news 仓 (兜底)",
+        "domain": "raw.githubusercontent.com",
+        "url": "https://raw.githubusercontent.com/qwerzxcva/stocks-data-news/main/news/{date}.md",
+        "auth": "none",
+        "fields": "Markdown 格式新闻汇总",
+        "integration": "http_get",
+        "status": "available",
+        "evidence": {
+          "http_code": 200,
+          "sample": "部分日期 404（未生成）；有效日期返回完整 Markdown",
+          "probe_time": "2026-10-13T19:04:56+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "10 req/min",
+        "waf_blocked": false,
+        "notes": "由远端 CI 每日生成；部分日期缺失属正常",
+        "degrade_to": [],
+        "headers": {}
+      },
+      {
+        "id": "douyin_hot_news",
+        "name": "抖音热搜新闻",
+        "domain": "aweme.snssdk.com",
+        "url": "https://aweme.snssdk.com/aweme/v1/hot/search/list/",
+        "auth": "none (mobile UA)",
+        "fields": "热搜词/讨论数/视频数",
+        "integration": "direct_json",
+        "status": "available",
+        "evidence": {
+          "http_code": 200,
+          "sample": "HTTP 200 JSON 30+ 条; hot_value 有时=0 需按 video_count 排序",
+          "probe_time": "2026-10-13T19:04:56+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "30s/次；移动端 UA 必带",
+        "waf_blocked": false,
+        "notes": "作为主题驱动信号接入 hot_impact.json；与股票题材标签做 join",
+        "degrade_to": [],
+        "headers": {}
+      },
+      {
+        "id": "sina_news",
+        "name": "新浪 7x24 快讯",
+        "domain": "news_sentiment",
+        "url": "https://zhibo.sina.com.cn/api/zhibo/feed?page=1",
+        "auth": "none",
+        "fields": "title/time/content",
+        "integration": "direct_json",
+        "status": "degraded",
+        "evidence": {
+          "http_code": null,
+          "sample": "",
+          "probe_time": "2026-10-13T19:23:25+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "10 req/min (registry 默认)",
+        "waf_blocked": false,
+        "notes": "实测返回体经常只有 113 bytes (zhibo_id missing), 内容量不稳定; 已由 fetch_remote_news 从 data-news 仓兜底",
+        "degrade_to": [],
+        "headers": {},
+        "_source": "sources_registry"
+      },
+      {
+        "id": "eastmoney_news",
+        "name": "东财 7x24 / 收评",
+        "domain": "news_sentiment",
+        "url": "https://np-listapi.eastmoney.com/comm/web/getNewsByColumns?client=web&biz=web7_24&fastColumn=100&column=100&req_trace={uuid}",
+        "auth": "none",
+        "fields": "",
+        "integration": "direct_json",
+        "status": "degraded",
+        "evidence": {
+          "http_code": null,
+          "sample": "",
+          "probe_time": "2026-10-13T19:25:11+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "10 req/min (registry 默认)",
+        "waf_blocked": false,
+        "notes": "实测 HTTP 567 Unknown Status; 财经/政策/产经三栏目全 567; 2026-10-13 补充: req_trace 为随机 32位hex UUID, 带上后正常返回 JSON; 567 多为容器本地出口, GitHub Actions 出口通常全通",
+        "degrade_to": [
+          "sina_news",
+          "remote_news"
+        ],
+        "headers": {},
+        "_source": "sources_registry"
+      },
+      {
+        "id": "cls_cn",
+        "name": "财联社 cls.cn",
+        "domain": "news_sentiment",
+        "url": "https://www.cls.cn/nodeapi/telegraphList",
+        "auth": "none",
+        "fields": "",
+        "integration": "direct_json",
+        "status": "blocked",
+        "evidence": {
+          "http_code": null,
+          "sample": "",
+          "probe_time": "2026-10-13T19:25:11+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "10 req/min (registry 默认)",
+        "waf_blocked": true,
+        "notes": "实测 404",
+        "degrade_to": [],
+        "headers": {},
+        "_source": "sources_registry"
+      }
+    ],
+    "fund_etf": [
+      {
+        "id": "em_fund_pingzhong",
+        "name": "东财基金重仓股持仓 (pingzhongdata JS)",
+        "domain": "fund.eastmoney.com",
+        "url": "https://fund.eastmoney.com/pingzhongdata/{fund_code}.js?v={unix_ts}",
+        "auth": "none",
+        "fields": "fS_name/fS_code/fund_Rate/fund_minsg/stockCodes(前10大重仓)/ishb",
+        "integration": "js_literal (literal_eval 解析)",
+        "status": "available",
+        "evidence": {
+          "http_code": 200,
+          "sample": "HTTP 200, 521562B JS; fund_code=510500 中证500ETF南方，stockCodes 含前10大重仓股",
+          "probe_time": "2026-10-13T19:04:56+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "10 req/min；v 参数=Unix timestamp 秒（缓存控制）",
+        "waf_blocked": false,
+        "notes": "JS 变量格式非 JSON，用 literal_eval 解析；.aspx FundJZ/FundGS 本地 403 WAF，但此 JS 接口完全可用；持仓数据季报更新，非实时",
+        "degrade_to": [],
+        "headers": {}
+      },
+      {
+        "id": "em_fund_etf_hist_min",
+        "name": "东财 ETF 历史净值 (akshare fund_etf_fund_info_em)",
+        "domain": "fund.eastmoney.com",
+        "url": "via akshare.fund_etf_fund_info_em(fund='511280', start_date='20000101', end_date='20500101')",
+        "auth": "none",
+        "fields": "净值日期/单位净值/累计净值/日增长率/申购状态/赎回状态",
+        "integration": "library_call (akshare)",
+        "status": "available",
+        "evidence": {
+          "http_code": 200,
+          "sample": "OK rows=784, 511280 (ETF 全史); 含申购/赎回状态",
+          "probe_time": "2026-10-13T19:04:56+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "同东财",
+        "waf_blocked": false,
+        "notes": "2026-10-13 补测可用；参数名为 fund 非 symbol；ETF 净值非股票日K",
+        "degrade_to": [],
+        "headers": {}
+      },
+      {
+        "id": "em_fund_rank",
+        "name": "东财混合基金排行",
+        "domain": "fund.eastmoney.com",
+        "url": "https://fund.eastmoney.com/top/default.aspx",
+        "auth": "none",
+        "fields": "混合基金近1年收益排行",
+        "integration": "web_scrape (HTML 解析)",
+        "status": "available",
+        "evidence": {
+          "http_code": 200,
+          "sample": "由 eastmoney_fund_rank.py 实现，49 条；HTML 解析，非 API",
+          "probe_time": "2026-10-13T19:04:56+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "10 req/min",
+        "waf_blocked": false,
+        "notes": "作为 KOL 抱团方向代理指标；HTML 解析需维护",
+        "degrade_to": [],
+        "headers": {}
+      },
+      {
+        "id": "eastmoney_fund_rank",
+        "name": "东财混合基金排行",
+        "domain": "fund_etf",
+        "url": "https://fund.eastmoney.com/top/default.aspx",
+        "auth": "none",
+        "fields": "混合基金近1年收益排行 (KOL抱团方向代理)",
+        "integration": "direct_json",
+        "status": "available",
+        "evidence": {
+          "http_code": null,
+          "sample": "",
+          "probe_time": "2026-10-13T19:25:11+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "10 req/min (registry 默认)",
+        "waf_blocked": false,
+        "notes": "由 eastmoney_fund_rank.py 实现, 49 条",
+        "degrade_to": [],
+        "headers": {},
+        "_source": "sources_registry"
+      },
+      {
+        "id": "eastmoney_fund_pingzhong",
+        "name": "东财基金重仓股持仓 (pingzhongdata JS)",
+        "domain": "fund_etf",
+        "url": "https://fund.eastmoney.com/pingzhongdata/{code}.js?v={ts}",
+        "auth": "none",
+        "fields": "fS_name / fS_code / fund_Rate / fund_sourceRate / fund_minsg / stockCodes / ishb",
+        "integration": "direct_json",
+        "status": "available",
+        "evidence": {
+          "http_code": null,
+          "sample": "",
+          "probe_time": "2026-10-13T19:25:11+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "10 req/min (registry 默认)",
+        "waf_blocked": false,
+        "notes": "返回 JS 变量 (非 JSON), 用正则 r'var (\\w+) = ([^;]+);' 解析; stockCodes 是前10大重仓股代码列表; .aspx FundJZ/FundGS 接口本地 WAF 403, 但此 JS 接口完全可用; v 参数 = Unix timestamp 秒, 用于缓存控制; 每次 CI 运行前需先查最新 ts",
+        "degrade_to": [],
+        "headers": {},
+        "_source": "sources_registry"
+      }
+    ],
+    "events": [
+      {
+        "id": "cninfo_announce",
+        "name": "巨潮资讯公告 (cninfo.com.cn)",
+        "domain": "www.cninfo.com.cn",
+        "url": "https://www.cninfo.com.cn/new/hisAnnouncement/query?pageNum=1&pageSize=5&column=szse&secuCode=000001&seDate=2026-10-01~2026-10-13",
+        "auth": "none",
+        "fields": "公告标题/日期/类型/PDF URL",
+        "integration": "direct_json",
+        "status": "unavailable",
+        "evidence": {
+          "http_code": 500,
+          "sample": "HTTP 500 Internal Server Error（本容器无法访问）；国内网络可能可用",
+          "probe_time": "2026-10-13T19:04:56+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "10 req/min",
+        "waf_blocked": false,
+        "notes": "2026-10-13 容器内 HTTP 500；巨潮资讯对大陆网络无地域限制（推测），容器外网络可正常访问；本环境无法验证，标注为 unavailable-in-container",
+        "degrade_to": [],
+        "headers": {}
+      },
+      {
+        "id": "em_ann_np",
+        "name": "东财公告 API",
+        "domain": "np-ann.eastmoney.com",
+        "url": "https://np-ann.eastmoney.com/api/security/ann?sr=-1&page_size=5&page_idx=1&ann_type=A&client_source=web&f_node=0&s_code=600519",
+        "auth": "none",
+        "fields": "公告标题/日期/类型/URL",
+        "integration": "direct_json",
+        "status": "degraded",
+        "evidence": {
+          "http_code": 200,
+          "sample": "HTTP 200 但返回 350221B HTML (SPA shell)，非 JSON；需要 X-Requested-With: XMLHttpRequest 头",
+          "probe_time": "2026-10-13T19:04:56+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "10 req/min",
+        "waf_blocked": false,
+        "notes": "2026-10-13 实测：无 XHR 头返回 HTML SPA 壳；加 XHR 头后可能返回 JSON（未验证）；东财公告域对容器 IP 可能限制不同；标注为 degraded",
+        "degrade_to": [],
+        "headers": {}
+      },
+      {
+        "id": "szse_api",
+        "name": "深交所官方数据 API",
+        "domain": "www.szse.cn",
+        "url": "https://www.szse.cn/api/report/ShowReport?SHOWTYPE=JSON&CATALOGID=1835&TABPAGE=1&pageNum=1&pageSize=5",
+        "auth": "none",
+        "fields": "交易行情/公告/监管数据",
+        "integration": "direct_json",
+        "status": "unavailable",
+        "evidence": {
+          "http_code": 500,
+          "sample": "HTTP 500（CATALOGID=1835/1803/1805 均 500）；可能需大陆出口 IP 或特定参数",
+          "probe_time": "2026-10-13T19:04:56+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "10 req/min",
+        "waf_blocked": false,
+        "notes": "2026-10-13 本容器测试全部返回 500；国内网络可能可用，需进一步排查",
+        "degrade_to": [],
+        "headers": {}
+      },
+      {
+        "id": "sse_api",
+        "name": "上交所官方数据 API",
+        "domain": "query.sse.com.cn",
+        "url": "http://query.sse.com.cn/commonQuery.do?sqlId=COMMON_SSE_ZQPZ_ZQPZCZL_TJXZGZL_L&pageHelp.pageSize=5&_=timestamp",
+        "auth": "none (需 Referer: sse.com.cn)",
+        "fields": "沪市行情/公告/基金等",
+        "integration": "direct_json",
+        "status": "degraded",
+        "evidence": {
+          "http_code": 200,
+          "sample": "HTTP 200 JSON 但 data=null (pageHelp.data=null)；sqlId 需配合特定页面上下文",
+          "probe_time": "2026-10-13T19:04:56+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "10 req/min",
+        "waf_blocked": false,
+        "notes": "返回 200 但 data=null：可能 sqlId 过期或需要有效 cookie session；需要进一步探测正确 sqlId 参数；Referer 头必带",
+        "degrade_to": [],
+        "headers": {}
+      }
+    ],
+    "social": [
+      {
+        "id": "douyin_hot_search",
+        "name": "抖音热搜榜 (社交信号)",
+        "domain": "aweme.snssdk.com",
+        "url": "https://aweme.snssdk.com/aweme/v1/hot/search/list/",
+        "auth": "none (mobile UA)",
+        "fields": "word/sentence_id/video_count/hot_value/active_time",
+        "integration": "direct_json",
+        "status": "available",
+        "evidence": {
+          "http_code": 200,
+          "sample": "HTTP 200 JSON; 30+ 条热搜; 2026-10-13 补测可用",
+          "probe_time": "2026-10-13T19:04:56+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "30s/次；移动端 UA 必带",
+        "waf_blocked": false,
+        "notes": "作为事件驱动主题标签接入 hot_impact.json；sentence_id 唯一去重键；hot_value 有时=0，按 video_count 排序；候选路径 /aweme/v1/discover/search/hot/ 404",
+        "degrade_to": [],
+        "headers": {
+          "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) Mobile/15E148"
+        }
+      },
+      {
+        "id": "xiaohongshu_hot",
+        "name": "小红书热门 (需 cookie/浏览器渲染)",
+        "domain": "edith.xiaohongshu.com",
+        "url": "https://edith.xiaohongshu.com/api/sns/web/v1/search/hot",
+        "auth": "cookie (需登录态)",
+        "fields": "热门话题/笔记/品牌词",
+        "integration": "browser_render",
+        "status": "unavailable",
+        "evidence": {
+          "http_code": 404,
+          "sample": "HTTP 404；edith 域所有可猜 API 路径均 404；主站为 React SPA",
+          "probe_time": "2026-10-13T19:04:56+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "不适用（需登录）",
+        "waf_blocked": false,
+        "notes": "2026-10-13 补测：所有路径 404，无公开 JSON API；需浏览器渲染+登录 cookie；替代方案：同花顺概念板块/抖音热搜作主题代理",
+        "degrade_to": [],
+        "headers": {}
+      },
+      {
+        "id": "xueqiu_hot",
+        "name": "雪球热榜 (需 xq_a_token)",
+        "domain": "xueqiu.com",
+        "url": "https://xueqiu.com/v5/statuses/hot/stock_list.json",
+        "auth": "cookie (xq_a_token)",
+        "fields": "热门股票列表/讨论热度",
+        "integration": "direct_json (with cookie)",
+        "status": "unavailable",
+        "evidence": {
+          "http_code": 404,
+          "sample": "无 cookie 时 404/400 + anti-bot JS；需 xq_a_token；2026-10-13 补测确认",
+          "probe_time": "2026-10-13T19:04:56+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "不适用（需有效 cookie）",
+        "waf_blocked": false,
+        "notes": "获取 xq_a_token：浏览器登录雪球 → F12 → Application → Cookies → xq_a_token；cookie 有效期约 30 天，需定期刷新；替代：东财股吧/同花顺热榜",
+        "degrade_to": [],
+        "headers": {}
+      },
+      {
+        "id": "tencent_news_author",
+        "name": "腾讯新闻特定作者页 (需浏览器渲染)",
+        "domain": "news.qq.com",
+        "url": "https://news.qq.com/omn/author/5233565",
+        "auth": "none (浏览器渲染)",
+        "fields": "作者文章列表",
+        "integration": "browser_render",
+        "status": "unavailable",
+        "evidence": {
+          "http_code": 200,
+          "sample": "HTTP 200 但返回 HTML (SPA shell 仅嵌 window.channelInfo)；猜测的 4 个后端接口全 404；文章列表需浏览器渲染",
+          "probe_time": "2026-10-13T19:04:56+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "不适用",
+        "waf_blocked": false,
+        "notes": "2026-10-13 补测：SPA 壳，web_backend/GetNewsList 等猜测路径全 404；需 Playwright/CDP 渲染管线；替代：新浪/东财新闻聚合源",
+        "degrade_to": [],
+        "headers": {}
+      },
+      {
+        "id": "xueqiu_anon_token",
+        "name": "雪球匿名 token (访问主页自动下发)",
+        "domain": "social",
+        "url": "GET https://xueqiu.com/ (匿名访问自动 set-cookie xq_a_token 与 u)",
+        "auth": "cookie (无需登录, 匿名即可)",
+        "fields": "xq_a_token → 解锁 /v5/stock/hot/list.json 等 v5 API",
+        "integration": "direct_json",
+        "status": "available",
+        "evidence": {
+          "http_code": null,
+          "sample": "",
+          "probe_time": "2026-10-13T19:23:25+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "10 req/min (registry 默认)",
+        "waf_blocked": false,
+        "notes": "2026-10-13 实测: 容器匿名访问 xueqiu.com 200 并拿到 140 位 token; 配合 browser-render 管线可抓雪球热榜; token 有效期短, 需定期重取",
+        "degrade_to": [],
+        "headers": {},
+        "_source": "sources_registry"
+      }
+    ],
+    "exchange_official": [
+      {
+        "id": "sse_market",
+        "name": "上交所行情数据 API",
+        "domain": "query.sse.com.cn",
+        "url": "http://query.sse.com.cn/commonQuery.do?sqlId={sql_id}&pageHelp.pageSize=10&_=timestamp",
+        "auth": "none (Referer: sse.com.cn 必须)",
+        "fields": "沪市行情/公告/基金/财务",
+        "integration": "direct_json",
+        "status": "unverified",
+        "evidence": {
+          "http_code": 200,
+          "sample": "HTTP 200 但 data=null；sqlId 需配合有效会话/Referer；2026-10-13 未完整验证",
+          "probe_time": "2026-10-13T19:04:56+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "10 req/min",
+        "waf_blocked": false,
+        "notes": "常见 sqlId：COMMON_SSE_ZQPZ_ZQPZCZL_TJXZGZL_L（沪市行情）；需确认是否要求 session cookie 或特定 Referer path",
+        "degrade_to": [],
+        "headers": {
+          "User-Agent": "Mozilla/5.0",
+          "Referer": "https://www.sse.com.cn/"
+        }
+      },
+      {
+        "id": "szse_api_v2",
+        "name": "深交所数据 API (v2 接口)",
+        "domain": "www.szse.cn",
+        "url": "https://www.szse.cn/api/report/ShowReport?SHOWTYPE=JSON&CATALOGID={id}&TABPAGE=1&pageNum=1&pageSize=5&random=0.1",
+        "auth": "none",
+        "fields": "深市行情/公告/基金/两融",
+        "integration": "direct_json",
+        "status": "unverified",
+        "evidence": {
+          "http_code": 500,
+          "sample": "2026-10-13 本容器 CATALOGID=1835/1803/1805 均返回 HTTP 500；国内网络可能正常",
+          "probe_time": "2026-10-13T19:04:56+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "10 req/min",
+        "waf_blocked": false,
+        "notes": "深交所 API 版本迭代较快，CATALOGID 可能已变更；本容器环境无法验证，需本地测试",
+        "degrade_to": [],
+        "headers": {}
+      }
+    ],
+    "library_wrappers": [
+      {
+        "id": "sec_edgar",
+        "name": "SEC EDGAR 财报 XBRL",
+        "domain": "library_wrappers",
+        "url": "https://data.sec.gov/submissions/{cik}.json",
+        "auth": "none",
+        "fields": "美股公司财报全量 XBRL (3.7MB/公司)",
+        "integration": "direct_json",
+        "status": "available",
+        "evidence": {
+          "http_code": null,
+          "sample": "",
+          "probe_time": "2026-10-13T19:25:11+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "10 req/min (registry 默认)",
+        "waf_blocked": false,
+        "notes": "完全免费无需 key; companyfacts 接口返回完整财务数据; A股用不上, 但可作中概股基本面参考",
+        "degrade_to": [],
+        "headers": {},
+        "_source": "sources_registry"
+      },
+      {
+        "id": "akshare",
+        "name": "AKShare",
+        "domain": "library_wrappers",
+        "url": "python 库 (非HTTP)",
+        "auth": "none",
+        "fields": "聚合东财/新浪/同花顺等 100+ 接口",
+        "integration": "library_call",
+        "status": "available",
+        "evidence": {
+          "http_code": null,
+          "sample": "",
+          "probe_time": "2026-10-13T19:25:11+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "10 req/min (registry 默认)",
+        "waf_blocked": false,
+        "notes": "akshare 1.19.1 容器已安装验证 (2026-10-13): 新浪日K/ETF K线、东财 push2his 历史K、同花顺财务摘要、统计局宏观数据均跑通; 它是封装层不是独立源, 底层仍是上面这些",
+        "degrade_to": [],
+        "headers": {},
+        "_source": "sources_registry"
+      },
+      {
+        "id": "cn_a_stock_data",
+        "name": "cn-a-stock-data (OpenStockData 开源库)",
+        "domain": "library_wrappers",
+        "url": "pip install cn-a-stock-data",
+        "auth": "none (问财层需 key)",
+        "fields": "封装腾讯/东财/百度股市通/同花顺/财联社/新浪/巨潮; 7层: 行情/研报/信号/资金筹码/新闻/基础/公告",
+        "integration": "direct_json",
+        "status": "unverified",
+        "evidence": {
+          "http_code": null,
+          "sample": "",
+          "probe_time": "2026-10-13T19:25:11+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "10 req/min (registry 默认)",
+        "waf_blocked": false,
+        "notes": "百度股市通 K线 (baidu_kline_with_ma, 腾讯 fallback) 与 cls.cn 电报封装值得复用; 未安装验证; 与 akshare 定位重叠但多了百度源",
+        "degrade_to": [],
+        "headers": {},
+        "_source": "sources_registry"
+      }
+    ],
+    "paid_key_api": [
+      {
+        "id": "alpha_vantage",
+        "name": "Alpha Vantage 美股行情",
+        "domain": "paid_key_api",
+        "url": "https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol={sym}&apikey=demo",
+        "auth": "key",
+        "fields": "美股实时报价",
+        "integration": "direct_json",
+        "status": "degraded",
+        "evidence": {
+          "http_code": null,
+          "sample": "",
+          "probe_time": "2026-10-13T19:25:11+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "10 req/min (registry 默认)",
+        "waf_blocked": false,
+        "notes": "demo key 可用但只能取少数符号, 实测 IBM 返回真实数据; 免费额度 25次/天; 注册 key 后 75次/分钟。坑: 用垃圾 key 也返回 200 真实数据, 无法校验 key 有效性",
+        "degrade_to": [],
+        "headers": {},
+        "_source": "sources_registry"
+      },
+      {
+        "id": "finnhub",
+        "name": "Finnhub",
+        "domain": "paid_key_api",
+        "url": "https://finnhub.io/api/v1/quote?symbol={sym}&token={key}",
+        "auth": "key",
+        "fields": "实时报价/基本面/新闻情绪",
+        "integration": "direct_json",
+        "status": "unavailable",
+        "evidence": {
+          "http_code": null,
+          "sample": "",
+          "probe_time": "2026-10-13T19:25:11+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "10 req/min (registry 默认)",
+        "waf_blocked": false,
+        "notes": "免费额度最慷慨 (60 req/min); 需注册",
+        "degrade_to": [],
+        "headers": {},
+        "_source": "sources_registry"
+      },
+      {
+        "id": "twelvedata",
+        "name": "Twelve Data",
+        "domain": "paid_key_api",
+        "url": "https://api.twelvedata.com/quote?symbol={sym}&apikey={key}",
+        "auth": "key",
+        "fields": "股/汇/币",
+        "integration": "direct_json",
+        "status": "unavailable",
+        "evidence": {
+          "http_code": null,
+          "sample": "",
+          "probe_time": "2026-10-13T19:25:11+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "10 req/min (registry 默认)",
+        "waf_blocked": false,
+        "notes": "免费 800次/天, $29/月 55 credits/min 日无限",
+        "degrade_to": [],
+        "headers": {},
+        "_source": "sources_registry"
+      },
+      {
+        "id": "fmp",
+        "name": "Financial Modeling Prep",
+        "domain": "paid_key_api",
+        "url": "https://financialmodelingprep.com/api/v3/quote/{sym}?apikey={key}",
+        "auth": "key",
+        "fields": "基本面/财报",
+        "integration": "direct_json",
+        "status": "unavailable",
+        "evidence": {
+          "http_code": null,
+          "sample": "",
+          "probe_time": "2026-10-13T19:25:11+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "10 req/min (registry 默认)",
+        "waf_blocked": false,
+        "notes": "免费 250次/天; $15/月平铺",
+        "degrade_to": [],
+        "headers": {},
+        "_source": "sources_registry"
+      },
+      {
+        "id": "marketstack",
+        "name": "Marketstack",
+        "domain": "paid_key_api",
+        "url": "http://api.marketstack.com/v1/eod?symbols={sym}&access_key={key}",
+        "auth": "key",
+        "fields": "全球股价日线",
+        "integration": "direct_json",
+        "status": "unavailable",
+        "evidence": {
+          "http_code": null,
+          "sample": "",
+          "probe_time": "2026-10-13T19:25:11+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "10 req/min (registry 默认)",
+        "waf_blocked": false,
+        "notes": "$9.99/月",
+        "degrade_to": [],
+        "headers": {},
+        "_source": "sources_registry"
+      },
+      {
+        "id": "tushare",
+        "name": "Tushare",
+        "domain": "paid_key_api",
+        "url": "http://api.tushare.pro",
+        "auth": "key",
+        "fields": "A股全品类 (行情/财务/因子)",
+        "integration": "direct_json",
+        "status": "unavailable",
+        "evidence": {
+          "http_code": null,
+          "sample": "",
+          "probe_time": "2026-10-13T19:25:11+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "10 req/min (registry 默认)",
+        "waf_blocked": false,
+        "notes": "国内最主流的 A股数据源, 需注册; 积分制, 免费额度有限",
+        "degrade_to": [],
+        "headers": {},
+        "_source": "sources_registry"
+      },
+      {
+        "id": "iwencai_openapi",
+        "name": "同花顺问财 OpenAPI (自然语言查数据)",
+        "domain": "paid_key_api",
+        "url": "https://openapi.iwencai.com/v1/query2data (POST)",
+        "auth": "key (IWENCAI_API_KEY)",
+        "fields": "自然语言选股/行情/财务/指数/基金/板块/期货; /v1/comprehensive/search 搜新闻/公告/研报",
+        "integration": "direct_json",
+        "status": "unavailable",
+        "evidence": {
+          "http_code": null,
+          "sample": "",
+          "probe_time": "2026-10-13T19:25:11+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "10 req/min (registry 默认)",
+        "waf_blocked": false,
+        "notes": "请求 body {query, source, page, limit, is_cache}; 返回 datas[] + code_count; 需申请 key; 限频控制, 30s 超时; 中文语义查询是独家能力",
+        "degrade_to": [],
+        "headers": {},
+        "_source": "sources_registry"
+      }
+    ],
+    "blocked_unavailable": [
+      {
+        "id": "yahoo_finance",
+        "name": "Yahoo Finance",
+        "domain": "blocked_unavailable",
+        "url": "https://query1.finance.yahoo.com/v8/finance/chart/{sym}",
+        "auth": "none",
+        "fields": "",
+        "integration": "direct_json",
+        "status": "degraded",
+        "evidence": {
+          "http_code": null,
+          "sample": "",
+          "probe_time": "2026-10-13T19:25:11+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "10 req/min (registry 默认)",
+        "waf_blocked": false,
+        "notes": "实测 HTTP 429 限流 (chart 与 search 都429)",
+        "degrade_to": [],
+        "headers": {},
+        "_source": "sources_registry"
+      },
+      {
+        "id": "stooq",
+        "name": "Stooq",
+        "domain": "blocked_unavailable",
+        "url": "https://stooq.com/q/l/?s={sym}&f=sd2t2ohlcv&h&e=csv",
+        "auth": "none",
+        "fields": "",
+        "integration": "direct_json",
+        "status": "blocked",
+        "evidence": {
+          "http_code": null,
+          "sample": "",
+          "probe_time": "2026-10-13T19:25:11+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "10 req/min (registry 默认)",
+        "waf_blocked": true,
+        "notes": "实测 404, 路径已变更",
+        "degrade_to": [],
+        "headers": {},
+        "_source": "sources_registry"
+      },
+      {
+        "id": "kaipanla",
+        "name": "开盘啦 kaipanla.com",
+        "domain": "blocked_unavailable",
+        "url": "https://app.kaipanla.com/open_api.php",
+        "auth": "none",
+        "fields": "",
+        "integration": "direct_json",
+        "status": "blocked",
+        "evidence": {
+          "http_code": null,
+          "sample": "",
+          "probe_time": "2026-10-13T19:25:11+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "10 req/min (registry 默认)",
+        "waf_blocked": true,
+        "notes": "app./xg. 子域 DNS 不可解析; www 的 open_api.php 被 Nuxt SPA fallback 劫持返回 HTML",
+        "degrade_to": [],
+        "headers": {},
+        "_source": "sources_registry"
+      },
+      {
+        "id": "gitcode_api",
+        "name": "gitcode / AtomGit API",
+        "domain": "blocked_unavailable",
+        "url": "https://web-api.gitcode.com/api/v2/repos/{owner}/{repo}",
+        "auth": "none",
+        "fields": "",
+        "integration": "direct_json",
+        "status": "blocked",
+        "evidence": {
+          "http_code": null,
+          "sample": "",
+          "probe_time": "2026-10-13T19:25:11+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "10 req/min (registry 默认)",
+        "waf_blocked": true,
+        "notes": "HTTP 418 反爬 (snomyc/stock 与 gh_mirrors 命名空间); 网页 SPA 渲染, 需浏览器+登录才能读源码",
+        "degrade_to": [],
+        "headers": {},
+        "_source": "sources_registry"
+      },
+      {
+        "id": "mootdx",
+        "name": "mootdx (TCP 7709)",
+        "domain": "blocked_unavailable",
+        "url": "tcp://119.147.164.60:7709",
+        "auth": "none",
+        "fields": "",
+        "integration": "direct_json",
+        "status": "blocked",
+        "evidence": {
+          "http_code": null,
+          "sample": "",
+          "probe_time": "2026-10-13T19:25:11+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "10 req/min (registry 默认)",
+        "waf_blocked": true,
+        "notes": "TCP 连接超时, 需国内IP",
+        "degrade_to": [],
+        "headers": {},
+        "_source": "sources_registry"
+      },
+      {
+        "id": "coingecko",
+        "name": "CoinGecko 加密货币",
+        "domain": "blocked_unavailable",
+        "url": "https://api.coingecko.com/api/v3/simple/price?ids={ids}&vs_currencies=usd",
+        "auth": "none",
+        "fields": "BTC/ETH 等实时价格",
+        "integration": "direct_json",
+        "status": "available",
+        "evidence": {
+          "http_code": null,
+          "sample": "",
+          "probe_time": "2026-10-13T19:26:12+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "10 req/min (registry 默认)",
+        "waf_blocked": false,
+        "notes": "完全免费无需 key, 实测 BTC=82532; 免费额度 1万 credits/月; A股项目暂不需要, 保留作海外情绪参考",
+        "degrade_to": [],
+        "headers": {},
+        "_source": "sources_registry"
+      }
+    ],
+    "local_cache": [
+      {
+        "id": "industry_map_tv",
+        "name": "TV 行业映射 (本地)",
+        "domain": "local_cache",
+        "url": "file://stocks-data-live/data/meta/industry_map_tv.json",
+        "auth": "none",
+        "fields": "5309只 代码 → sector/industry/type",
+        "integration": "direct_json",
+        "status": "available",
+        "evidence": {
+          "http_code": null,
+          "sample": "",
+          "probe_time": "2026-10-13T19:25:11+08:00",
+          "container": "alpine-aarch64"
+        },
+        "rate_limit_suggestion": "10 req/min (registry 默认)",
+        "waf_blocked": false,
+        "notes": "由 tv_screener.py --industry-map 生成; 解决了东财被封后 multi_v5 缺行业映射出0候选的问题",
+        "degrade_to": [],
+        "headers": {},
+        "_source": "sources_registry"
+      }
+    ]
+  }
+}

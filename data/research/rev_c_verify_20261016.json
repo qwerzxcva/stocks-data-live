@@ -1,0 +1,419 @@
+{
+ "generated": "2026-10-16 02:06:29",
+ "probes": [
+  {
+   "name": "futu_flash_list",
+   "url": "https://news.futunn.com/news-site-api/main/get-flash-list?page=1&pageSize=10",
+   "method": "GET",
+   "data": null,
+   "headers": {
+    "Referer": "https://www.futunn.com/",
+    "Host": "www.futunn.com"
+   },
+   "http_code": 200,
+   "bytes": 10769,
+   "secs": 0.37,
+   "sample": "<!doctype html>\n<html>\n\n<head>\n  <meta charset=\"utf-8\">\n  <title>404</title>\n  <meta name=\"viewport\"\n    content=\"width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no,viewport-fit=cover\">\n  <meta name=\"apple-mobile-web-app-capable\" content=\"yes\">\n  <meta name=\"apple-mobile-web-app-status-bar-style\" content=\"black\">\n  <style>\n    :root {\n      --ct_bg_page1: #fff;\n      --hk-official-font-regular: \"PingFangHK-Regular"
+  },
+  {
+   "name": "futu_stock_list",
+   "url": "https://www.futunn.com/quote-api/quote-v1/get-stock-list?marketType=1&pageSize=10&pageNo=1",
+   "method": "GET",
+   "data": null,
+   "headers": {
+    "Referer": "https://www.futunn.com/",
+    "Host": "www.futunn.com"
+   },
+   "http_code": 200,
+   "bytes": 10769,
+   "secs": 0.65,
+   "sample": "<!doctype html>\n<html>\n\n<head>\n  <meta charset=\"utf-8\">\n  <title>404</title>\n  <meta name=\"viewport\"\n    content=\"width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no,viewport-fit=cover\">\n  <meta name=\"apple-mobile-web-app-capable\" content=\"yes\">\n  <meta name=\"apple-mobile-web-app-status-bar-style\" content=\"black\">\n  <style>\n    :root {\n      --ct_bg_page1: #fff;\n      --hk-official-font-regular: \"PingFangHK-Regular"
+  },
+  {
+   "name": "futu_stock_list_v2",
+   "url": "https://www.futunn.com/quote-api/v1/get-stock-list?marketType=1&pageSize=10",
+   "method": "GET",
+   "data": null,
+   "headers": {
+    "Referer": "https://www.futunn.com/",
+    "Host": "www.futunn.com"
+   },
+   "http_code": 200,
+   "bytes": 10769,
+   "secs": 0.35,
+   "sample": "<!doctype html>\n<html>\n\n<head>\n  <meta charset=\"utf-8\">\n  <title>404</title>\n  <meta name=\"viewport\"\n    content=\"width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no,viewport-fit=cover\">\n  <meta name=\"apple-mobile-web-app-capable\" content=\"yes\">\n  <meta name=\"apple-mobile-web-app-status-bar-style\" content=\"black\">\n  <style>\n    :root {\n      --ct_bg_page1: #fff;\n      --hk-official-font-regular: \"PingFangHK-Regular"
+  },
+  {
+   "name": "futu_quote_detail",
+   "url": "https://www.futunn.com/quote-api/quote-v1/get-stock-detail?stockId=700&marketType=1&marketId=1",
+   "method": "GET",
+   "data": null,
+   "headers": {
+    "Referer": "https://www.futunn.com/",
+    "Host": "www.futunn.com"
+   },
+   "http_code": 200,
+   "bytes": 10769,
+   "secs": 0.33,
+   "sample": "<!doctype html>\n<html>\n\n<head>\n  <meta charset=\"utf-8\">\n  <title>404</title>\n  <meta name=\"viewport\"\n    content=\"width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no,viewport-fit=cover\">\n  <meta name=\"apple-mobile-web-app-capable\" content=\"yes\">\n  <meta name=\"apple-mobile-web-app-status-bar-style\" content=\"black\">\n  <style>\n    :root {\n      --ct_bg_page1: #fff;\n      --hk-official-font-regular: \"PingFangHK-Regular"
+  },
+  {
+   "name": "futu_news_center",
+   "url": "https://news.futunn.com/news-site-api/main/get-news-list?page=1&pageSize=10",
+   "method": "GET",
+   "data": null,
+   "headers": {
+    "Referer": "https://www.futunn.com/",
+    "Host": "www.futunn.com"
+   },
+   "http_code": 200,
+   "bytes": 10769,
+   "secs": 0.26,
+   "sample": "<!doctype html>\n<html>\n\n<head>\n  <meta charset=\"utf-8\">\n  <title>404</title>\n  <meta name=\"viewport\"\n    content=\"width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no,viewport-fit=cover\">\n  <meta name=\"apple-mobile-web-app-capable\" content=\"yes\">\n  <meta name=\"apple-mobile-web-app-status-bar-style\" content=\"black\">\n  <style>\n    :root {\n      --ct_bg_page1: #fff;\n      --hk-official-font-regular: \"PingFangHK-Regular"
+  },
+  {
+   "name": "cls_v1_signed",
+   "url": "https://www.cls.cn/v1/roll/get_roll_list?app=CailianpressWeb&category=&last_time=&os=web&rn=20&sv=7.7.5&sign=test",
+   "method": "GET",
+   "data": null,
+   "headers": {
+    "Referer": "https://www.cls.cn/",
+    "Host": "www.cls.cn"
+   },
+   "http_code": 200,
+   "bytes": 39,
+   "secs": 0.21,
+   "sample": "{\"errno\":\"10012\",\"msg\":\"签名错误\"}\n"
+  },
+  {
+   "name": "cls_v2_roll",
+   "url": "https://www.cls.cn/v2/roll/get_roll_list?app=CailianpressWeb&os=web&rn=20&sv=8.7.9",
+   "method": "GET",
+   "data": null,
+   "headers": {
+    "Referer": "https://www.cls.cn/",
+    "Host": "www.cls.cn"
+   },
+   "http_code": 200,
+   "bytes": 49,
+   "secs": 0.31,
+   "sample": "{\"errno\":50101,\"msg\":\"小财正在加载中...\"}\n"
+  },
+  {
+   "name": "cls_nodeapi_telegraph",
+   "url": "https://www.cls.cn/nodeapi/telegraphList?app=CailianpressWeb&os=web&rn=20&sv=8.7.9",
+   "method": "GET",
+   "data": null,
+   "headers": {
+    "Referer": "https://www.cls.cn/",
+    "Host": "www.cls.cn"
+   },
+   "error": "HTTPError HTTP Error 404: Not Found"
+  },
+  {
+   "name": "cls_api_telegraph",
+   "url": "https://www.cls.cn/api/telegraph/list?page=1&size=20",
+   "method": "GET",
+   "data": null,
+   "headers": {
+    "Referer": "https://www.cls.cn/",
+    "Host": "www.cls.cn"
+   },
+   "error": "HTTPError HTTP Error 404: Not Found"
+  },
+  {
+   "name": "cls_depth_hot",
+   "url": "https://www.cls.cn/nodeapi/updateTelegraphList?app=CailianpressWeb&os=web&rn=20&sv=8.7.9",
+   "method": "GET",
+   "data": null,
+   "headers": {
+    "Referer": "https://www.cls.cn/",
+    "Host": "www.cls.cn"
+   },
+   "error": "HTTPError HTTP Error 404: Not Found"
+  },
+  {
+   "name": "cninfo_ann_query",
+   "url": "https://web.cninfo.com.cn/new/hisAnnouncement/query",
+   "method": "POST",
+   "data": "pageNum=1&pageSize=10&column=szse&tabName=fulltext&stock=600519&searchkey=&secid=&plate=&category=&trade=&seDate=",
+   "headers": {
+    "Referer": "https://web.cninfo.com.cn/",
+    "Host": "web.cninfo.com.cn",
+    "Content-Type": "application/x-www-form-urlencoded"
+   },
+   "error": "URLError <urlopen error [Errno -2] Name or service not known>"
+  },
+  {
+   "name": "cninfo_stock_list",
+   "url": "https://web.cninfo.com.cn/new/information/topSearch/query",
+   "method": "POST",
+   "data": "keyWord=600519&maxNum=10",
+   "headers": {
+    "Referer": "https://web.cninfo.com.cn/",
+    "Host": "web.cninfo.com.cn",
+    "Content-Type": "application/x-www-form-urlencoded"
+   },
+   "error": "URLError <urlopen error [Errno -2] Name or service not known>"
+  },
+  {
+   "name": "tgb_moreHot",
+   "url": "https://www.tgb.cn/moreHot?type=1&pageNo=1",
+   "method": "GET",
+   "data": null,
+   "headers": {
+    "Referer": "https://www.tgb.cn/",
+    "Host": "www.tgb.cn"
+   },
+   "http_code": 200,
+   "bytes": 94588,
+   "secs": 0.39,
+   "sample": "<!DOCTYPE html>\n<html lang=\"zh-CN\">\n<head>\n    <base href=\"https://www.tgb.cn/\"/>\n    \n        \n        \n        \n        \n        \n        \n            <title>淘股吧_专业投资A股股票炒股论坛交流分享社区</title>\n            <meta name=\"keywords\" content=\"淘股吧,股票论坛,股吧,炒股论坛,股票交流平台,炒股分享交流\"/>\n            <meta name=\"description\" content=\"淘股吧，国内专业的股票炒股交流�"
+  },
+  {
+   "name": "tgb_api_hot",
+   "url": "https://www.tgb.cn/api/moreHot?type=1&pageNo=1",
+   "method": "GET",
+   "data": null,
+   "headers": {
+    "Referer": "https://www.tgb.cn/",
+    "Host": "www.tgb.cn"
+   },
+   "error": "HTTPError HTTP Error 404: Not Found"
+  },
+  {
+   "name": "tgb_topic_hot",
+   "url": "https://www.tgb.cn/topic/hot?pageNo=1",
+   "method": "GET",
+   "data": null,
+   "headers": {
+    "Referer": "https://www.tgb.cn/",
+    "Host": "www.tgb.cn"
+   },
+   "error": "HTTPError HTTP Error 404: Not Found"
+  },
+  {
+   "name": "kpl_api_market",
+   "url": "https://www.kaipanla.com/api/v1/market/trend",
+   "method": "GET",
+   "data": null,
+   "headers": {
+    "Referer": "https://www.kaipanla.com/",
+    "Host": "www.kaipanla.com"
+   },
+   "http_code": 200,
+   "bytes": 8657,
+   "secs": 0.16,
+   "sample": "<!DOCTYPE html><html  lang=\"zh-CN\"><head><meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, viewport-fit=cover\">\n<title>开盘啦</title>\n<link rel=\"stylesheet\" href=\"/_nuxt/entry.B2FJ5N-L.css\" crossorigin>\n<link rel=\"stylesheet\" href=\"/_nuxt/index.BrF4-YIg.css\" crossorigin>\n<link rel=\"stylesheet\" href=\"/_nuxt/index.O4OnlGYX.css\" crossorigin>\n<link rel=\"stylesheet\" hr"
+  },
+  {
+   "name": "kpl_api_stock",
+   "url": "https://www.kaipanla.com/api/v1/stock/trend?code=600519",
+   "method": "GET",
+   "data": null,
+   "headers": {
+    "Referer": "https://www.kaipanla.com/",
+    "Host": "www.kaipanla.com"
+   },
+   "http_code": 200,
+   "bytes": 8666,
+   "secs": 0.19,
+   "sample": "<!DOCTYPE html><html  lang=\"zh-CN\"><head><meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, viewport-fit=cover\">\n<title>开盘啦</title>\n<link rel=\"stylesheet\" href=\"/_nuxt/entry.B2FJ5N-L.css\" crossorigin>\n<link rel=\"stylesheet\" href=\"/_nuxt/index.BrF4-YIg.css\" crossorigin>\n<link rel=\"stylesheet\" href=\"/_nuxt/index.O4OnlGYX.css\" crossorigin>\n<link rel=\"stylesheet\" hr"
+  },
+  {
+   "name": "kpl_home",
+   "url": "https://www.kaipanla.com/",
+   "method": "GET",
+   "data": null,
+   "headers": {
+    "Referer": "https://www.kaipanla.com/",
+    "Host": "www.kaipanla.com"
+   },
+   "http_code": 200,
+   "bytes": 17347,
+   "secs": 0.19,
+   "sample": "<!DOCTYPE html><html  lang=\"zh-CN\"><head><meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, viewport-fit=cover\">\n<title>开盘啦</title>\n<link rel=\"stylesheet\" href=\"/_nuxt/entry.B2FJ5N-L.css\" crossorigin>\n<link rel=\"stylesheet\" href=\"/_nuxt/default.DQeH4iHD.css\" crossorigin>\n<link rel=\"stylesheet\" href=\"/_nuxt/index.BrF4-YIg.css\" crossorigin>\n<link rel=\"stylesheet\" "
+  },
+  {
+   "name": "wencai_unified_v2",
+   "url": "http://www.iwencai.com/unifiedwap/unified-wap/v2/result/get?query=%E6%B6%A8%E5%B9%85%E5%A4%A7%E4%BA%8E5%25&urp_sort_way=desc&urp_sort_index=%E5%9C%BA%E5%86%85%E6%B6%A8%E5%B9%85&page=1&perpage=10&addheaderindexes=&condition=&codelist=&indexnamelimit=&logid=test",
+   "method": "GET",
+   "data": null,
+   "headers": {
+    "Referer": "http://www.iwencai.com/",
+    "Host": "www.iwencai.com"
+   },
+   "http_code": 200,
+   "bytes": 0,
+   "secs": 0.32,
+   "sample": ""
+  },
+  {
+   "name": "wencai_urp_v7",
+   "url": "http://www.iwencai.com/urp/v7/landing/getDataList?query=%E6%B6%A8%E5%B9%85%E5%A4%A7%E4%BA%8E5%25&page=1&perpage=10&urp_sort_way=desc&source=Ths_iwencai_Xuangu",
+   "method": "GET",
+   "data": null,
+   "headers": {
+    "Referer": "http://www.iwencai.com/",
+    "Host": "www.iwencai.com"
+   },
+   "error": "HTTPError HTTP Error 403: Forbidden"
+  },
+  {
+   "name": "sse_stock_list",
+   "url": "https://query.sse.com.cn/security/stock/getStockListData.do?jsonCallBack=jsonpCallback&isPagination=true&stockCode=&csrcCode=&areaName=&pageHelp.cacheSize=1&pageHelp.beginPage=1&pageHelp.pageSize=25&pageHelp.pageNo=1&_=1697000000000",
+   "method": "GET",
+   "data": null,
+   "headers": {
+    "Referer": "https://www.sse.com.cn/",
+    "Host": "query.sse.com.cn"
+   },
+   "http_code": 200,
+   "bytes": 114,
+   "secs": 0.29,
+   "sample": "\n({\"jsonCallBack\":\"jsonpCallback\",\"success\":\"false\",\"error\":\"系统繁忙...\",\"errorType\":\"ExceptionInterceptor\"})"
+  },
+  {
+   "name": "sse_market_summary",
+   "url": "https://query.sse.com.cn/market/getMarketSummary.do?jsonCallBack=jsonpCallback&isPagination=false&_=1697000000000",
+   "method": "GET",
+   "data": null,
+   "headers": {
+    "Referer": "https://www.sse.com.cn/",
+    "Host": "query.sse.com.cn"
+   },
+   "error": "HTTPError HTTP Error 404: "
+  },
+  {
+   "name": "szse_report",
+   "url": "https://www.szse.cn/api/report/ShowReport/data?SHOWTYPE=JSON&CATALOGID=1110&TABKEY=tab1&txtStart=2026-10-01&txtEnd=2026-10-16&random=0.12345",
+   "method": "GET",
+   "data": null,
+   "headers": {
+    "Referer": "https://www.szse.cn/",
+    "Host": "www.szse.cn"
+   },
+   "http_code": 200,
+   "bytes": 21476,
+   "secs": 0.23,
+   "sample": "[{\"metadata\":{\"catalogid\":\"1110\",\"name\":\"A股列表\",\"excel\":\"xlsx\",\"pagetype\":\"tabs\",\"subname\":\"2026-10-15 \",\"tabkey\":\"tab1\",\"pagesize\":20,\"pageno\":1,\"pagecount\":146,\"recordcount\":2906,\"showrecordcount\":false,\"header\":\"\\n        \\n\\t\\t<table>\\n\\t\\t\\t<tr>\\n\\t\\t\\t\\t<td class=\\\"link1\\\">\\n\\t\\t\\t\\t\\t(点击<u>简称</u>查询产品页面 )\\n\\t\\t\\t\\t</td>\\n\\t\\t\\t</tr>\\n\\t\\t</table>\\n  \\t\\n    \",\"footer\":\"\",\"reporttype\":null,\"tabcss\":null,\"conditions\":"
+  },
+  {
+   "name": "szse_ann_list",
+   "url": "https://www.szse.cn/api/disc/announcement/annList?random=0.12345",
+   "method": "GET",
+   "data": null,
+   "headers": {
+    "Referer": "https://www.szse.cn/",
+    "Host": "www.szse.cn"
+   },
+   "error": "HTTPError HTTP Error 500: Internal Server Error"
+  },
+  {
+   "name": "guba_rank_api",
+   "url": "https://guba.eastmoney.com/interface/GetData.aspx?path=rank/stock&ps=10&p=1",
+   "method": "GET",
+   "data": null,
+   "headers": {
+    "Referer": "https://guba.eastmoney.com/",
+    "Host": "guba.eastmoney.com"
+   },
+   "http_code": 200,
+   "bytes": 0,
+   "secs": 0.26,
+   "sample": ""
+  },
+  {
+   "name": "guba_list_api",
+   "url": "https://guba.eastmoney.com/interface/GetData.aspx?path=newarticlelist&code=600519&ps=10&p=1",
+   "method": "GET",
+   "data": null,
+   "headers": {
+    "Referer": "https://guba.eastmoney.com/",
+    "Host": "guba.eastmoney.com"
+   },
+   "http_code": 200,
+   "bytes": 0,
+   "secs": 0.24,
+   "sample": ""
+  },
+  {
+   "name": "sina_moneyflow_bestsort",
+   "url": "https://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php/MoneyFlow.ssl_bestsort?page=1&num=10&sort=netamount&asc=0&daima=sh600519",
+   "method": "GET",
+   "data": null,
+   "headers": {
+    "Referer": "https://finance.sina.com.cn/",
+    "Host": "vip.stock.finance.sina.com.cn"
+   },
+   "http_code": 200,
+   "bytes": 46,
+   "secs": 0.2,
+   "sample": "{\"__ERROR\":3,\"__ERRORMSG\":\"Service not found\"}"
+  },
+  {
+   "name": "sina_hq_node_count",
+   "url": "https://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php/Market_Center.getHQNodeStockCount?node=hs_a",
+   "method": "GET",
+   "data": null,
+   "headers": {
+    "Referer": "https://finance.sina.com.cn/",
+    "Host": "vip.stock.finance.sina.com.cn"
+   },
+   "http_code": 200,
+   "bytes": 6,
+   "secs": 0.18,
+   "sample": "\"5575\""
+  },
+  {
+   "name": "sina_datacenter_hq",
+   "url": "https://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php/Market_Center.getHQNodeData&page=1&num=5&sort=changepercent&asc=0&node=hs_a",
+   "method": "GET",
+   "data": null,
+   "headers": {
+    "Referer": "https://finance.sina.com.cn/",
+    "Host": "vip.stock.finance.sina.com.cn"
+   },
+   "http_code": 200,
+   "bytes": 46,
+   "secs": 0.22,
+   "sample": "{\"__ERROR\":3,\"__ERRORMSG\":\"Service not found\"}"
+  },
+  {
+   "name": "tq_money_rank",
+   "url": "https://proxy.finance.qq.com/cgi/cgi-bin/rank/hs/getMoneyRankList?_appver=11.17.0&sort_type=zljlr&direct=down&offset=0&count=20",
+   "method": "GET",
+   "data": null,
+   "headers": {
+    "Referer": "https://gu.qq.com/",
+    "Host": "proxy.finance.qq.com"
+   },
+   "error": "HTTPError HTTP Error 404: Not Found"
+  },
+  {
+   "name": "tq_limitup_pool",
+   "url": "https://proxy.finance.qq.com/cgi/cgi-bin/rank/hs/getLimitUpList?_appver=11.17.0&offset=0&count=20",
+   "method": "GET",
+   "data": null,
+   "headers": {
+    "Referer": "https://gu.qq.com/",
+    "Host": "proxy.finance.qq.com"
+   },
+   "error": "HTTPError HTTP Error 404: Not Found"
+  },
+  {
+   "name": "tq_fflow_day",
+   "url": "https://proxy.finance.qq.com/ifzqgtimg/appstock/app/fflow/daykline/get?param=sh600519,day,,,10,qfq",
+   "method": "GET",
+   "data": null,
+   "headers": {
+    "Referer": "https://gu.qq.com/",
+    "Host": "proxy.finance.qq.com"
+   },
+   "http_code": 200,
+   "bytes": 52,
+   "secs": 0.11,
+   "sample": "{\"code\":11,\"data\":\"\",\"msg\":\"No dispatch info found\"}"
+  }
+ ]
+}

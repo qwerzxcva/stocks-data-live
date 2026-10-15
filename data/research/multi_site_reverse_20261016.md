@@ -181,3 +181,117 @@ data/ths/manifest.json                             汇总
 | 和讯 DNS 死 | 本机 `getaddrinfo` 失败 |
 | 新浪期货 node 白名单窄 | 实测 5 个品种，仅 2 个通 |
 | `pn` 字段含义、`volume/turnover/zsz` 单位 | **未核实**，已标注 |
+
+---
+
+# 第三批补充 — 财联社签名突破 + 深交所（2026-10-16 深夜）
+
+## 9. 财联社：签名算法补上 `category` 后打通
+
+**根因**：项目里 2026-10-14 写的 `scripts/cls_sign.py` 签名时**漏了 `category` 参数**
+（即使它为空字符串），导致 `cls_cn` 源一直标 blocked、返回 `errno=10012 签名错误`。
+
+正确算法（与旧版同样的双层 hash，只是参数集不同）：
+
+```
+所有参数（含空 category）按 key 字母排序
+  → 拼接为 key=value&key=value
+  → sha1().hexdigest()
+  → md5().hexdigest()          # sign
+```
+
+默认参数：`app=CailianpressWeb, category='', os=web, rn=50, sv=7.7.5`
+
+### 9.1 实测结论
+
+| 项 | 结论 |
+|---|---|
+ `v1/roll/get_roll_list` | ✅ 200, 51909B, 53 字段, `errno=0` |
+| `rn` 上限 | **50**（60/70/80/99/100/150/200 全部返回 0 条） |
+| 分页参数 | **全无效**：`last_time`/`last_id`/`ctime`/`min_time`/`refresh_type`/`page`/`pageNo`/`p` 实测 5 页翻下来都是同样 50 条 —— 只返回最新窗口，无历史回溯 |
+| `category` 白名单 | 6 个且**服务端真过滤**：`red`(40 条全 B 级) / `announcement` / `watch` / `hk_us` / `fund`(38 条 C 级) / `remind` |
+| `title` 字段 | 恒为空串（电报正文在 `brief`/`content`） |
+| `subjects` | **100% 覆盖且带 `plate_id`** —— 可直接映射东财板块，是 `hot_impact` 的优质输入 |
+| `stock_list` | 覆盖率低（实测 2/50），不要依赖它做个股关联 |
+| `sv` 版本号 | 不敏感（7.7.5 / 8.0.0 / 8.7.9 均可） |
+
+### 9.2 旧端点 `/api/cache?name=telegraphList` 仍可用
+
+2026-10-14 发现的端点复核仍活着，且**免签也返回 200**（`errno=0`, 20 条, 31 字段）。
+与 v1 的差异：
+
+| | `/api/cache` | `/v1/roll/get_roll_list` |
+|---|---|---|
+| 字段数 | 31 | 53 |
+| `title` 非空率 | **7/20** | 0/20 |
+| 分类筛选 | 无 | 6 类 |
+| `lastTime` 分页 | 部分生效（19/20 条，边界重叠 1 条） | 无效 |
+
+→ **两端点互补**：cache 版拿 title，v1 版拿分类 + 富字段。已写入 registry notes。
+
+另：网上多个开源项目用的 `nodeapi/telegraphList` 免签路径现在**全 404**，
+`v2/roll/get_roll_list` 返回 `errno=50101`。财联社已把免签入口全关。
+
+### 9.3 采集与落地
+
+`scripts/cls_collect.py`（含修正后的签名），已接进 `ths-collect.yml`。
+Actions 第三轮验证：**250 条唯一电报**（7 个分类各 40-50 条），
+`subjects` 100% 覆盖、`plate_ids` 68%、level 分布 B5/C45。
+落地 `data/ths/cls_telegraph.json`。
+
+## 10. 深交所：`szse api/report` 三个可用报表
+
+registry 里的 `szse_api` 一直标 blocked，实际是入口找错了。
+正确路径是 `https://www.szse.cn/api/report/ShowReport/data?SHOWTYPE=JSON&CATALOGID=<id>&TABKEY=tab1&random=<float>`：
+
+| CATALOGID | 名称 | 记录数 |
+|---|---|---|
+| 1110 | A股列表 | 2906 |
+| 1105 | 基金列表 | 1069 |
+| 1945 | ETF列表 | 756 |
+
+字段（A股）：`agdm`(代码) / `agjc`(简称) / `bk`(板块) / `agssrq`(上市日期) /
+`agzgb`(总股本) / `agltgb`(流通股本) / `sshymc`(证监会行业，如 `J 金融业`)。
+ETF 列表**独带 `zxjjjz` 最新净值**。
+
+**两个坑**：
+1. **`pageno` 翻页参数不生效** —— 实测 `pageno=1/2/3/100` 全部返回同样的前 20 条
+   （平安银行 000001 开头）。只能拿首页 20 只，要全量得另找入口。
+2. **简称字段全带 HTML 锚标签**（`agjc`/`jjjcurl`/`kzjcurl`），且 ETF 的字段含多个链接，需正则剥离。
+
+## 11. 第三批 blocked 留档（`dead_third_batch`）
+
+| 站点 | 现象 |
+|---|---|
+| 富途 | `futunn.com` 5 个 `quote-api`/`news-site-api` 路径全返回 404 SPA 页（10769B） |
+| 淘股吧 | `tgb.cn/moreHot` 返回页脚营业执照框架（94KB，无热帖数据）；`api`/`topic` 路径 404 |
+| 开盘啦 | `kaipanla.com/api/v1/*` 返回 Nuxt SPA HTML（8.6KB），需登录态 |
+| 问财 | `iwencai.com/unifiedwap/v2` 返回 200 但 **0 字节**；`urp/v7` 403 |
+| 东财股吧 | `guba.eastmoney.com/interface/GetData.aspx` 200 但 0 字节 |
+| 上交所 | `query.sse.com.cn getStockListData` 返回 `success:false`（需 jsonCallBack 精确匹配） |
+| 新浪 | `MoneyFlow.ssl_bestsort` 与 `Market_Center.getHQNodeData` 返回 `Service not found` |
+| 腾讯 | `rank/hs/getMoneyRankList` 与 `getLimitUpList` 404；`fflow/daykline` 返回 `No dispatch info found` |
+| 巨潮 | `web.cninfo.com.cn` **DNS 无法解析**（与和讯同样死） |
+
+新增 ok 源 `sina_hq_node_count`：A 股总数 5575（裸字符串，非 JSON），
+可与雪球 screener 的 5000 交叉校验（差 575，口径差异**未核实**）。
+
+## 12. 数据源总数与落地状态
+
+**89 → 152 个源**（ok 108 / degraded 15 / blocked 19 / unauth 8 / untested 2）。
+
+`data/ths/` 共 101 个文件，四类数据：
+
+```
+finance/<code>_{benefit,debt,cash}.json   THS 三大报表全科目
+f10/<code>_{9页}.json                     THS F10 九页
+kline/<code>/kline_{01,21}.json           THS 日/月K + 分时
+board.json / news.json                    板块成分股 + 7x24 快讯
+f10_em/<code>_*.json                      东财 F10 / 机构 / 研报（43 个文件）
+cls_telegraph.json                        财联社 250 条唯一电报（7 分类）
+manifest.json                             汇总（files=101, em=43, cls=250）
+```
+
+另 `data/xq_screener.json.gz`（674KB）：雪球 5000 只 A 股 × 31 字段选股池。
+
+**仍未跑**：雪球全量需大陆 IP（Actions 出口 418）；全市场 THS 采集未实测耗时。

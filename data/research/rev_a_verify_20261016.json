@@ -1,0 +1,214 @@
+{
+ "generated": "2026-10-16 00:32:59",
+ "note": "curl -w 复核子代理 rev_a 声明",
+ "probes": [
+  {
+   "name": "tencent_board_rank",
+   "url": "https://proxy.finance.qq.com/cgi/cgi-bin/rank/hs/getBoardRankList?_appver=11.17.0&board_code=aStock&sort_type=price&direct=down&offset=0&count=200",
+   "http_code": 0,
+   "bytes": 0,
+   "secs": 0.029826,
+   "sample": ""
+  },
+  {
+   "name": "tencent_board_rank_zdf",
+   "url": "https://proxy.finance.qq.com/cgi/cgi-bin/rank/hs/getBoardRankList?_appver=11.17.0&board_code=aStock&sort_type=zdf&direct=down&offset=0&count=5",
+   "http_code": 0,
+   "bytes": 0,
+   "secs": 0.035695,
+   "sample": ""
+  },
+  {
+   "name": "tencent_board_rank_hk",
+   "url": "https://proxy.finance.qq.com/cgi/cgi-bin/rank/hs/getBoardRankList?_appver=11.17.0&board_code=hkStock&sort_type=price&direct=down&offset=0&count=5",
+   "http_code": 0,
+   "bytes": 0,
+   "secs": 0.041388,
+   "sample": ""
+  },
+  {
+   "name": "tencent_newfqkline",
+   "url": "https://proxy.finance.qq.com/ifzqgtimg/appstock/app/newfqkline/get?_var=kline_dayqfq&param=sh000919,day,2025-01-01,2025-03-01,640,qfq&r=0.82",
+   "http_code": 0,
+   "bytes": 0,
+   "secs": 0.038335,
+   "sample": ""
+  },
+  {
+   "name": "tencent_hk_kline",
+   "url": "https://web.ifzq.gtimg.cn/appstock/app/hkfqkline/get?param=hk00700,day,2026-09-01,2026-10-15,640,hfq",
+   "http_code": 200,
+   "bytes": 119407,
+   "secs": 0.225493,
+   "sample": "{\"code\":0,\"msg\":\"\",\"data\":{\"hk00700\":{\"hfqday\":[[\"2024-03-08\",\"1572.930\",\"1562.930\",\"1590.930\",\"1562.930\",\"12416156.000\",{},\"0.130\",\"338054.533\"],[\"2024-03-11\",\"1568.930\",\"1605.930\",\"1605.930\",\"1568.930\",\"17866889.000\",{},\"0.190\",\"493658.462\"],[\"2024-03-12\",\"1622.930\",\"1666.930\",\"1675.930\",\"1613.930\",\"36531141.000\",{},\"0.390\",\"1050683.181\"],[\"2024-03-13\",\"1669.930\",\"1665.930\",\"1682.930\",\"1655.930\",\"20074418.000\",{},\"0.210\",\"585078.443\"],[\"2024-03-14\",\"1659.930\",\"1658.930\",\"1682.930\",\"1646.930\",\""
+  },
+  {
+   "name": "tencent_us_kline",
+   "url": "https://web.ifzq.gtimg.cn/appstock/app/usfqkline/get?param=usAAPL,day,2026-10-01,2026-10-15,10,qfq",
+   "http_code": 200,
+   "bytes": 1541,
+   "secs": 0.162131,
+   "sample": "{\"code\":0,\"msg\":\"\",\"data\":{\"usAAPL\":{\"day\":[[\"2011-06-02\",\"346.22\",\"346.22\",\"347.84\",\"344.53\",\"16780815.00\",{},\"0.00\",\"0.00\",\"0.00\",\"0.00\"]],\"qt\":{\"usAAPL\":[\"real\",\"\\u82f9\\u679c\",\"AAPL.OQ\",\"343.95\",\"342.96\",\"346.95\",\"16694597\",\"0\",\"0\",\"0\",\"0\",\"0\",\"0\",\"0\",\"0\",\"0\",\"0\",\"0\",\"0\",\"0\",\"0\",\"0\",\"0\",\"0\",\"0\",\"0\",\"0\",\"0\",\"0\",\"\",\"2026-10-15 12:32:37\",\"0.99\",\"0.29\",\"347.85\",\"342.56\",\"USD\",\"16694597\",\"5764236494\",\"0.11\",\"39.44\",\"\",\"46.11\",\"\",\"1.54\",\"50165.48199\",\"50196.68211\",\"Apple Inc.\",\"8.72\",\"348.15\",\"242."
+  },
+  {
+   "name": "tencent_us_kline_old",
+   "url": "https://web.ifzq.gtimg.cn/appstock/app/usfqkline/get?param=usAAPL,day,2011-06-02,2011-06-02,10,qfq",
+   "http_code": 200,
+   "bytes": 1541,
+   "secs": 0.170246,
+   "sample": "{\"code\":0,\"msg\":\"\",\"data\":{\"usAAPL\":{\"day\":[[\"2011-06-02\",\"346.22\",\"346.22\",\"347.84\",\"344.53\",\"16780815.00\",{},\"0.00\",\"0.00\",\"0.00\",\"0.00\"]],\"qt\":{\"usAAPL\":[\"real\",\"\\u82f9\\u679c\",\"AAPL.OQ\",\"343.95\",\"342.96\",\"346.95\",\"16694597\",\"0\",\"0\",\"0\",\"0\",\"0\",\"0\",\"0\",\"0\",\"0\",\"0\",\"0\",\"0\",\"0\",\"0\",\"0\",\"0\",\"0\",\"0\",\"0\",\"0\",\"0\",\"0\",\"\",\"2026-10-15 12:32:37\",\"0.99\",\"0.29\",\"347.85\",\"342.56\",\"USD\",\"16694597\",\"5764236494\",\"0.11\",\"39.44\",\"\",\"46.11\",\"\",\"1.54\",\"50165.48199\",\"50196.68211\",\"Apple Inc.\",\"8.72\",\"348.15\",\"242."
+  },
+  {
+   "name": "tencent_index_weektrends",
+   "url": "https://web.ifzq.gtimg.cn/other/klineweb/klineWeb/weekTrends?code=sh000919&type=qfq&_var=trend_qfq&r=0.35",
+   "http_code": 200,
+   "bytes": 30017,
+   "secs": 0.146229,
+   "sample": "trend_qfq={\"code\":0,\"msg\":\"ok\",\"data\":[[\"2005-01-04\",\"978.1400\"],[\"2005-01-07\",\"967.7200\"],[\"2005-01-14\",\"975.9300\"],[\"2005-01-21\",\"978.3400\"],[\"2005-01-28\",\"973.4800\"],[\"2005-02-04\",\"1034.4700\"],[\"2005-02-18\",\"1018.3600\"],[\"2005-02-25\",\"1054.9800\"],[\"2005-03-04\",\"1028.7000\"],[\"2005-03-11\",\"1025.1899\"],[\"2005-03-18\",\"985.4100\"],[\"2005-03-25\",\"972.2200\"],[\"2005-04-01\",\"992.0200\"],[\"2005-04-08\",\"1008.3500\"],[\"2005-04-15\",\"988.5100\"],[\"2005-04-22\",\"967.9500\"],[\"2005-04-29\",\"952.0700\"],[\"2005-05-13\""
+  },
+  {
+   "name": "sina_futures_sngz",
+   "url": "https://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php/Market_Center.getHQFuturesData?page=1&num=5&sort=position&asc=0&node=sngz_qh&base=futures",
+   "http_code": 200,
+   "bytes": 1422,
+   "secs": 0.22144,
+   "sample": "[{\"symbol\":\"T2612\",\"exchange\":\"cffex\",\"name\":\"10\\u5e74\\u671f\\u56fd\\u503a\\u671f\\u8d272612\",\"trade\":\"109.67\",\"settlement\":\"0.00\",\"presettlement\":\"109.690\",\"open\":\"109.75\",\"high\":\"109.79\",\"low\":\"109.67\",\"close\":\"109.67\",\"bidprice1\":\"109.675\",\"askprice1\":\"109.680\",\"bidvol1\":\"13\",\"askvol1\":\"27\",\"volume\":\"107992\",\"position\":\"420813\",\"ticktime\":\"15:15:00\",\"tradedate\":\"2026-10-15\",\"preclose\":\"109.680\",\"changepercent\":\"-0.0001367\",\"bid\":\"0.00\",\"ask\":\"0.00\",\"prevsettlement\":\"109.69\"},{\"symbol\":\"T2703\",\"ex"
+  },
+  {
+   "name": "sina_futures_TA",
+   "url": "https://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php/Market_Center.getHQFuturesData?page=1&num=5&sort=position&asc=0&node=TA_qh&base=futures",
+   "http_code": 200,
+   "bytes": 2,
+   "secs": 0.199416,
+   "sample": "[]"
+  },
+  {
+   "name": "sina_futures_IM",
+   "url": "https://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php/Market_Center.getHQFuturesData?page=1&num=5&sort=position&asc=0&node=IM_qh&base=futures",
+   "http_code": 200,
+   "bytes": 2471,
+   "secs": 0.367142,
+   "sample": "[{\"symbol\":\"IM0\",\"exchange\":\"cffex\",\"name\":\"\\u4e2d\\u8bc1\\u8fde\\u7eed\\u6307\\u6570\\u671f\\u8d27\\u8fde\\u7eed\",\"trade\":\"6553.60\",\"settlement\":\"0.00\",\"presettlement\":\"6788.200\",\"open\":\"6627.00\",\"high\":\"6706.60\",\"low\":\"6532.40\",\"close\":\"6553.60\",\"bidprice1\":\"6553.000\",\"askprice1\":\"6553.600\",\"bidvol1\":\"3\",\"askvol1\":\"5\",\"volume\":\"225578\",\"position\":\"299105\",\"ticktime\":\"15:00:00\",\"tradedate\":\"2026-10-15\",\"preclose\":\"6805.800\",\"changepercent\":\"-0.0345600\",\"bid\":\"0.00\",\"ask\":\"0.00\",\"prevsettlement\":\"6788.20"
+  },
+  {
+   "name": "sina_futures_IF",
+   "url": "https://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php/Market_Center.getHQFuturesData?page=1&num=5&sort=position&asc=0&node=IF_qh&base=futures",
+   "http_code": 200,
+   "bytes": 2,
+   "secs": 0.276546,
+   "sample": "[]"
+  },
+  {
+   "name": "sina_futures_T",
+   "url": "https://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php/Market_Center.getHQFuturesData?page=1&num=5&sort=position&asc=0&node=T_qh&base=futures",
+   "http_code": 200,
+   "bytes": 2,
+   "secs": 0.271691,
+   "sample": "[]"
+  },
+  {
+   "name": "sina_moneyflow_zjlrqs",
+   "url": "https://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php/MoneyFlow.ssl_qsfx_zjlrqs?page=1&num=3&sort=opendate&asc=0&daima=sh600519",
+   "http_code": 200,
+   "bytes": 869,
+   "secs": 0.294589,
+   "sample": "[{\"opendate\":\"2026-10-15\",\"trade\":\"1311.8100\",\"changeratio\":\"0.02007\",\"turnover\":\"44.7261\",\"netamount\":\"1431698917.5400\",\"ratioamount\":\"0.195966\",\"r0_net\":\"1271738490.5000\",\"r0_ratio\":\"0.17407160\",\"r0x_ratio\":\"83.423\",\"cnt_r0x_ratio\":\"2\",\"cate_ra\":\"0.11836\",\"cate_na\":\"2438065363.3000\"},{\"opendate\":\"2026-10-14\",\"trade\":\"1286.0000\",\"changeratio\":\"0.00871448\",\"turnover\":\"19.0169\",\"netamount\":\"563322203.3800\",\"ratioamount\":\"0.184962\",\"r0_net\":\"450109682.2500\",\"r0_ratio\":\"0.14778976\",\"r0x_ratio\":\"86."
+  },
+  {
+   "name": "sina_moneyflow_lscjfb",
+   "url": "https://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php/MoneyFlow.ssl_qsfx_lscjfb?page=1&num=3&sort=opendate&asc=0&daima=sh600519",
+   "http_code": 200,
+   "bytes": 995,
+   "secs": 0.353551,
+   "sample": "[{\"opendate\":\"2026-10-15\",\"trade\":\"1311.8100\",\"changeratio\":\"0.02007\",\"turnover\":\"44.7261\",\"netamount\":\"1431698917.5400\",\"ratioamount\":\"0.195966\",\"r0\":\"6128820647.6400\",\"r1\":\"1124370983.2900\",\"r2\":\"54182645.2300\",\"r3\":\"5221.6400\",\"r0_net\":\"1271738490.5000\",\"r1_net\":\"153357700.9100\",\"r2_net\":\"6607947.7700\",\"r3_net\":\"-5221.6400\"},{\"opendate\":\"2026-10-14\",\"trade\":\"1286.0000\",\"changeratio\":\"0.00871448\",\"turnover\":\"19.0169\",\"netamount\":\"563322203.3800\",\"ratioamount\":\"0.184962\",\"r0\":\"1890797637.6700\","
+  },
+  {
+   "name": "sina_esg_stocks",
+   "url": "https://global.finance.sina.com.cn/api/openapi.php/EsgService.getEsgStocks?page=1&num=3",
+   "http_code": 0,
+   "bytes": 0,
+   "secs": 0.040238,
+   "sample": "[{\"opendate\":\"2026-10-15\",\"trade\":\"1311.8100\",\"changeratio\":\"0.02007\",\"turnover\":\"44.7261\",\"netamount\":\"1431698917.5400\",\"ratioamount\":\"0.195966\",\"r0\":\"6128820647.6400\",\"r1\":\"1124370983.2900\",\"r2\":\"54182645.2300\",\"r3\":\"5221.6400\",\"r0_net\":\"1271738490.5000\",\"r1_net\":\"153357700.9100\",\"r2_net\":\"6607947.7700\",\"r3_net\":\"-5221.6400\"},{\"opendate\":\"2026-10-14\",\"trade\":\"1286.0000\",\"changeratio\":\"0.00871448\",\"turnover\":\"19.0169\",\"netamount\":\"563322203.3800\",\"ratioamount\":\"0.184962\",\"r0\":\"1890797637.6700\","
+  },
+  {
+   "name": "sina_esg_msci",
+   "url": "https://global.finance.sina.com.cn/api/openapi.php/EsgService.getMsciEsgStocks?p=1&num=3",
+   "http_code": 0,
+   "bytes": 0,
+   "secs": 0.033881,
+   "sample": "[{\"opendate\":\"2026-10-15\",\"trade\":\"1311.8100\",\"changeratio\":\"0.02007\",\"turnover\":\"44.7261\",\"netamount\":\"1431698917.5400\",\"ratioamount\":\"0.195966\",\"r0\":\"6128820647.6400\",\"r1\":\"1124370983.2900\",\"r2\":\"54182645.2300\",\"r3\":\"5221.6400\",\"r0_net\":\"1271738490.5000\",\"r1_net\":\"153357700.9100\",\"r2_net\":\"6607947.7700\",\"r3_net\":\"-5221.6400\"},{\"opendate\":\"2026-10-14\",\"trade\":\"1286.0000\",\"changeratio\":\"0.00871448\",\"turnover\":\"19.0169\",\"netamount\":\"563322203.3800\",\"ratioamount\":\"0.184962\",\"r0\":\"1890797637.6700\","
+  },
+  {
+   "name": "sina_esg_zd",
+   "url": "https://global.finance.sina.com.cn/api/openapi.php/EsgService.getZdEsgStocks?page=1&num=3",
+   "http_code": 0,
+   "bytes": 0,
+   "secs": 0.013518,
+   "sample": "[{\"opendate\":\"2026-10-15\",\"trade\":\"1311.8100\",\"changeratio\":\"0.02007\",\"turnover\":\"44.7261\",\"netamount\":\"1431698917.5400\",\"ratioamount\":\"0.195966\",\"r0\":\"6128820647.6400\",\"r1\":\"1124370983.2900\",\"r2\":\"54182645.2300\",\"r3\":\"5221.6400\",\"r0_net\":\"1271738490.5000\",\"r1_net\":\"153357700.9100\",\"r2_net\":\"6607947.7700\",\"r3_net\":\"-5221.6400\"},{\"opendate\":\"2026-10-14\",\"trade\":\"1286.0000\",\"changeratio\":\"0.00871448\",\"turnover\":\"19.0169\",\"netamount\":\"563322203.3800\",\"ratioamount\":\"0.184962\",\"r0\":\"1890797637.6700\","
+  },
+  {
+   "name": "sina_esg_rft",
+   "url": "https://global.finance.sina.com.cn/api/openapi.php/EsgService.getRftEsgStocks?p=1&num=3",
+   "http_code": 0,
+   "bytes": 0,
+   "secs": 0.038077,
+   "sample": "[{\"opendate\":\"2026-10-15\",\"trade\":\"1311.8100\",\"changeratio\":\"0.02007\",\"turnover\":\"44.7261\",\"netamount\":\"1431698917.5400\",\"ratioamount\":\"0.195966\",\"r0\":\"6128820647.6400\",\"r1\":\"1124370983.2900\",\"r2\":\"54182645.2300\",\"r3\":\"5221.6400\",\"r0_net\":\"1271738490.5000\",\"r1_net\":\"153357700.9100\",\"r2_net\":\"6607947.7700\",\"r3_net\":\"-5221.6400\"},{\"opendate\":\"2026-10-14\",\"trade\":\"1286.0000\",\"changeratio\":\"0.00871448\",\"turnover\":\"19.0169\",\"netamount\":\"563322203.3800\",\"ratioamount\":\"0.184962\",\"r0\":\"1890797637.6700\","
+  },
+  {
+   "name": "sina_esg_hz",
+   "url": "https://global.finance.sina.com.cn/api/openapi.php/EsgService.getHzEsgStocks?page=1&num=3",
+   "http_code": 0,
+   "bytes": 0,
+   "secs": 0.032502,
+   "sample": "[{\"opendate\":\"2026-10-15\",\"trade\":\"1311.8100\",\"changeratio\":\"0.02007\",\"turnover\":\"44.7261\",\"netamount\":\"1431698917.5400\",\"ratioamount\":\"0.195966\",\"r0\":\"6128820647.6400\",\"r1\":\"1124370983.2900\",\"r2\":\"54182645.2300\",\"r3\":\"5221.6400\",\"r0_net\":\"1271738490.5000\",\"r1_net\":\"153357700.9100\",\"r2_net\":\"6607947.7700\",\"r3_net\":\"-5221.6400\"},{\"opendate\":\"2026-10-14\",\"trade\":\"1286.0000\",\"changeratio\":\"0.00871448\",\"turnover\":\"19.0169\",\"netamount\":\"563322203.3800\",\"ratioamount\":\"0.184962\",\"r0\":\"1890797637.6700\","
+  },
+  {
+   "name": "sina_spot_goods",
+   "url": "https://stock.finance.sina.com.cn/futures/api/openapi.php/GoodsIndexService.get_goods_index?symbol=BDI&table=0",
+   "http_code": 200,
+   "bytes": 852412,
+   "secs": 0.566397,
+   "sample": "{\"result\":{\"status\":{\"code\":0},\"data\":{\"data\":[{\"symbol\":\"BDI\",\"name\":\"\\u864f\\u7bd3\\u8117\\u813c\\u788c\\u811b\\u6f5e\\u62e2\\u8d42\\u8121\\u8121\\u5784\\u7984\\u73ab\\u8130\\u8d42\\u8122\\u5a92\",\"opendate\":\"0023-06-02\",\"zde\":\"-18.00\",\"zdf\":\"-1.9200\",\"price\":\"919.00\"},{\"symbol\":\"BDI\",\"name\":\"\\u864f\\u7bd3\\u8117\\u813c\\u788c\\u811b\\u6f5e\\u62e2\\u8d42\\u8121\\u8121\\u5784\\u7984\\u73ab\\u8130\\u8d42\\u8122\\u5a92\",\"opendate\":\"0024-03-20\",\"zde\":\"-108.00\",\"zdf\":\"-4.5200\",\"price\":\"2284.00\"},{\"symbol\":\"BDI\",\"name\":\"\\u864f\\u7bd3\\"
+  },
+  {
+   "name": "sina_option_stock_name",
+   "url": "https://stock.finance.sina.com.cn/futures/api/openapi.php/StockOptionService.getStockName",
+   "http_code": 200,
+   "bytes": 238,
+   "secs": 0.241672,
+   "sample": "{\"result\":{\"status\":{\"code\":0},\"data\":{\"cateList\":[\"50ETF\",\"50ETF\",\"300ETF\",\"500ETF\",\"\\u79d1\\u521b50\",\"\\u79d1\\u521b\\u677f50\"],\"contractMonth\":[\"2026-10\",\"2026-10\",\"2026-11\",\"2026-12\",\"2027-03\"],\"stockId\":\"510050\",\"cateId\":\"510050C2612\"}}}"
+  },
+  {
+   "name": "sina_hk_klc_js",
+   "url": "https://finance.sina.com.cn/stock/hkstock/CES100/klc2_kl.js",
+   "http_code": 0,
+   "bytes": 0,
+   "secs": 0.038018,
+   "sample": "{\"result\":{\"status\":{\"code\":0},\"data\":{\"cateList\":[\"50ETF\",\"50ETF\",\"300ETF\",\"500ETF\",\"\\u79d1\\u521b50\",\"\\u79d1\\u521b\\u677f50\"],\"contractMonth\":[\"2026-10\",\"2026-10\",\"2026-11\",\"2026-12\",\"2027-03\"],\"stockId\":\"510050\",\"cateId\":\"510050C2612\"}}}"
+  },
+  {
+   "name": "sina_us_index_static",
+   "url": "https://finance.sina.com.cn/staticdata/us/.IXIC",
+   "http_code": 0,
+   "bytes": 0,
+   "secs": 0.038787,
+   "sample": "{\"result\":{\"status\":{\"code\":0},\"data\":{\"cateList\":[\"50ETF\",\"50ETF\",\"300ETF\",\"500ETF\",\"\\u79d1\\u521b50\",\"\\u79d1\\u521b\\u677f50\"],\"contractMonth\":[\"2026-10\",\"2026-10\",\"2026-11\",\"2026-12\",\"2027-03\"],\"stockId\":\"510050\",\"cateId\":\"510050C2612\"}}}"
+  },
+  {
+   "name": "dead_hexun_usa_kline",
+   "url": "http://webusstock.hermes.hexun.com/usa/kline?code=NASDAQNTES&start=20261001&number=-20&type=5",
+   "http_code": 0,
+   "bytes": 0,
+   "secs": 0.031745,
+   "sample": "{\"result\":{\"status\":{\"code\":0},\"data\":{\"cateList\":[\"50ETF\",\"50ETF\",\"300ETF\",\"500ETF\",\"\\u79d1\\u521b50\",\"\\u79d1\\u521b\\u677f50\"],\"contractMonth\":[\"2026-10\",\"2026-10\",\"2026-11\",\"2026-12\",\"2027-03\"],\"stockId\":\"510050\",\"cateId\":\"510050C2612\"}}}"
+  },
+  {
+   "name": "dead_gtimg_hk_rank",
+   "url": "http://stock.gtimg.cn/data/hk_rank.php",
+   "http_code": 200,
+   "bytes": 116,
+   "secs": 1.150015,
+   "sample": "{\"code\":2003,\"msg\":\"\\u951f\\u65a4\\u62f7\\u65f6\\u951f\\u65a4\\u62f7\\u652f\\u951f\\u8857\\u8be5\\u5e2e\\u62f7\\u951f\",\"data\":\"\"}"
+  }
+ ]
+}

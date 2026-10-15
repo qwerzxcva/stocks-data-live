@@ -1,0 +1,125 @@
+{
+ "generated": "2026-10-16 00:38:56",
+ "probes": [
+  {
+   "name": "em_org_survey",
+   "url": "https://datacenter-web.eastmoney.com/api/data/v1/get?reportName=RPT_ORG_SURVEYNEW&columns=ALL&pageSize=3&pageNumber=1&sortColumns=NOTICE_DATE&sortTypes=-1&source=WEB&client=WEB",
+   "http_code": 0,
+   "bytes": 0,
+   "secs": 0.038342,
+   "sample": ""
+  },
+  {
+   "name": "em_shareholder_increase",
+   "url": "https://datacenter-web.eastmoney.com/api/data/v1/get?reportName=RPT_SHARE_HOLDER_INCREASE&columns=ALL&pageSize=3&pageNumber=1&sortColumns=NOTICE_DATE&sortTypes=-1&source=WEB&client=WEB",
+   "http_code": 0,
+   "bytes": 0,
+   "secs": 0.039639,
+   "sample": ""
+  },
+  {
+   "name": "em_holder_num_latest",
+   "url": "https://datacenter-web.eastmoney.com/api/data/v1/get?reportName=RPT_HOLDERNUMLATEST&columns=ALL&pageSize=3&pageNumber=1&sortColumns=END_DATE&sortTypes=-1&source=WEB&client=WEB&filter=(SECURITY_CODE%3D%22600519%22)",
+   "http_code": 0,
+   "bytes": 0,
+   "secs": 0.029944,
+   "sample": ""
+  },
+  {
+   "name": "em_org_hold_allmarket",
+   "url": "https://datacenter-web.eastmoney.com/api/data/v1/get?reportName=RPT_MAIN_ORGHOLD&columns=ALL&pageSize=3&pageNumber=1&sortColumns=REPORT_DATE&sortTypes=-1&source=WEB&client=WEB",
+   "http_code": 0,
+   "bytes": 0,
+   "secs": 0.040864,
+   "sample": ""
+  },
+  {
+   "name": "em_f10_freeholders",
+   "url": "https://datacenter-web.eastmoney.com/api/data/v1/get?reportName=RPT_F10_EH_FREEHOLDERS&columns=ALL&pageSize=3&pageNumber=1&filter=(SECUCODE%3D%22600519.SH%22)&source=HSF10&client=PC",
+   "http_code": 0,
+   "bytes": 0,
+   "secs": 0.038867,
+   "sample": ""
+  },
+  {
+   "name": "em_f10_orghold_history",
+   "url": "https://datacenter-web.eastmoney.com/api/data/v1/get?reportName=RPT_F10_MAIN_ORGHOLD&columns=ALL&pageSize=3&pageNumber=1&filter=(SECUCODE%3D%22600519.SH%22)&source=HSF10&client=PC",
+   "http_code": 0,
+   "bytes": 0,
+   "secs": 0.035065,
+   "sample": ""
+  },
+  {
+   "name": "em_f10_coretheme_board",
+   "url": "https://datacenter-web.eastmoney.com/api/data/v1/get?reportName=RPT_F10_CORETHEME_BOARDTYPE&columns=ALL&pageSize=3&pageNumber=1&filter=(SECUCODE%3D%22600519.SH%22)&source=HSF10&client=PC",
+   "http_code": 0,
+   "bytes": 0,
+   "secs": 0.026175,
+   "sample": ""
+  },
+  {
+   "name": "em_f10_mainop",
+   "url": "https://datacenter-web.eastmoney.com/api/data/v1/get?reportName=RPT_F10_FN_MAINOP&columns=ALL&pageSize=3&pageNumber=1&filter=(SECUCODE%3D%22600519.SH%22)&source=HSF10&client=PC",
+   "http_code": 0,
+   "bytes": 0,
+   "secs": 0.018015,
+   "sample": ""
+  },
+  {
+   "name": "em_reportapi",
+   "url": "https://reportapi.eastmoney.com/report/list?industryCode=*&pageSize=3&industry=*&rating=*&ratingChange=*&beginTime=2026-09-01&endTime=2026-10-16&pageNo=1&fields=&qType=0&orgCode=&code=600519&rcode=&p=1&pageNum=1&pageNumber=1",
+   "http_code": 0,
+   "bytes": 0,
+   "secs": 0.038514,
+   "sample": ""
+  },
+  {
+   "name": "em_hsf10_shareholder",
+   "url": "https://emweb.securities.eastmoney.com/PC_HSF10/ShareholderResearch/PageAjax?code=SH600519",
+   "http_code": 0,
+   "bytes": 0,
+   "secs": 0.043246,
+   "sample": ""
+  },
+  {
+   "name": "em_hsf10_company",
+   "url": "https://emweb.securities.eastmoney.com/PC_HSF10/CompanySurvey/PageAjax?code=SH600519",
+   "http_code": 0,
+   "bytes": 0,
+   "secs": 0.040982,
+   "sample": ""
+  },
+  {
+   "name": "em_hsf10_capital",
+   "url": "https://emweb.securities.eastmoney.com/PC_HSF10/CapitalStockStructure/PageAjax?code=SH600519",
+   "http_code": 0,
+   "bytes": 0,
+   "secs": 0.040847,
+   "sample": ""
+  },
+  {
+   "name": "em_hsf10_bonus",
+   "url": "https://emweb.securities.eastmoney.com/PC_HSF10/BonusFinancing/PageAjax?code=SH600519",
+   "http_code": 0,
+   "bytes": 0,
+   "secs": 0.039423,
+   "sample": ""
+  },
+  {
+   "name": "em_hsf10_business",
+   "url": "https://emweb.securities.eastmoney.com/PC_HSF10/BusinessAnalysis/PageAjax?code=SH600519",
+   "http_code": 0,
+   "bytes": 0,
+   "secs": 0.03825,
+   "sample": ""
+  },
+  {
+   "name": "em_hsf10_operations",
+   "url": "https://emweb.securities.eastmoney.com/PC_HSF10/OperationsRequired/PageAjax?code=SH600519",
+   "http_code": 0,
+   "bytes": 0,
+   "secs": 0.038471,
+   "sample": ""
+  }
+ ]
+}
